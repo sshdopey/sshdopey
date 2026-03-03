@@ -3,19 +3,6 @@ import path from "path";
 import { seedIfEmpty } from "./seed";
 import { createId } from "./utils";
 
-export interface Post {
-  id: number;
-  slug: string;
-  title: string;
-  content: string;
-  excerpt: string;
-  cover_image: string;
-  tags: string;
-  featured: number;
-  published_at: string;
-  updated_at: string;
-}
-
 export interface Subscriber {
   id: string;
   email: string;
@@ -48,19 +35,6 @@ function getDb(): Database.Database {
         created_at TEXT DEFAULT (datetime('now'))
       );
 
-      CREATE TABLE IF NOT EXISTS posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        slug TEXT UNIQUE NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        excerpt TEXT DEFAULT '',
-        cover_image TEXT DEFAULT '',
-        tags TEXT DEFAULT '',
-        featured INTEGER DEFAULT 0,
-        published_at TEXT DEFAULT (datetime('now')),
-        updated_at TEXT DEFAULT (datetime('now'))
-      );
-
       CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_slug TEXT NOT NULL,
@@ -91,40 +65,7 @@ function getDb(): Database.Database {
   return _db;
 }
 
-// ── Posts ──
-
-export function getAllPosts(): Post[] {
-  return getDb()
-    .prepare("SELECT * FROM posts ORDER BY published_at DESC")
-    .all() as Post[];
-}
-
-export function getPostBySlug(slug: string): Post | undefined {
-  return getDb()
-    .prepare("SELECT * FROM posts WHERE slug = ?")
-    .get(slug) as Post | undefined;
-}
-
-export function getFeaturedPosts(limit = 3): Post[] {
-  return getDb()
-    .prepare("SELECT * FROM posts WHERE featured = 1 ORDER BY published_at DESC LIMIT ?")
-    .all(limit) as Post[];
-}
-
-export function getLatestPosts(limit = 20): Post[] {
-  return getDb()
-    .prepare("SELECT * FROM posts ORDER BY published_at DESC LIMIT ?")
-    .all(limit) as Post[];
-}
-
-export function getAllTags(): string[] {
-  const posts = getAllPosts();
-  const tagSet = new Set<string>();
-  for (const p of posts) {
-    if (p.tags) p.tags.split(",").forEach((t) => tagSet.add(t.trim()));
-  }
-  return Array.from(tagSet).sort();
-}
+// ── Likes ──
 
 export function getLikeCounts(): Record<string, number> {
   const rows = getDb()
@@ -134,27 +75,6 @@ export function getLikeCounts(): Record<string, number> {
   for (const r of rows) map[r.post_slug] = r.c;
   return map;
 }
-
-export function createPost(
-  title: string,
-  slug: string,
-  content: string,
-  excerpt: string,
-  featured: boolean,
-  tags: string,
-  coverImage: string,
-) {
-  const db = getDb();
-  if (featured) {
-    const count = db.prepare("SELECT COUNT(*) as c FROM posts WHERE featured = 1").get() as { c: number };
-    if (count.c >= 3) {
-      db.prepare("UPDATE posts SET featured = 0 WHERE id = (SELECT id FROM posts WHERE featured = 1 ORDER BY published_at ASC LIMIT 1)").run();
-    }
-  }
-  return db.prepare("INSERT INTO posts (title, slug, content, excerpt, featured, tags, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)").run(title, slug, content, excerpt, featured ? 1 : 0, tags, coverImage);
-}
-
-// ── Likes ──
 
 export function getLikeCount(postSlug: string): number {
   const r = getDb().prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?").get(postSlug) as { c: number };

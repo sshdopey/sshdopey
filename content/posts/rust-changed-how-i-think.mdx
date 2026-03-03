@@ -1,0 +1,110 @@
+---
+title: "Rust Changed How I Think About Software"
+excerpt: "Learning Rust didn't just teach me a new language. It rewired how I think about every language I use."
+published_at: "2026-01-22"
+cover_image: "https://picsum.photos/seed/rustthink/1200/630"
+tags: ["rust", "systems"]
+featured: false
+---
+
+Learning Rust didn't just teach me a new language. It rewired how I approach software in *every* language I use. Python, TypeScript, SQL — I write all of them differently now, and I write them better.
+
+## Ownership Is a Design Tool
+
+Before Rust, I thought about data in terms of "where is it?" After Rust, I think about data in terms of "who owns it, who can see it, and when does it stop existing?"
+
+```rust
+// Ownership is explicit. You can read the data flow like a story.
+fn process_batch(data: Vec<Record>) -> Result<Report, ProcessError> {
+    let validated = validate(data)?;          // data moves into validate
+    let enriched = enrich(&validated)?;       // validated is borrowed
+    let report = summarize(&enriched)?;       // enriched is borrowed
+    Ok(report)                                // report moves to caller
+}
+```
+
+After a year of this, I started asking in every language: *who owns this data? Who can mutate it? When does it get cleaned up?* These questions have no compiler to enforce them in Python, but they're still the right questions to ask.
+
+![Rust ownership and borrowing visualized](https://picsum.photos/seed/rust-ownership/800/400)
+
+## Error Handling as Architecture
+
+Rust's `Result<T, E>` type made me realize that most code treats errors as an afterthought. In Rust, errors are **first-class data**.
+
+```rust
+#[derive(Debug, thiserror::Error)]
+enum IngestError {
+    #[error("invalid format: {0}")]
+    InvalidFormat(String),
+
+    #[error("duplicate record: {id}")]
+    Duplicate { id: String },
+
+    #[error("storage failure")]
+    Storage(#[from] std::io::Error),
+}
+
+fn ingest(record: RawRecord) -> Result<ProcessedRecord, IngestError> {
+    let parsed = parse(&record).map_err(|e| IngestError::InvalidFormat(e.to_string()))?;
+    check_duplicate(&parsed)?;
+    store(&parsed)?;
+    Ok(parsed)
+}
+```
+
+Every function signature tells you exactly what can go wrong. No hidden exceptions. No "this might throw something, check the docs maybe." The *type system* documents your failure modes.
+
+## What I Bring Back to Python
+
+The before and after is dramatic:
+
+```python
+# Before Rust: YOLO
+def get_user(id):
+    return db.query(f"SELECT * FROM users WHERE id = {id}")
+
+# After Rust: explicit types, explicit errors, no surprises
+def get_user(user_id: int) -> User | None:
+    row = db.execute(
+        "SELECT * FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+    return User.model_validate(dict(row)) if row else None
+```
+
+Specific habits Rust gave me:
+
+- **Type hints everywhere.** Not because Python requires them — because *I* require them. `mypy --strict` on every project.
+- **No bare excepts.** Every `except` clause names exactly what it catches. If I don't know what exceptions a function throws, I read the source.
+- **Immutable by default.** I use `frozen=True` on dataclasses. I use tuples instead of lists when the data shouldn't change. I treat mutation as a code smell that requires justification.
+- **Parse, don't validate.** Instead of validating a dict and hoping it stays valid, I parse it into a typed object at the boundary and only pass typed objects internally.
+
+```python
+from pydantic import BaseModel
+
+class CreateUserRequest(BaseModel):
+    email: str
+    name: str
+    role: Literal["admin", "member", "viewer"]
+
+# At the boundary: parse raw input into a typed object
+request = CreateUserRequest.model_validate(raw_input)
+
+# Internally: only typed objects flow through the system
+user = create_user(request)  # type-safe all the way down
+```
+
+## The Borrow Checker Taught Me Concurrency
+
+Rust's borrow checker doesn't just prevent memory bugs — it prevents data races at compile time. You literally **cannot** share mutable state across threads without explicit synchronization.
+
+This changed how I think about concurrent Python code. I stopped using shared mutable state entirely. Instead:
+
+- Use message passing between async tasks (queues, channels)
+- Use immutable data structures passed by value
+- Isolate mutable state behind a single owner with a clear API
+
+> Shared mutable state is the root of all evil in concurrent programming. Rust makes this a compile error. In Python, you have to make it a *team norm*.
+
+![Concurrency patterns: message passing vs shared state](https://picsum.photos/seed/rust-concurrency/800/400)
+
+Rust didn't just teach me a language. It taught me a way of thinking about programs that makes me better in every language I touch.

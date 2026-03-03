@@ -2,81 +2,70 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Search } from "lucide-react";
-import { readingTime } from "@/lib/utils";
-import type { Post } from "@/lib/db";
+import type { PostMeta } from "@/lib/posts";
 
 function PostCard({
   post,
   index,
   likes,
 }: {
-  post: Post;
+  post: PostMeta;
   index: number;
   likes: number;
 }) {
-  const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ delay: index * 0.04, duration: 0.4 }}
+      className="h-full"
     >
       <Link
         href={`/blog/${post.slug}`}
-        className="group block rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
+        className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
       >
         {post.cover_image && (
-          <img
-            src={post.cover_image}
-            alt=""
-            className="w-full h-36 object-cover group-hover:scale-[1.02] transition-transform duration-500"
-          />
+          <div className="relative w-full h-36 overflow-hidden">
+            <Image
+              src={post.cover_image}
+              alt={post.title}
+              fill
+              className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+              sizes="(max-width: 640px) 100vw, 50vw"
+            />
+          </div>
         )}
 
-        <div className="p-5">
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2.5">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[11px] text-muted px-2 py-0.5 rounded-full border border-line-faint"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-
+        <div className="p-5 flex flex-col flex-1">
           <h3 className="text-primary font-semibold leading-snug mb-1.5 group-hover:text-secondary transition-colors">
             {post.title}
           </h3>
 
-          <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3">
+          <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3 flex-1">
             {post.excerpt}
           </p>
 
-          <div className="flex items-center gap-3 text-xs text-muted">
-            <time>
-              {new Date(post.published_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </time>
-            <span className="text-dim">·</span>
-            <span>{readingTime(post.content)} min read</span>
+          <div className="flex items-center justify-between text-xs text-muted mt-auto">
+            <div className="flex items-center gap-2.5">
+              <time>
+                {new Date(post.published_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </time>
+              <span className="text-dim">·</span>
+              <span>{post.reading_time} min read</span>
+            </div>
             {likes > 0 && (
-              <>
-                <span className="text-dim">·</span>
-                <span className="flex items-center gap-1">
-                  <Heart size={11} />
-                  {likes}
-                </span>
-              </>
+              <span className="flex items-center gap-1 text-accent">
+                <Heart size={11} />
+                {likes}
+              </span>
             )}
           </div>
         </div>
@@ -89,63 +78,52 @@ function FeaturedCard({
   post,
   likes,
 }: {
-  post: Post;
+  post: PostMeta;
   likes: number;
 }) {
-  const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
-
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block rounded-xl border border-line overflow-hidden hover:border-ghost bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
+      className="group flex flex-col h-full rounded-xl border border-line overflow-hidden hover:border-ghost bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
     >
       {post.cover_image && (
-        <img
-          src={post.cover_image}
-          alt=""
-          className="w-full h-40 object-cover group-hover:scale-[1.02] transition-transform duration-500"
-        />
+        <div className="relative w-full h-40 overflow-hidden">
+          <Image
+            src={post.cover_image}
+            alt={post.title}
+            fill
+            className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
       )}
 
-      <div className="p-5">
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[11px] text-muted px-2 py-0.5 rounded-full border border-line-faint"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
+      <div className="p-5 flex flex-col flex-1">
         <h3 className="text-lg text-primary font-semibold leading-snug mb-2">
           {post.title}
         </h3>
 
-        <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3">
+        <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3 flex-1">
           {post.excerpt}
         </p>
 
-        <div className="flex items-center gap-3 text-xs text-muted">
-          <time>
-            {new Date(post.published_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-          </time>
-          <span className="text-dim">·</span>
-          <span>{readingTime(post.content)} min</span>
+        <div className="flex items-center justify-between text-xs text-muted mt-auto">
+          <div className="flex items-center gap-2.5">
+            <time>
+              {new Date(post.published_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </time>
+            <span className="text-dim">·</span>
+            <span>{post.reading_time} min</span>
+          </div>
           {likes > 0 && (
-            <>
-              <span className="text-dim">·</span>
-              <span className="flex items-center gap-1">
-                <Heart size={11} />
-                {likes}
-              </span>
-            </>
+            <span className="flex items-center gap-1 text-accent">
+              <Heart size={11} />
+              {likes}
+            </span>
           )}
         </div>
       </div>
@@ -159,8 +137,8 @@ export function BlogContent({
   allTags,
   likeCounts,
 }: {
-  posts: Post[];
-  featured: Post[];
+  posts: PostMeta[];
+  featured: PostMeta[];
   allTags: string[];
   likeCounts: Record<string, number>;
 }) {
@@ -172,17 +150,11 @@ export function BlogContent({
       search === "" ||
       post.title.toLowerCase().includes(search.toLowerCase()) ||
       post.excerpt.toLowerCase().includes(search.toLowerCase());
-    const matchTag =
-      !activeTag ||
-      (post.tags &&
-        post.tags
-          .split(",")
-          .map((t) => t.trim())
-          .includes(activeTag));
+    const matchTag = !activeTag || post.tags.includes(activeTag);
     return matchSearch && matchTag;
   });
 
-  const nonFeaturedFiltered = filtered.filter((p) => p.featured !== 1);
+  const nonFeaturedFiltered = filtered.filter((p) => !p.featured);
   const showFeatured = !search && !activeTag && featured.length > 0;
 
   return (
@@ -205,10 +177,10 @@ export function BlogContent({
         <div className="flex flex-wrap gap-2 mb-10">
           <button
             onClick={() => setActiveTag(null)}
-            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+            className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
               activeTag === null
-                ? "border-accent text-accent bg-accent/5"
-                : "border-line-faint text-muted hover:text-primary hover:border-line"
+                ? "bg-accent/10 text-accent"
+                : "bg-surface-hover text-muted hover:text-accent"
             }`}
           >
             All
@@ -219,10 +191,10 @@ export function BlogContent({
               onClick={() =>
                 setActiveTag(activeTag === tag ? null : tag)
               }
-              className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+              className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
                 activeTag === tag
-                  ? "border-accent text-accent bg-accent/5"
-                  : "border-line-faint text-muted hover:text-primary hover:border-line"
+                  ? "bg-accent/10 text-accent"
+                  : "bg-surface-hover text-muted hover:text-accent"
               }`}
             >
               {tag}
@@ -247,7 +219,7 @@ export function BlogContent({
           >
             {featured.map((p) => (
               <FeaturedCard
-                key={p.id}
+                key={p.slug}
                 post={p}
                 likes={likeCounts[p.slug] ?? 0}
               />
@@ -267,7 +239,7 @@ export function BlogContent({
             {(showFeatured ? nonFeaturedFiltered : filtered).map(
               (post, idx) => (
                 <PostCard
-                  key={post.id}
+                  key={post.slug}
                   post={post}
                   index={idx}
                   likes={likeCounts[post.slug] ?? 0}

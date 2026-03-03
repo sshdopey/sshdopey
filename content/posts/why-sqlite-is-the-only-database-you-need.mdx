@@ -1,0 +1,90 @@
+---
+title: "Why SQLite Is the Only Database You Need"
+excerpt: "For 90% of applications, SQLite is not just sufficient — it's optimal. Stop paying for complexity you don't need."
+published_at: "2025-11-29"
+cover_image: "https://picsum.photos/seed/sqlitedb/1200/630"
+tags: ["databases"]
+featured: false
+---
+
+I'm going to make a controversial claim: for 90% of applications, SQLite is not just sufficient — it's *optimal*.
+
+Not for everything. Not for massive multi-region deployments with 500 concurrent writers. But for your SaaS, your personal project, your API backend, your internal tool? SQLite wins, and it's not close.
+
+## The Numbers Don't Lie
+
+SQLite handles **100,000+ reads per second** on commodity hardware. With WAL mode enabled, you get concurrent readers with a single writer — and that single writer can do thousands of transactions per second. That's more than enough for applications serving tens of thousands of users.
+
+```sql
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA cache_size = -64000;
+PRAGMA busy_timeout = 5000;
+PRAGMA foreign_keys = ON;
+```
+
+Five lines. Your database is now faster than most managed PostgreSQL instances that cost you $50/month.
+
+![SQLite performance and simplicity comparison](https://picsum.photos/seed/sqlite-perf/800/400)
+
+## The Real Comparison
+
+Most "SQLite vs Postgres" comparisons focus on theoretical limits. Here's what matters in practice for a typical web application:
+
+| Aspect | SQLite | Managed Postgres |
+|--------|--------|-----------------|
+| Read latency | ~0.01ms (in-process) | ~1-5ms (network) |
+| Setup time | 0 seconds | 5-30 minutes |
+| Monthly cost | $0 | $15-100+ |
+| Backup strategy | `cp data.db data.db.bak` | pg_dump + storage |
+| Connection pooling | Not needed | Required |
+| Deployment | Comes with your app | Separate infrastructure |
+| Concurrent reads | Unlimited | Connection-limited |
+
+That latency difference is the killer. Your database call is a **function call**, not a network round trip. For read-heavy workloads, this completely changes performance characteristics.
+
+![In-process vs network database latency visualization](https://picsum.photos/seed/sqlite-latency/800/400)
+
+## Operational Simplicity
+
+Here's what you *don't need* with SQLite:
+
+- A database server process to monitor
+- Connection pooling configuration
+- Network latency between app and database
+- A backup strategy more complex than copying a file
+- An ops team to manage upgrades
+- SSL certificates for database connections
+- A separate CI service for database migrations
+
+Your database is a **file**. You can `cp` it. You can `scp` it to another machine. You can version it. You can email it to a colleague (please don't). This isn't a limitation — it's a superpower.
+
+```typescript
+import Database from 'better-sqlite3';
+
+const db = new Database('app.db');
+db.pragma('journal_mode = WAL');
+
+const getUser = db.prepare('SELECT * FROM users WHERE id = ?');
+const user = getUser.get(userId);
+```
+
+No connection strings. No pool configuration. No `await`. Synchronous, in-process, blazingly fast.
+
+## When to Leave SQLite
+
+I'm not a zealot. There are real reasons to reach for Postgres:
+
+1. **Multiple write-heavy services** need simultaneous write access
+2. **Multi-region replication** is a hard requirement (though Litestream and LiteFS exist)
+3. **Full-text search in non-Latin scripts** needs PostgreSQL's superior ICU support
+4. **You need PostGIS** for geospatial queries
+5. **Your write volume exceeds ~10,000 writes/second** sustained
+
+Notice what's *not* on this list: "my app has users," "I need joins," "I need transactions," "I want ACID guarantees." SQLite has all of those.
+
+## The Fairmeld Stack
+
+This blog, Fairmeld's admin tools, and several internal services all run on SQLite. Combined, they handle thousands of requests per day. The database file is 12MB. It takes 3ms to back up.
+
+Start with SQLite. Migrate when you have a *specific, measurable* reason. You'll be surprised how long "when" takes to arrive.

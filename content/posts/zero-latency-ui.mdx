@@ -1,0 +1,114 @@
+---
+title: "Zero-Latency UI: A Manifesto"
+excerpt: "Users don't care about your Lighthouse score. They care about one thing: does it feel fast?"
+published_at: "2025-12-18"
+cover_image: "https://picsum.photos/seed/latencyui/1200/630"
+tags: ["performance", "engineering"]
+featured: true
+---
+
+Users don't care about your Lighthouse score. They don't care about your bundle size metrics. They don't care about your server response time.
+
+They care about one thing: *does it feel fast?*
+
+Perceived performance is the only performance that matters. And the gap between "technically fast" and "perceptually fast" is where most teams fail.
+
+## The Latency Budget
+
+Research from Google and Microsoft tells us the same story:
+
+| Threshold | Perception | Example |
+|-----------|-----------|---------|
+| < 100ms | Instant | Button click feedback |
+| 100-300ms | Slight delay | Page transition |
+| 300-1000ms | Noticeable wait | Data loading |
+| > 1000ms | Interrupted flow | User considers leaving |
+| > 3000ms | Broken | User *is* leaving |
+
+Your job as a frontend engineer is to keep *every interaction* under 100ms perceptually, even when the backend takes 500ms to respond.
+
+![Latency perception thresholds and user experience](https://picsum.photos/seed/latency-chart/800/400)
+
+## Optimistic by Default
+
+Every mutation should be optimistic. When a user clicks "like," the heart fills immediately. When they submit a comment, it appears in the list before the server responds.
+
+```typescript
+async function handleLike(postId: string) {
+  // Update UI immediately — the user sees this in <16ms
+  setLiked(true);
+  setCount(prev => prev + 1);
+
+  try {
+    await api.post(`/posts/${postId}/like`);
+  } catch {
+    // Roll back only on failure
+    setLiked(false);
+    setCount(prev => prev - 1);
+    toast.error("Couldn't save your like. Try again?");
+  }
+}
+```
+
+The user sees the change in under 16ms. The server round-trip happens invisibly. If it fails, you gracefully roll back. The failure rate on a well-built API is <0.1% — you're penalizing 100% of users for a problem that affects <0.1%.
+
+## Prefetch Everything
+
+The fastest request is one that's already been made. Prefetch aggressively on hover, on viewport entry, on route idle.
+
+```typescript
+function PostLink({ slug, children }: { slug: string; children: React.ReactNode }) {
+  const prefetch = () => {
+    // Start fetching data the moment the user shows intent
+    queryClient.prefetchQuery({
+      queryKey: ['post', slug],
+      queryFn: () => fetchPost(slug),
+      staleTime: 30_000,
+    });
+  };
+
+  return (
+    <Link
+      href={`/blog/${slug}`}
+      onMouseEnter={prefetch}
+      onFocus={prefetch}
+    >
+      {children}
+    </Link>
+  );
+}
+```
+
+By the time the user clicks, the data is already in cache. The page transition feels instant because it *is* instant — the network request happened 200ms ago while the user was moving their mouse.
+
+## Ship Less JavaScript
+
+Every kilobyte of JavaScript is a millisecond of parsing on a median mobile device. The best optimization is deletion.
+
+1. **Audit your dependencies.** Run `npx bundlephobia` on every dependency. If a library adds 50KB to format a date, write the 10-line function yourself.
+2. **Code-split by route.** No user should download the settings page JavaScript on the landing page.
+3. **Use the platform.** CSS transitions instead of Framer Motion for simple animations. `<dialog>` instead of a 15KB modal library. `<details>` instead of an accordion component.
+4. **Defer non-critical JS.** Analytics, chat widgets, and social embeds should load after the page is interactive.
+
+## Measure What Users Feel
+
+Stop measuring server response times in isolation. Measure these instead:
+
+- **Interaction to Next Paint (INP)**: How long between a user action and the next visual update?
+- **Time to Interactive (TTI)**: When can the user actually *do things*?
+- **Cumulative Layout Shift (CLS)**: Does the page jump around while loading?
+
+```typescript
+const observer = new PerformanceObserver((list) => {
+  for (const entry of list.getEntries()) {
+    if (entry.entryType === 'event' && entry.duration > 100) {
+      console.warn('Slow interaction:', entry.name, entry.duration + 'ms');
+    }
+  }
+});
+observer.observe({ type: 'event', buffered: true });
+```
+
+![Interaction-to-visual-update timing measurement](https://picsum.photos/seed/latency-inp/800/400)
+
+Build a culture where a 200ms interaction is treated as a **bug**, not a tradeoff. The technology to make everything feel instant already exists. The question is whether you care enough to use it.

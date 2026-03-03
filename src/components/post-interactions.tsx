@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Share, Sparkles, X } from "lucide-react";
+import { Heart, Share, Sparkles, X, Link2, Check, Linkedin } from "lucide-react";
 import {
   likePost,
   subscribeAction,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/actions";
 import { getDisplayName } from "@/lib/utils";
 import { useSidebar } from "./client-layout";
-import type { Comment, Subscriber, Post } from "@/lib/db";
+import type { Comment, Subscriber } from "@/lib/db";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -28,6 +29,96 @@ function timeAgo(dateStr: string): string {
   });
 }
 
+// ── Share Menu ──
+
+function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const url = typeof window !== "undefined"
+    ? `${window.location.origin}/blog/${postSlug}`
+    : "";
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+      setOpen(false);
+    }, 1500);
+  }
+
+  function shareOnX() {
+    window.open(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+      "_blank",
+    );
+    setOpen(false);
+  }
+
+  function shareOnLinkedIn() {
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+      "_blank",
+    );
+    setOpen(false);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line-faint text-muted hover:text-accent hover:border-accent/30 transition-all text-sm cursor-pointer"
+      >
+        <Share size={14} />
+        Share
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 5, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.96 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-full right-0 mb-2 z-50 bg-surface border border-line rounded-xl overflow-hidden min-w-[190px] shadow-lg"
+            >
+              <button
+                onClick={copyLink}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-accent hover:bg-surface-hover transition-colors cursor-pointer"
+              >
+                {copied ? <Check size={14} className="text-accent" /> : <Link2 size={14} />}
+                {copied ? "Copied!" : "Copy link"}
+              </button>
+              <button
+                onClick={shareOnX}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-accent hover:bg-surface-hover transition-colors border-t border-line-faint cursor-pointer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                Share on X
+              </button>
+              <button
+                onClick={shareOnLinkedIn}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-accent hover:bg-surface-hover transition-colors border-t border-line-faint cursor-pointer"
+              >
+                <Linkedin size={14} />
+                Share on LinkedIn
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ── Like + Ask AI + Share Bar ──
 
 function LikeShareBar({
@@ -42,7 +133,6 @@ function LikeShareBar({
   const [count, setCount] = useState(initialCount);
   const [liked, setLiked] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
-  const [shared, setShared] = useState(false);
   const [, startTransition] = useTransition();
   const { toggle } = useSidebar();
 
@@ -56,19 +146,6 @@ function LikeShareBar({
       setCount(r.count);
     });
     setTimeout(() => setParticles([]), 800);
-  }
-
-  async function handleShare() {
-    const url = `${window.location.origin}/blog/${postSlug}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-      } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 2000);
-    }
   }
 
   return (
@@ -115,25 +192,13 @@ function LikeShareBar({
       <div className="flex items-center gap-2">
         <button
           onClick={toggle}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line-faint text-muted hover:text-accent hover:border-accent/30 transition-all text-sm cursor-pointer"
+          className="ask-ai-glow flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line-faint text-muted hover:text-accent transition-colors text-sm cursor-pointer"
         >
-          <Sparkles size={14} />
+          <Sparkles size={14} className="text-accent" />
           Ask AI
         </button>
 
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-line-faint text-muted hover:text-primary hover:border-line transition-all text-sm cursor-pointer"
-        >
-          {shared ? (
-            "Link copied!"
-          ) : (
-            <>
-              <Share size={14} />
-              Share
-            </>
-          )}
-        </button>
+        <ShareMenu postSlug={postSlug} title={title} />
       </div>
     </div>
   );
@@ -170,9 +235,11 @@ function AuthorSubscribe({
     <div className="py-8 border-t border-line-faint">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex items-center gap-4">
-          <img
+          <Image
             src="/sshdopey.jpeg"
             alt="Dopey"
+            width={44}
+            height={44}
             className="w-11 h-11 rounded-full object-cover shrink-0"
           />
           <div className="min-w-0">
@@ -180,7 +247,7 @@ function AuthorSubscribe({
               Written by Dopey
             </p>
             <p className="text-xs text-muted mt-0.5 leading-relaxed">
-              AI systems &amp; high-performance tools. Python + Rust.
+            Just one letter away from being Dope.
             </p>
           </div>
         </div>
@@ -189,24 +256,24 @@ function AuthorSubscribe({
           {subscriber ? (
             <p className="text-sm text-muted">
               Subscribed as{" "}
-              <span className="text-secondary font-medium">
+              <span className="text-accent font-medium">
                 {getDisplayName(subscriber.id)}
               </span>{" "}
               ✓
             </p>
           ) : (
-            <form onSubmit={handleSubscribe} className="flex gap-2">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
               <input
                 type="email"
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-44 bg-surface border border-line-faint rounded-lg px-3 py-2 text-sm text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40"
+                className="w-full sm:w-64 bg-surface border border-line-faint rounded-lg px-3 py-2.5 text-sm text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40"
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-accent text-inverse text-sm font-medium rounded-lg hover:opacity-90 cursor-pointer"
+                className="px-4 py-2.5 bg-accent text-inverse text-sm font-medium rounded-lg hover:opacity-90 cursor-pointer whitespace-nowrap"
               >
                 Subscribe
               </button>
@@ -269,8 +336,8 @@ function CommentLikeBtn({
     <button
       onClick={handleLike}
       disabled={!email}
-      className={`flex items-center gap-1 text-xs cursor-pointer ${
-        liked ? "text-accent" : "text-ghost hover:text-muted"
+      className={`flex items-center gap-1 text-xs cursor-pointer transition-colors ${
+        liked ? "text-accent" : "text-ghost hover:text-accent"
       } ${!email ? "opacity-30 cursor-default" : ""}`}
     >
       <Heart size={12} fill={liked ? "currentColor" : "none"} />
@@ -348,7 +415,7 @@ function ThreadNode({
           {subscriber && (
             <button
               onClick={() => setReplying(!replying)}
-              className="text-xs text-ghost hover:text-muted cursor-pointer"
+              className="text-xs text-ghost hover:text-accent cursor-pointer transition-colors"
             >
               Reply
             </button>
@@ -385,7 +452,7 @@ function ThreadNode({
                     setReplying(false);
                     setReplyText("");
                   }}
-                  className="text-xs text-ghost hover:text-muted cursor-pointer"
+                  className="text-xs text-ghost hover:text-accent cursor-pointer transition-colors"
                 >
                   <X size={14} />
                 </button>
@@ -497,11 +564,13 @@ function DiscussionSection({
 // ── Main Export ──
 
 export function PostInteractions({
-  post,
+  postSlug,
+  postTitle,
   likeCount,
   initialComments,
 }: {
-  post: Post;
+  postSlug: string;
+  postTitle: string;
   likeCount: number;
   initialComments: Comment[];
 }) {
@@ -518,13 +587,13 @@ export function PostInteractions({
   return (
     <>
       <LikeShareBar
-        postSlug={post.slug}
+        postSlug={postSlug}
         initialCount={likeCount}
-        title={post.title}
+        title={postTitle}
       />
       <AuthorSubscribe subscriber={subscriber} onSubscribed={setSubscriber} />
       <DiscussionSection
-        postSlug={post.slug}
+        postSlug={postSlug}
         comments={comments}
         subscriber={subscriber}
         onCommentAdded={setComments}

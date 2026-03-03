@@ -1,0 +1,157 @@
+---
+title: "Building AI Agents That Actually Work"
+excerpt: "Most AI agent demos are impressive. Most AI agent products are terrible. Here's the engineering that bridges the gap."
+published_at: "2026-01-08"
+cover_image: "https://picsum.photos/seed/aiagents/1200/630"
+tags: ["ai", "python", "architecture"]
+featured: true
+---
+
+Most AI agent demos are impressive. Most AI agent products are terrible. The gap between "look what it can do" and "this reliably solves my problem" is enormous, and it's an engineering problem — not an AI problem.
+
+I've spent the last year building Fairmeld's agent system. What I've learned is that the model is maybe 20% of the work. The other 80% is everything that makes the model *useful*: tool design, error recovery, evaluation, observability, and knowing when to bail out gracefully.
+
+## The Reliability Problem
+
+An AI agent that works 90% of the time is useless. Not "suboptimal" — **useless**. If your agent fails on every 10th request, users learn to distrust it completely. They'll stop using it after the third failure, regardless of how magical the other seven successes were.
+
+Here's the math: if an agent calls three tools in sequence, and each tool call succeeds 95% of the time, the overall success rate is 0.95³ = **85.7%**. For a five-step task: 0.95⁵ = **77.4%**. This compounds fast.
+
+![AI agent tool-call loop and reliability compounding](https://picsum.photos/seed/agent-loop/800/400)
+
+```python
+class Agent:
+    def __init__(self, model: str, tools: list[Tool], max_steps: int = 10):
+        self.model = model
+        self.tools = {t.name: t for t in tools}
+        self.max_steps = max_steps
+
+    async def execute(self, task: str) -> AgentResult:
+        messages = [{"role": "user", "content": task}]
+        steps = []
+
+        for i in range(self.max_steps):
+            response = await self.llm.chat(messages, tools=self.tools)
+
+            if response.done:
+                return AgentResult(output=response.content, steps=steps)
+
+            tool_result = await self._run_tool(response.tool_call)
+            steps.append(Step(tool=response.tool_call, result=tool_result))
+
+            if tool_result.is_error:
+                messages.append(self._format_error(tool_result))
+            else:
+                messages.append(self._format_result(tool_result))
+
+        return AgentResult.timeout(steps=steps)
+```
+
+## Tool Design Matters More Than Prompts
+
+The single highest-leverage investment you can make in an agent system is **tool design**. A well-designed tool is almost impossible for the model to misuse. A poorly designed tool will be misused constantly, no matter how good your prompt is.
+
+```python
+# Bad: vague, unbounded, stringly-typed
+def search(query: str) -> list[dict]:
+    """Search for stuff."""
+    return db.search(query)
+
+# Good: precise, typed, bounded, documented
+def find_user_by_email(email: str) -> User | None:
+    """Find a single user by exact email match.
+
+    Returns None if no user exists with this email.
+    Email matching is case-insensitive.
+    """
+    return db.users.find_one({"email": email.lower()})
+```
+
+Principles that work in practice:
+
+- **One tool, one job.** Never build a Swiss Army knife tool. Build many small, specific tools.
+- **Fail loudly.** Return structured errors that tell the model *what went wrong* and *what to try instead*.
+- **Limit output size.** A tool that returns 50KB of JSON will confuse the model. Paginate, summarize, or filter.
+- **Make invalid states unrepresentable.** Use enums instead of strings. Use typed IDs instead of raw integers.
+
+## Build the Eval First
+
+This is the most counterintuitive lesson: **write the evaluation suite before you write the agent.**
+
+```python
+class AgentEval:
+    def __init__(self, agent: Agent):
+        self.agent = agent
+        self.cases: list[EvalCase] = []
+
+    def add_case(self, input: str, expected: str, tags: list[str] = []):
+        self.cases.append(EvalCase(input=input, expected=expected, tags=tags))
+
+    async def run(self) -> EvalReport:
+        results = []
+        for case in self.cases:
+            result = await self.agent.execute(case.input)
+            score = self._score(result, case.expected)
+            results.append(EvalResult(case=case, result=result, score=score))
+
+        return EvalReport(
+            total=len(results),
+            passed=sum(1 for r in results if r.score >= 0.8),
+            avg_score=mean(r.score for r in results),
+            avg_latency=mean(r.result.latency for r in results),
+            avg_cost=mean(r.result.cost for r in results),
+        )
+```
+
+| Metric | Our Target | Typical Agent | Fairmeld Current |
+|--------|-----------|---------------|-----------------|
+| Task completion | > 95% | 70-85% | 93.2% |
+| Avg latency | < 5s | 8-15s | 3.8s |
+| Tool call accuracy | > 99% | 90-95% | 98.7% |
+| Cost per task | < $0.03 | $0.10-0.50 | $0.02 |
+| Graceful failure rate | 100% | 40-60% | 100% |
+
+Every number in that table is measured by automated evals that run on every commit.
+
+![Agent evaluation metrics dashboard](https://picsum.photos/seed/agent-eval/800/400)
+
+## The Recovery Loop
+
+When a tool call fails — and it will — the agent needs a structured recovery strategy. Not "try again and hope." A *strategy*.
+
+```python
+class RecoveryStrategy:
+    def recover(self, error: ToolError, context: AgentContext) -> Recovery:
+        if error.is_retryable:
+            return Recovery.retry(delay=error.retry_after or 1.0)
+
+        if error.has_fallback:
+            return Recovery.fallback(tool=error.fallback_tool)
+
+        if context.steps_remaining > 2:
+            return Recovery.replan(hint=f"Tool '{error.tool}' failed: {error.message}")
+
+        return Recovery.bail(reason=error.message)
+```
+
+The key insight: **the model should never see a raw exception**. Every failure should be translated into a structured message that helps the model take the correct next action.
+
+## Observability Is Not Optional
+
+If you can't see what your agent is doing step-by-step, you can't debug it. Every agent run in Fairmeld produces a trace:
+
+```python
+@dataclass
+class AgentTrace:
+    run_id: str
+    task: str
+    steps: list[TraceStep]
+    total_tokens: int
+    total_cost: float
+    latency_ms: float
+    outcome: Literal["success", "failure", "timeout"]
+```
+
+We log every trace. We review failures daily. We turn failures into eval cases. The system gets better every week because we have the data to make it better.
+
+Stop building agents by vibes. Build them like software: with tests, metrics, monitoring, and a roadmap.

@@ -1,0 +1,167 @@
+---
+title: "Designing APIs People Actually Love"
+excerpt: "A great API is one that developers can use correctly without reading the documentation. Here's how to build one."
+published_at: "2026-03-02"
+cover_image: "https://picsum.photos/seed/apidesign/1200/630"
+tags: ["api-design", "architecture", "python"]
+featured: false
+---
+
+A great API is one that developers can use correctly *without reading the documentation*. Not because documentation doesn't matter — it does — but because the API's design should make the right thing obvious and the wrong thing difficult.
+
+I've built APIs consumed by internal teams, third-party developers, and AI agents. The principles that make an API beloved are the same regardless of who's calling it.
+
+![RESTful API resource hierarchy and naming](https://picsum.photos/seed/api-response/800/400)
+
+## Naming Is the Hardest Problem
+
+The name of an endpoint, parameter, or field is documentation that you can't skip. It's the first thing a developer sees, and it shapes their mental model of your entire system.
+
+```python
+# Bad: ambiguous, inconsistent, requires documentation
+@app.post("/api/do")
+async def handle(data: dict):
+    pass
+
+@app.get("/api/getUser")
+async def get(id: str):
+    pass
+
+# Good: predictable, consistent, self-documenting
+@app.post("/api/users")
+async def create_user(req: CreateUserRequest) -> UserResponse:
+    pass
+
+@app.get("/api/users/{user_id}")
+async def get_user(user_id: str) -> UserResponse:
+    pass
+```
+
+Rules I follow:
+
+- **Nouns for resources, verbs for actions.** `/users`, `/posts`, not `/getUser`, `/createPost`.
+- **Plural resource names.** `/users/123`, not `/user/123`.
+- **Consistent casing.** Pick `snake_case` or `camelCase` and never mix.
+- **No abbreviations.** `user_id`, not `uid`. `created_at`, not `ts`.
+
+## Response Envelopes and Error Shapes
+
+Every API response should follow the same shape. Consistency lets consumers write generic error handling instead of special-casing every endpoint.
+
+```python
+from pydantic import BaseModel
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+
+class ApiResponse(BaseModel, Generic[T]):
+    data: T
+    meta: dict | None = None
+
+class ApiError(BaseModel):
+    error: str
+    code: str
+    details: list[FieldError] | None = None
+
+class FieldError(BaseModel):
+    field: str
+    message: str
+```
+
+A successful response:
+
+```json
+{
+  "data": { "id": "usr_abc123", "name": "Dopey", "email": "d@sshdopey.com" },
+  "meta": null
+}
+```
+
+An error response:
+
+```json
+{
+  "error": "Validation failed",
+  "code": "VALIDATION_ERROR",
+  "details": [
+    { "field": "email", "message": "Invalid email format" },
+    { "field": "name", "message": "Name is required" }
+  ]
+}
+```
+
+## HTTP Status Codes That Make Sense
+
+Don't make developers guess what went wrong:
+
+| Status | Meaning | When to use |
+|--------|---------|-------------|
+| 200 | OK | Successful GET, PUT, PATCH |
+| 201 | Created | Successful POST that creates a resource |
+| 204 | No Content | Successful DELETE |
+| 400 | Bad Request | Validation failure, malformed input |
+| 401 | Unauthorized | Missing or invalid authentication |
+| 403 | Forbidden | Authenticated but not authorized |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Duplicate resource, state conflict |
+| 422 | Unprocessable | Syntactically valid but semantically wrong |
+| 429 | Too Many Requests | Rate limited (include `Retry-After` header) |
+| 500 | Internal Error | Something broke on your end |
+
+**Never return 200 with an error body.** If the request failed, the status code should reflect it. API consumers check status codes first, body second.
+
+![HTTP status code and response shape consistency](https://picsum.photos/seed/api-status/800/400)
+
+## Pagination Done Right
+
+Offset-based pagination breaks under concurrent writes. Cursor-based pagination is more reliable and often faster:
+
+```python
+from pydantic import BaseModel
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    data: list[T]
+    next_cursor: str | None
+    has_more: bool
+
+@app.get("/api/posts", response_model=PaginatedResponse[PostSummary])
+async def list_posts(cursor: str | None = None, limit: int = 20):
+    posts = db.fetch_posts(after_cursor=cursor, limit=limit + 1)
+    has_more = len(posts) > limit
+    items = posts[:limit]
+
+    return PaginatedResponse(
+        data=items,
+        next_cursor=items[-1].id if has_more else None,
+        has_more=has_more,
+    )
+```
+
+The consumer just follows `next_cursor` until `has_more` is `false`. No page math, no off-by-one bugs, no missed or duplicated items during concurrent writes.
+
+## Versioning: Don't Overthink It
+
+URL-based versioning (`/v1/users`) is simple, explicit, and works. Header-based versioning is clever and annoying. Query parameter versioning is chaotic.
+
+```python
+from fastapi import APIRouter
+
+v1 = APIRouter(prefix="/api/v1")
+v2 = APIRouter(prefix="/api/v2")
+
+@v1.get("/users/{user_id}")
+async def get_user_v1(user_id: str) -> UserResponseV1:
+    pass
+
+@v2.get("/users/{user_id}")
+async def get_user_v2(user_id: str) -> UserResponseV2:
+    pass
+```
+
+Keep the old version running until all consumers have migrated. Set a deprecation date. Don't break existing consumers. It's that simple.
+
+One principle I've learned the hard way: **idempotency matters**. For any mutation that could be retried (network failures, user double-clicks), design your endpoints so that calling them twice produces the same result as calling them once. Use client-provided idempotency keys: `X-Idempotency-Key: uuid-from-client`. Store them briefly and return the cached response for duplicate requests. This eliminates entire categories of support tickets and makes your API reliable in the real world where networks fail.
+
+Another often-overlooked detail: **include request IDs in responses**. Add `X-Request-Id` to every response header. When a user reports "the API returned an error," you can look up exactly what happened instead of asking them to reproduce. One line of middleware, massive debuggability gain.
+
+The best API is one that feels *obvious*. When a developer guesses the endpoint name, the parameter name, and the response shape — and they're right every time — you've built something they'll love.

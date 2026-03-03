@@ -1,0 +1,108 @@
+---
+title: "The Case Against Microservices"
+excerpt: "Your startup doesn't need Kubernetes. It needs a well-structured monolith and a deployment script."
+published_at: "2026-02-03"
+cover_image: "https://picsum.photos/seed/monolith/1200/630"
+tags: ["architecture"]
+featured: false
+---
+
+Your startup doesn't need Kubernetes. It doesn't need a service mesh. It doesn't need 47 microservices communicating over gRPC with an event bus and a saga orchestrator.
+
+It needs a well-structured monolith and a deployment script.
+
+I know this is heresy. Let me make the case.
+
+## The Hidden Costs
+
+Every architecture discussion about microservices focuses on the benefits — independent deployment, team autonomy, technology flexibility. Nobody talks about what you're actually signing up for:
+
+| Capability | Monolith | Microservices |
+|-----------|----------|---------------|
+| Deployment | One artifact, one process | N artifacts, orchestration layer |
+| Debugging | Stack trace | Distributed tracing (Jaeger, Zipkin) |
+| Latency | Function call (~1μs) | Network hop (~1-10ms) |
+| Data consistency | SQL transaction | Sagas, eventual consistency |
+| Refactoring | IDE rename, done | Multi-repo coordinated deploy |
+| Local dev | `python main.py` | Docker Compose + 8GB RAM |
+| Team size needed | Any | Needs dedicated platform team |
+| Monitoring | Application metrics | Per-service metrics + mesh metrics |
+
+That table represents **real engineering time**. Every cell in the "Microservices" column is a team that needs to build, maintain, and on-call for that capability.
+
+![Monolith vs microservices architecture comparison](https://picsum.photos/seed/mono-vs-micro/800/400)
+
+## The Modular Monolith
+
+The false dichotomy is "monolith vs microservices." The real answer for most teams is a **modular monolith**: clear internal boundaries, shared deployment.
+
+```python
+# Project structure for a modular monolith
+project/
+├── modules/
+│   ├── auth/
+│   │   ├── __init__.py      # Public API only
+│   │   ├── service.py
+│   │   ├── models.py
+│   │   └── repository.py
+│   ├── billing/
+│   │   ├── __init__.py
+│   │   ├── service.py
+│   │   └── stripe_client.py
+│   ├── content/
+│   │   ├── __init__.py
+│   │   ├── service.py
+│   │   └── search.py
+│   └── notifications/
+│       ├── __init__.py
+│       └── service.py
+├── shared/
+│   ├── db.py               # Single database connection
+│   ├── events.py           # In-process event bus
+│   └── config.py
+└── main.py                 # One entry point
+```
+
+Rules of the modular monolith:
+
+1. **Modules communicate through their public API** (the `__init__.py`), never by reaching into internal files.
+2. **No cross-module database queries.** If `billing` needs user data, it calls `auth.get_user()`, not `SELECT * FROM users`.
+3. **Shared state goes through the event bus**, not direct imports.
+
+```python
+# modules/auth/__init__.py — the public API
+from .service import AuthService
+from .models import User, Session
+
+__all__ = ["AuthService", "User", "Session"]
+
+# modules/billing/service.py — uses auth through its public API
+from modules.auth import AuthService, User
+
+class BillingService:
+    def __init__(self, auth: AuthService):
+        self.auth = auth
+
+    def create_subscription(self, user_id: str, plan: str) -> Subscription:
+        user = self.auth.get_user(user_id)
+        if user is None:
+            raise UserNotFoundError(user_id)
+        return self._create_stripe_subscription(user, plan)
+```
+
+## When Microservices Actually Make Sense
+
+I'm not saying microservices are always wrong. They make sense when:
+
+- **You have 100+ engineers** who can't coordinate releases
+- **Components have fundamentally different scaling profiles** (e.g., your video transcoding service needs GPUs but your API doesn't)
+- **You need polyglot runtimes** for genuine technical reasons (not resume-driven development)
+- **Regulatory requirements** demand isolation between components
+
+Notice the common thread: these are **organizational** and **operational** constraints, not technical ones. If you don't have these constraints, you don't need microservices.
+
+![Modular monolith boundaries and service extraction path](https://picsum.photos/seed/mono-modular/800/400)
+
+> You can always extract a service from a well-structured monolith. You cannot easily merge poorly-designed microservices back into something coherent.
+
+Start with a monolith. Structure it well. Extract services when you have a *specific, measurable* reason — not when a conference speaker tells you to.

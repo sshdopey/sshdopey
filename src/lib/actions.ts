@@ -6,7 +6,6 @@ import {
   addLike,
   addComment,
   addCommentLike,
-  createPost,
   getComments,
   getCommentLikeCount,
   getSubscriberByEmail,
@@ -59,29 +58,4 @@ export async function likeCommentAction(
 
   addCommentLike(commentId, subscriber.id);
   return { count: getCommentLikeCount(commentId) };
-}
-
-export async function publishPost(
-  formData: FormData,
-): Promise<{ success?: boolean; slug?: string; error?: string }> {
-  const title = formData.get("title") as string;
-  const content = formData.get("content") as string;
-  const featured = formData.get("featured") === "on";
-  const tags = (formData.get("tags") as string) || "";
-  const coverImage = (formData.get("cover_image") as string) || "";
-
-  if (!title?.trim() || !content?.trim())
-    return { error: "Title and content are required." };
-
-  const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  const excerpt = content.trim().slice(0, 160).replace(/[#*_`>\[\]]/g, "").trim();
-
-  try {
-    createPost(title.trim(), slug, content.trim(), excerpt, featured, tags.trim(), coverImage.trim());
-    revalidatePath("/blog");
-    revalidatePath("/");
-    return { success: true, slug };
-  } catch (e: unknown) {
-    return { error: e instanceof Error ? e.message : "Failed to publish." };
-  }
 }

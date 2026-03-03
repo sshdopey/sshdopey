@@ -1,14 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
-import type { Post } from "@/lib/db";
-import { readingTime } from "@/lib/utils";
+import type { PostMeta } from "@/lib/posts";
 
 export function KeepReading({
   posts,
   currentSlug,
   likeCounts,
 }: {
-  posts: Post[];
+  posts: PostMeta[];
   currentSlug: string;
   likeCounts: Record<string, number>;
 }) {
@@ -17,7 +17,7 @@ export function KeepReading({
   if (others.length === 0) return null;
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10 border-t border-line-faint">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 border-t border-line-faint">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-sm font-semibold text-primary">Keep Reading</h2>
         <Link
@@ -28,41 +28,59 @@ export function KeepReading({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {others.map((post) => (
-          <Link
-            key={post.id}
-            href={`/blog/${post.slug}`}
-            className="group block rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all"
-          >
-            {post.cover_image && (
-              <img
-                src={post.cover_image}
-                alt=""
-                className="w-full h-32 object-cover"
-              />
-            )}
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-primary leading-snug line-clamp-2 group-hover:text-secondary transition-colors">
-                {post.title}
-              </h3>
-              {post.excerpt && (
-                <p className="text-xs text-muted mt-1.5 leading-relaxed line-clamp-2">
-                  {post.excerpt}
-                </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {others.map((post) => {
+          const likes = likeCounts[post.slug] ?? 0;
+
+          return (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all"
+            >
+              {post.cover_image && (
+                <div className="relative w-full h-32 overflow-hidden">
+                  <Image
+                    src={post.cover_image}
+                    alt={post.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                  />
+                </div>
               )}
-              <div className="flex items-center gap-3 text-xs text-dim mt-2.5">
-                <span>{readingTime(post.content)} min read</span>
-                {(likeCounts[post.slug] ?? 0) > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Heart size={11} />
-                    {likeCounts[post.slug]}
-                  </span>
+              <div className="p-4 flex flex-col flex-1">
+                <h3 className="text-sm font-medium text-primary leading-snug line-clamp-2 group-hover:text-secondary transition-colors">
+                  {post.title}
+                </h3>
+                {post.excerpt && (
+                  <p className="text-xs text-muted mt-1.5 leading-relaxed line-clamp-2 flex-1">
+                    {post.excerpt}
+                  </p>
                 )}
+                <div className="flex items-center justify-between text-xs text-dim mt-2.5">
+                  <div className="flex items-center gap-2">
+                    <time>
+                      {new Date(post.published_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </time>
+                    <span className="text-ghost">·</span>
+                    <span>{post.reading_time} min</span>
+                  </div>
+                  {likes > 0 && (
+                    <span className="flex items-center gap-1 text-accent">
+                      <Heart size={10} />
+                      {likes}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

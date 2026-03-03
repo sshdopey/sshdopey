@@ -1,0 +1,149 @@
+---
+title: "The Art of Error Handling"
+excerpt: "Good error handling isn't about catching exceptions. It's about making failure a first-class part of your design."
+published_at: "2026-03-01"
+cover_image: "https://picsum.photos/seed/errorart/1200/630"
+tags: ["rust", "engineering"]
+featured: false
+---
+
+Most codebases treat errors as an inconvenience — something to catch, log, and suppress. But error handling is **architecture**. The way you model, propagate, and present errors defines the reliability of your entire system.
+
+After years of writing Rust, where the compiler *forces* you to handle every error, I've developed a philosophy that I now apply in every language.
+
+![Error handling decision tree and hierarchy](https://picsum.photos/seed/error-tree/800/400)
+
+## The Error Hierarchy
+
+Not all errors are equal. The first step is classifying them:
+
+```rust
+#[derive(Debug, thiserror::Error)]
+enum AppError {
+    // Operational: expected, recoverable, happens in normal operation
+    #[error("user not found: {0}")]
+    NotFound(String),
+
+    #[error("rate limit exceeded, retry after {retry_after}s")]
+    RateLimited { retry_after: u64 },
+
+    #[error("validation failed: {0}")]
+    Validation(String),
+
+    // Infrastructure: unexpected, may be transient
+    #[error("database error")]
+    Database(#[from] sqlx::Error),
+
+    #[error("network timeout")]
+    Timeout(#[from] tokio::time::error::Elapsed),
+
+    // Fatal: unrecoverable, something is fundamentally wrong
+    #[error("configuration missing: {0}")]
+    Config(String),
+}
+```
+
+Each category demands different handling:
+
+- **Operational errors** → Return to the user with a helpful message
+- **Infrastructure errors** → Retry with backoff, then escalate
+- **Fatal errors** → Crash immediately and loudly
+
+## The `?` Operator and Error Propagation
+
+Rust's `?` operator is the best error handling syntax I've used in any language. It makes the happy path clean while ensuring errors propagate correctly:
+
+```rust
+async fn create_user(input: CreateUserInput) -> Result<User, AppError> {
+    input.validate()?;                           // Validation error
+    let existing = db.find_by_email(&input.email).await?;  // DB error
+    if existing.is_some() {
+        return Err(AppError::Validation("email already taken".into()));
+    }
+    let hash = hash_password(&input.password)?;  // Crypto error
+    let user = db.insert_user(&input.email, &hash).await?; // DB error
+    email::send_welcome(&user.email).await?;     // Network error
+    Ok(user)
+}
+```
+
+Read this function top to bottom. The happy path is *crystal clear*. Every `?` is a potential exit point, and the type system guarantees they're all handled by the caller.
+
+## Errors Are User Interface
+
+The error a user sees determines whether they can fix their problem or file a support ticket. This is true for API consumers, CLI users, and even internal developers calling your library.
+
+```rust
+impl AppError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Self::NotFound(_) => StatusCode::NOT_FOUND,
+            Self::Validation(_) => StatusCode::BAD_REQUEST,
+            Self::RateLimited { .. } => StatusCode::TOO_MANY_REQUESTS,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn user_message(&self) -> String {
+        match self {
+            Self::NotFound(id) => format!("Resource '{id}' not found"),
+            Self::Validation(msg) => format!("Invalid input: {msg}"),
+            Self::RateLimited { retry_after } =>
+                format!("Too many requests. Try again in {retry_after} seconds."),
+            // Never expose internal details to users
+            Self::Database(_) | Self::Timeout(_) =>
+                "An internal error occurred. Please try again.".into(),
+            Self::Config(_) =>
+                "Service configuration error. Please contact support.".into(),
+        }
+    }
+}
+```
+
+**Rule: operational errors get specific messages. Infrastructure errors get generic ones.** Never tell a user "SQLite error: UNIQUE constraint failed on users.email." Tell them "That email is already registered."
+
+![User-facing vs internal error message mapping](https://picsum.photos/seed/error-ui/800/400)
+
+## Patterns I Use Everywhere
+
+**1. Make errors impossible where you can, handleable where you can't.**
+
+```rust
+// Instead of returning an error for invalid email...
+fn send_email(to: Email, body: &str) -> Result<(), SendError> { /* ... */ }
+
+// ...make invalid email unconstructable
+struct Email(String);
+impl Email {
+    fn parse(raw: &str) -> Result<Self, ValidationError> {
+        if is_valid_email(raw) { Ok(Self(raw.to_lowercase())) }
+        else { Err(ValidationError::InvalidEmail) }
+    }
+}
+```
+
+**2. Add context when propagating.**
+
+```rust
+let config = fs::read_to_string(&path)
+    .map_err(|e| AppError::Config(format!("failed to read {}: {e}", path.display())))?;
+```
+
+**3. Never silently swallow errors.**
+
+```python
+# Python: never do this
+try:
+    result = risky_operation()
+except Exception:
+    pass  # what could go wrong?
+
+# Do this instead
+try:
+    result = risky_operation()
+except SpecificError as e:
+    logger.warning("Operation failed, using fallback", error=str(e))
+    result = fallback_value()
+```
+
+Good error handling is invisible when things go right and invaluable when things go wrong. Make failure a first-class citizen in your design, not an afterthought bolted on with `try/catch`.

@@ -4,9 +4,10 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
-import { Sparkles, ChevronsRight, Send } from "lucide-react";
+import { Sparkles, ChevronsRight, ChevronsDown, Send } from "lucide-react";
 
 interface SidebarContextType {
   isOpen: boolean;
@@ -24,6 +25,24 @@ export const useSidebar = () => useContext(SidebarContext);
 
 export function ClientLayout({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && isMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen, isMobile]);
 
   return (
     <SidebarContext.Provider
@@ -36,17 +55,36 @@ export function ClientLayout({ children }: { children: ReactNode }) {
       <div className="relative">
         <div
           className="transition-[margin] duration-300 ease-in-out"
-          style={{ marginRight: isOpen ? "380px" : "0" }}
+          style={{ marginRight: isOpen && !isMobile ? "380px" : "0" }}
         >
           {children}
         </div>
 
+        {isOpen && isMobile && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+
         <aside
-          className={`fixed top-0 right-0 h-screen w-[380px] bg-page border-l border-line z-50 flex flex-col transition-transform duration-300 ease-in-out ${
-            isOpen ? "translate-x-0" : "translate-x-full"
+          className={`fixed z-50 bg-page border-line flex flex-col transition-transform duration-300 ease-in-out ${
+            isMobile
+              ? `inset-x-0 bottom-0 h-[75vh] rounded-t-2xl border-t ${
+                  isOpen ? "translate-y-0" : "translate-y-full"
+                }`
+              : `top-0 right-0 h-screen w-[380px] border-l ${
+                  isOpen ? "translate-x-0" : "translate-x-full"
+                }`
           }`}
         >
-          <div className="flex items-center justify-between px-5 h-14 border-b border-line-faint shrink-0">
+          {isMobile && (
+            <div className="flex justify-center py-2">
+              <div className="w-10 h-1 rounded-full bg-line" />
+            </div>
+          )}
+
+          <div className={`flex items-center justify-between px-5 h-14 border-b border-line-faint shrink-0 ${isMobile ? "h-12" : ""}`}>
             <div className="flex items-center gap-2">
               <Sparkles size={15} className="text-accent" />
               <span className="text-sm font-semibold text-primary">Ask AI</span>
@@ -55,7 +93,7 @@ export function ClientLayout({ children }: { children: ReactNode }) {
               onClick={() => setIsOpen(false)}
               className="text-muted hover:text-primary transition-colors p-1 cursor-pointer"
             >
-              <ChevronsRight size={18} />
+              {isMobile ? <ChevronsDown size={18} /> : <ChevronsRight size={18} />}
             </button>
           </div>
 

@@ -1,20 +1,20 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { Clock } from "lucide-react";
-import {
-  getPostBySlug,
-  getComments,
-  getLikeCount,
-  getLatestPosts,
-  getLikeCounts,
-} from "@/lib/db";
+import { getPostBySlug, getAllSlugs } from "@/lib/posts";
 import { renderMarkdown } from "@/lib/markdown";
-import { readingTime } from "@/lib/utils";
+import { getComments, getLikeCount, getLikeCounts } from "@/lib/db";
+import { getLatestPostsMeta } from "@/lib/posts";
 import { ReadingProgress } from "@/components/reading-progress";
 import { CodeCopy } from "@/components/code-copy";
 import { AudioPlayer } from "@/components/audio-player";
 import { FadeIn } from "@/components/fade-in";
 import { PostInteractions } from "@/components/post-interactions";
 import { KeepReading } from "@/components/keep-reading";
+
+export async function generateStaticParams() {
+  return getAllSlugs().map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -46,12 +46,10 @@ export default async function BlogPost({
 
   const comments = getComments(slug);
   const likeCount = getLikeCount(slug);
-  const recommended = getLatestPosts(10);
+  const recommended = getLatestPostsMeta(10);
   const likeCounts = getLikeCounts();
   const html = await renderMarkdown(post.content);
 
-  const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
-  const mins = readingTime(post.content);
   const date = new Date(post.published_at).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -63,44 +61,50 @@ export default async function BlogPost({
       <ReadingProgress />
       <CodeCopy />
 
-      <article className="max-w-4xl mx-auto px-6 pt-14 sm:pt-20 pb-16">
-        {post.cover_image && (
-          <FadeIn>
-            <div className="mb-10 -mx-6 sm:mx-0 overflow-hidden sm:rounded-xl">
-              <img
-                src={post.cover_image}
-                alt=""
-                className="w-full h-56 sm:h-80 object-cover"
-              />
-            </div>
-          </FadeIn>
-        )}
-
+      {post.cover_image && (
         <FadeIn>
-          <header className="mb-12">
-            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight leading-[1.15] mb-5">
+          <div className="relative w-full max-w-6xl mx-auto mt-4 mb-10 px-4 sm:px-6">
+            <div className="relative w-full aspect-[2.4/1] rounded-2xl overflow-hidden">
+              <Image
+                src={post.cover_image}
+                alt={post.title}
+                fill
+                priority
+                className="object-cover"
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-page/60" />
+            </div>
+          </div>
+        </FadeIn>
+      )}
+
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 pb-16">
+        <FadeIn>
+          <header className="mb-8 sm:mb-12">
+            <h1 className="text-2xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight leading-[1.15] mb-4 sm:mb-5">
               {post.title}
             </h1>
 
             <div className="flex flex-wrap items-center justify-between gap-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 text-sm text-muted">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="flex items-center gap-1.5 text-xs sm:text-sm text-muted">
                   <Clock size={14} />
-                  {mins} min read
+                  {post.reading_time} min read
                 </span>
-                {tags.map((tag) => (
+                {post.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs text-muted px-2 py-0.5 rounded-full border border-line-faint"
+                    className="text-xs text-dim bg-surface-hover px-1.5 py-0.5 rounded-md"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <AudioPlayer />
-                <time className="text-sm text-muted">{date}</time>
+                <time className="text-xs sm:text-sm text-muted">{date}</time>
               </div>
             </div>
           </header>
@@ -114,7 +118,8 @@ export default async function BlogPost({
         </FadeIn>
 
         <PostInteractions
-          post={post}
+          postSlug={post.slug}
+          postTitle={post.title}
           likeCount={likeCount}
           initialComments={comments}
         />

@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Send } from "lucide-react";
+import { Github, Linkedin, Mail, Send, Youtube } from "lucide-react";
 
 const socials = [
   { name: "GitHub", href: "https://github.com/sshdopey", icon: <Github size={16} /> },
@@ -11,6 +11,7 @@ const socials = [
       </svg>
     ),
   },
+  { name: "YouTube", href: "https://youtube.com/@sshdopey", icon: <Youtube size={16} /> },
   { name: "LinkedIn", href: "https://linkedin.com/in/sshdopey", icon: <Linkedin size={16} /> },
   { name: "Telegram", href: "https://t.me/sshdopey", icon: <Send size={16} /> },
   { name: "Email", href: "mailto:hello@sshdopey.com", icon: <Mail size={16} /> },
@@ -32,9 +33,9 @@ export function SocialLinks({
             href={s.href}
             target={s.href.startsWith("mailto:") ? undefined : "_blank"}
             rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-            className="group flex items-center gap-2.5 px-4 py-2.5 rounded-lg border border-line hover:border-accent/40 bg-surface/60 hover:bg-surface-hover text-sm text-secondary hover:text-primary transition-all"
+            className="group flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-line hover:border-accent/40 bg-surface/60 hover:bg-surface-hover text-xs sm:text-sm text-secondary hover:text-accent transition-all"
           >
-            <span className="text-muted group-hover:text-accent transition-colors">
+            <span className="transition-colors group-hover:text-accent">
               {s.icon}
             </span>
             <span>{s.name}</span>
@@ -46,14 +47,14 @@ export function SocialLinks({
 
   if (variant === "inline") {
     return (
-      <div className={`flex items-center gap-4 ${className}`}>
+      <div className={`flex flex-wrap items-center justify-center gap-3 sm:gap-4 ${className}`}>
         {socials.map((s) => (
           <a
             key={s.name}
             href={s.href}
             target={s.href.startsWith("mailto:") ? undefined : "_blank"}
             rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-            className="text-sm text-secondary hover:text-accent transition-colors"
+            className="text-xs sm:text-sm text-secondary hover:text-accent transition-colors"
           >
             {s.name}
           </a>

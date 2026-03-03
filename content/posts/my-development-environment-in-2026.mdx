@@ -1,0 +1,146 @@
+---
+title: "My Development Environment in 2026"
+excerpt: "Every year I refine my setup. Here's the full breakdown of my development environment heading into 2026."
+published_at: "2026-03-03"
+cover_image: "https://picsum.photos/seed/devenv2026/1200/630"
+tags: ["tooling"]
+featured: false
+---
+
+Every year I refine my development environment. I'm not chasing novelty — I'm chasing *friction reduction*. Every second I spend fighting my tools is a second I'm not thinking about the problem.
+
+Here's my full setup heading into 2026.
+
+![Development environment setup overview](https://picsum.photos/seed/dev-setup-terminal/800/400)
+
+## Editor: Cursor (Neovim Keybindings)
+
+After years of pure Neovim, I moved to Cursor with Neovim keybindings. The AI integration is genuinely useful — not for writing code, but for *navigating* code. "Find where this error originates" and "explain this legacy function" are queries I run dozens of times a day.
+
+I still keep a Neovim config for quick edits and remote work:
+
+```lua
+-- Core settings I carry everywhere
+vim.opt.relativenumber = true
+vim.opt.scrolloff = 8
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.smartindent = true
+vim.opt.signcolumn = "yes"
+vim.opt.updatetime = 50
+```
+
+## Terminal: Ghostty
+
+I switched from Alacritty to Ghostty and haven't looked back. Native macOS rendering, sub-millisecond input latency, and a config file that's actually readable:
+
+```
+font-family = "Berkeley Mono"
+font-size = 14
+theme = catppuccin-mocha
+cursor-style = block
+window-padding-x = 8
+window-padding-y = 4
+```
+
+## Shell: Zsh + Starship
+
+Minimal prompt. No oh-my-zsh. I maintain ~50 lines of shell config:
+
+```shell
+# Key aliases
+alias g="git"
+alias gs="git status -sb"
+alias gd="git diff"
+alias gl="git log --oneline -20"
+alias dc="docker compose"
+alias py="python3"
+alias cat="bat"
+alias ls="eza -la"
+
+# Fast directory switching
+eval "$(zoxide init zsh)"
+
+# Prompt
+eval "$(starship init zsh)"
+```
+
+## Python: uv + ruff
+
+The Python tooling renaissance is real. `uv` replaced pip, pip-tools, virtualenv, and pyenv for me:
+
+```shell
+# Create a project
+uv init myproject && cd myproject
+
+# Add dependencies (installs in <1s, not 30s)
+uv add fastapi pydantic sqlalchemy
+
+# Run scripts
+uv run python train.py
+
+# Lock dependencies
+uv lock
+```
+
+`ruff` replaced flake8, isort, black, and pyflakes. One tool, one config:
+
+```toml
+# pyproject.toml
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "TCH"]
+```
+
+## Rust: cargo + bacon
+
+For Rust projects, `bacon` is the best quality-of-life tool nobody talks about. It watches your project and re-runs checks on save:
+
+```shell
+# Install once
+cargo install bacon
+
+# Run in a terminal — it watches and re-checks automatically
+bacon clippy
+```
+
+My `Cargo.toml` always includes:
+
+```toml
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+```
+
+This gives fast compilation for your code but optimized dependencies — a massive improvement for anything using serde or tokio.
+
+![Terminal with bacon and cargo watch output](https://picsum.photos/seed/dev-rust/800/400)
+
+## Git Workflow
+
+```shell
+# My git config essentials
+git config --global rerere.enabled true     # remember conflict resolutions
+git config --global pull.rebase true        # rebase on pull, always
+git config --global push.autoSetupRemote true  # no more --set-upstream
+```
+
+I use conventional commits (`feat:`, `fix:`, `refactor:`) enforced by a pre-commit hook. Not because I love process — because it makes `git log --oneline` actually useful.
+
+## The Philosophy
+
+My setup optimizes for three things:
+
+1. **Fast feedback.** File save → result should be under 1 second for linting/typechecking.
+2. **Minimal context switching.** Terminal, editor, and browser. That's it. No IDE panels, no floating windows, no notification badges.
+3. **Reproducibility.** My entire setup is in a dotfiles repo. New machine to productive in under 30 minutes.
+
+The best development environment is the one you stop noticing. Every tool should be invisible — fast enough to never break your flow, reliable enough to never surprise you, simple enough to never confuse you.
+
+One addition I made this year: **structured logging everywhere**. Instead of `print()` or `logging.info()`, I use `structlog` in Python and `tracing` in Rust. Every log line is JSON with context — request ID, user ID, duration. When something breaks in production, I grep for the request ID and get the full trace. The setup cost is 10 minutes per project; the debugging time savings are measured in hours. Your future self will thank you when you're chasing a bug at 11pm.

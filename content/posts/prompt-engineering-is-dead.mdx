@@ -1,0 +1,131 @@
+---
+title: "Prompt Engineering Is Dead"
+excerpt: "The era of artisanal prompt crafting is ending. What comes next is real software engineering applied to AI systems."
+published_at: "2026-02-12"
+cover_image: "https://picsum.photos/seed/promptend/1200/630"
+tags: ["ai", "llm"]
+featured: false
+---
+
+The era of artisanal prompt crafting is ending. Every major model update makes your carefully tuned prompts obsolete. That "prompt engineering" job title is going the way of "webmaster" — a transitional role that gets absorbed into proper engineering practice.
+
+I've been building AI features in Fairmeld for a year now. Here's what I've learned: **the prompt is the least important part of an AI system**.
+
+![Prompt flow vs structured output architecture](https://picsum.photos/seed/prompt-flow/800/400)
+
+## The Fragility Problem
+
+Watch what happens when you "prompt engineer" a solution:
+
+```python
+# Fragile: depends on specific model behavior
+prompt = """You are a JSON extraction expert. Always respond with
+valid JSON. Never include markdown formatting. Never add explanatory
+text. The JSON must have exactly these fields: name, age, location.
+If a field is missing, use null. Do not include any other fields."""
+
+result = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": f"Extract: {text}"}],
+)
+data = json.loads(result.choices[0].message.content)  # fingers crossed
+```
+
+Now try the robust approach:
+
+```python
+from pydantic import BaseModel
+from openai import OpenAI
+
+class Person(BaseModel):
+    name: str
+    age: int | None
+    location: str | None
+
+client = OpenAI()
+result = client.beta.chat.completions.parse(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": text}],
+    response_format=Person,
+)
+
+person = result.choices[0].message.parsed  # typed, validated, guaranteed
+```
+
+No prompt gymnastics. No "please respond in JSON." The model is *structurally constrained* to return what you need. When the model updates, this still works. When you switch providers, the pattern transfers.
+
+## Structured Outputs Beat Prompts Every Time
+
+The pattern extends beyond simple extraction. For any task where you need structured, reliable output:
+
+1. **Define a schema** (Pydantic model, JSON Schema, TypeScript type)
+2. **Use constrained generation** (structured outputs, function calling, tool use)
+3. **Validate on receipt** (type checking, range validation, business rules)
+4. **Handle failures with code**, not more prompt words
+
+```python
+from pydantic import BaseModel, Field
+from enum import Enum
+
+class Severity(str, Enum):
+    critical = "critical"
+    warning = "warning"
+    info = "info"
+
+class CodeReview(BaseModel):
+    issues: list[Issue]
+    summary: str = Field(max_length=200)
+    approval: bool
+
+class Issue(BaseModel):
+    file: str
+    line: int = Field(ge=1)
+    severity: Severity
+    description: str = Field(max_length=500)
+    suggestion: str | None = None
+```
+
+The schema *is* the prompt. It tells the model what you need with machine-parseable precision.
+
+![Pydantic schema and structured output validation](https://picsum.photos/seed/prompt-schema/800/400)
+
+## What Actually Matters in AI Engineering
+
+The skills that matter for building AI products aren't prompt tricks. They're software engineering skills:
+
+1. **System design** — How you compose models with tools, data, and code. How you route between fast/cheap and slow/capable models. How you cache and batch intelligently.
+
+2. **Evaluation** — How you measure quality, detect regressions, and A/B test changes. If you can't measure it, you can't improve it.
+
+3. **Reliability** — How you handle model failures, timeouts, rate limits, and garbage output. How you degrade gracefully instead of showing users an error.
+
+4. **Cost control** — How you route between models based on task complexity. GPT-4o for hard tasks, GPT-4o-mini for easy ones, cached responses for repeated queries.
+
+```python
+class ModelRouter:
+    def __init__(self):
+        self.cache = LRUCache(maxsize=10_000)
+
+    async def complete(self, task: Task) -> Response:
+        cache_key = task.cache_key()
+        if cached := self.cache.get(cache_key):
+            return cached
+
+        model = self._select_model(task)
+        response = await self._call(model, task)
+        self.cache.set(cache_key, response)
+        return response
+
+    def _select_model(self, task: Task) -> str:
+        if task.complexity == "simple":
+            return "gpt-4o-mini"
+        if task.requires_reasoning:
+            return "o3-mini"
+        return "gpt-4o"
+```
+
+5. **Observability** — Log every LLM call. Track latency, cost, token usage, and output quality. Build dashboards. Review failures.
+
+Don't optimize your prompts. Optimize your **architecture**. The prompt is just one string in a much larger system.
+
+One more skill that separates production AI systems from demos: **fallback chains**. When your primary model is down, rate limited, or returns garbage, what happens? We route through a fallback: GPT-4o → GPT-4o-mini → cached response → graceful degradation. The user never sees "service unavailable" — they get a slightly slower or slightly worse response, but the product still works. Building this requires thinking about every LLM call as a potential failure point and having a plan for each one. That's systems thinking, not prompt engineering.

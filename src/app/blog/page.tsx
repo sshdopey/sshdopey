@@ -1,4 +1,5 @@
-import { getAllPosts, getFeaturedPosts, getAllTags, getLikeCounts } from "@/lib/db";
+import { getAllPostsMeta, getFeaturedPosts, getAllTags } from "@/lib/posts";
+import { getLikeCounts } from "@/lib/db";
 import { FadeIn } from "@/components/fade-in";
 import { BlogContent } from "@/components/blog-content";
 
@@ -8,13 +9,13 @@ export const metadata = {
 };
 
 export default function BlogIndex() {
-  const posts = getAllPosts();
+  const posts = getAllPostsMeta();
   const featured = getFeaturedPosts(3);
   const allTags = getAllTags();
   const likeCounts = getLikeCounts();
 
   return (
-    <div className="max-w-5xl mx-auto px-6 pt-14 sm:pt-20 pb-24">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24">
       <FadeIn>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
           Writing

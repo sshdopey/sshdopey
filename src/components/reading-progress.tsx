@@ -4,36 +4,35 @@ import { useEffect } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 
 export function ReadingProgress() {
-  const progress = useMotionValue(0);
-  const scaleX = useSpring(progress, {
-    stiffness: 120,
-    damping: 30,
-    restDelta: 0.001,
+  const raw = useMotionValue(0);
+  const scaleX = useSpring(raw, {
+    stiffness: 300,
+    damping: 50,
+    restDelta: 0.0001,
   });
 
   useEffect(() => {
-    function handleScroll() {
+    let raf: number;
+
+    function update() {
       const prose = document.querySelector(".prose");
-      if (!prose) return;
-
-      const rect = prose.getBoundingClientRect();
-      const navHeight = 56;
-      const viewportHeight = window.innerHeight;
-      const scrollableRange = rect.height - (viewportHeight - navHeight);
-
-      if (scrollableRange <= 0) {
-        progress.set(1);
-        return;
+      if (prose) {
+        const rect = prose.getBoundingClientRect();
+        const navH = 56;
+        const vh = window.innerHeight;
+        const range = rect.height - (vh - navH);
+        if (range <= 0) {
+          raw.set(1);
+        } else {
+          raw.set(Math.min(1, Math.max(0, (navH - rect.top) / range)));
+        }
       }
-
-      const scrolled = navHeight - rect.top;
-      progress.set(Math.min(1, Math.max(0, scrolled / scrollableRange)));
+      raf = requestAnimationFrame(update);
     }
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [progress]);
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, [raw]);
 
   return (
     <motion.div

@@ -1,0 +1,150 @@
+---
+title: "From Prototype to Production ML"
+excerpt: "The notebook worked. The demo impressed everyone. Now ship it to production without losing your mind."
+published_at: "2026-02-26"
+cover_image: "https://picsum.photos/seed/prodml/1200/630"
+tags: ["python", "devops", "ai"]
+featured: false
+---
+
+The notebook worked. The demo impressed everyone. Your manager is excited. The CEO saw it and said "ship it by Friday."
+
+Now comes the hard part: turning a Jupyter prototype into a production ML system that runs reliably, scales predictably, and doesn't page you at 3am.
+
+I've taken three models from prototype to production in Fairmeld. Each time, I underestimated the gap between "it works on my machine" and "it works for users." Here's the playbook I wish I had on day one.
+
+![ML prototype to production pipeline stages](https://picsum.photos/seed/ml-pipeline/800/400)
+
+## The Maturity Ladder
+
+Not every ML project needs the same level of infrastructure. Match your investment to your stage:
+
+| Level | Characteristics | Infrastructure | When |
+|-------|----------------|---------------|------|
+| 0 - Notebook | Jupyter, manual runs | None | Exploration |
+| 1 - Script | `.py` file, CLI args | Cron job or manual | Internal tools |
+| 2 - Service | API endpoint, basic monitoring | Docker + health checks | Single-user product feature |
+| 3 - Pipeline | Automated retraining, versioning | CI/CD + model registry | Multi-user product |
+| 4 - Platform | A/B testing, feature store, automated rollback | Full MLOps stack | ML is the core product |
+
+Most teams jump from Level 0 to Level 4 and drown. **Start at Level 1 and climb one step at a time.**
+
+## Level 1: From Notebook to Script
+
+The first step is the most important: get out of the notebook.
+
+```python
+# train.py — a real script, not a notebook
+import argparse
+from pathlib import Path
+from loguru import logger
+from model import train_model, evaluate_model, save_model
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=Path, required=True)
+    parser.add_argument("--output", type=Path, default=Path("models/latest"))
+    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--learning-rate", type=float, default=3e-4)
+    args = parser.parse_args()
+
+    logger.info(f"Training with data={args.data}, epochs={args.epochs}")
+    model = train_model(args.data, epochs=args.epochs, lr=args.learning_rate)
+
+    metrics = evaluate_model(model, args.data / "test")
+    logger.info(f"Evaluation: {metrics}")
+
+    if metrics["f1"] < 0.85:
+        logger.error(f"Model quality below threshold: {metrics['f1']:.3f} < 0.85")
+        raise SystemExit(1)
+
+    save_model(model, args.output)
+    logger.info(f"Model saved to {args.output}")
+
+if __name__ == "__main__":
+    main()
+```
+
+Key differences from a notebook: **explicit inputs**, **logged outputs**, **quality gates**, **reproducible from the command line**.
+
+![Training script CLI and logging output](https://picsum.photos/seed/ml-train-script/800/400)
+
+## Level 2: Serving with an API
+
+Wrap the model in a simple API. Don't over-engineer this — you can always add complexity later.
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import torch
+
+app = FastAPI()
+model = torch.jit.load("models/latest/model.pt")
+
+class PredictRequest(BaseModel):
+    text: str
+    max_tokens: int = 100
+
+class PredictResponse(BaseModel):
+    result: str
+    confidence: float
+    model_version: str
+
+@app.post("/predict", response_model=PredictResponse)
+async def predict(req: PredictRequest):
+    try:
+        output = model.predict(req.text, max_tokens=req.max_tokens)
+        return PredictResponse(
+            result=output.text,
+            confidence=output.confidence,
+            model_version="2026-02-26-v1",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "model_loaded": model is not None}
+```
+
+## Level 3: Automated Retraining
+
+This is where most teams get stuck. Automated retraining requires:
+
+1. **Versioned data** — You need to know exactly which data produced which model
+2. **Versioned models** — Every model artifact has a unique identifier and stored metrics
+3. **Automated evaluation** — The new model is compared against the current production model
+4. **Gradual rollout** — New models serve a percentage of traffic before full deployment
+
+```yaml
+# retrain.yml — CI pipeline for model retraining
+name: Retrain Model
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2am
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch training data
+        run: python scripts/fetch_data.py --output data/train
+      - name: Train model
+        run: python train.py --data data/train --output models/candidate
+      - name: Evaluate against production
+        run: python evaluate.py --candidate models/candidate --baseline models/production
+      - name: Promote if better
+        run: python promote.py --candidate models/candidate --min-improvement 0.02
+```
+
+## The Three Rules
+
+After three rounds of prototype-to-production, I've internalized three rules:
+
+- **Log everything.** Every prediction, every input, every latency measurement. You can't debug what you can't see. You can't improve what you can't measure.
+- **Version everything.** Data, models, code, configs. You should be able to reproduce any model from any point in time.
+- **Gate everything.** No model reaches production without passing automated quality checks. No exceptions, no "just this once."
+
+The notebook is for exploration. Production is for reliability. The bridge between them is *discipline*.
