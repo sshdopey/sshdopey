@@ -39,7 +39,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] text-dim px-2 py-0.5 rounded-full border border-line-faint"
+                  className="text-[11px] text-muted px-2 py-0.5 rounded-full border border-line-faint"
                 >
                   {tag}
                 </span>
@@ -55,7 +55,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
             {post.excerpt}
           </p>
 
-          <div className="flex items-center gap-2.5 text-xs text-dim">
+          <div className="flex items-center gap-2.5 text-xs text-muted">
             <time>
               {new Date(post.published_at).toLocaleDateString("en-US", {
                 month: "short",
@@ -63,7 +63,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
                 year: "numeric",
               })}
             </time>
-            <span className="text-ghost">·</span>
+            <span className="text-dim">·</span>
             <span>{readingTime(post.content)} min read</span>
           </div>
         </div>
@@ -112,14 +112,14 @@ function FeaturedCard({ post }: { post: Post }) {
           {post.excerpt}
         </p>
 
-        <div className="flex items-center gap-2.5 text-xs text-dim">
+        <div className="flex items-center gap-2.5 text-xs text-muted">
           <time>
             {new Date(post.published_at).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             })}
           </time>
-          <span className="text-ghost">·</span>
+          <span className="text-dim">·</span>
           <span>{readingTime(post.content)} min</span>
         </div>
       </div>

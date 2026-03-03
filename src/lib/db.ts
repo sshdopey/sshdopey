@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import { seedIfEmpty } from "./seed";
+import { createId } from "./utils";
 
 export interface Post {
   id: number;
@@ -16,20 +17,18 @@ export interface Post {
 }
 
 export interface Subscriber {
-  id: number;
-  name: string;
+  id: string;
   email: string;
   created_at: string;
 }
 
 export interface Comment {
-  id: number;
+  id: string;
   post_slug: string;
-  subscriber_id: number;
-  parent_id: number | null;
+  subscriber_id: string;
+  parent_id: string | null;
   content: string;
   created_at: string;
-  subscriber_name: string;
   like_count: number;
 }
 
@@ -44,8 +43,7 @@ function getDb(): Database.Database {
 
     _db.exec(`
       CREATE TABLE IF NOT EXISTS subscribers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         created_at TEXT DEFAULT (datetime('now'))
       );
@@ -70,10 +68,10 @@ function getDb(): Database.Database {
       );
 
       CREATE TABLE IF NOT EXISTS comments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         post_slug TEXT NOT NULL,
-        subscriber_id INTEGER NOT NULL,
-        parent_id INTEGER,
+        subscriber_id TEXT NOT NULL,
+        parent_id TEXT,
         content TEXT NOT NULL,
         created_at TEXT DEFAULT (datetime('now')),
         FOREIGN KEY (subscriber_id) REFERENCES subscribers(id)
@@ -81,12 +79,10 @@ function getDb(): Database.Database {
 
       CREATE TABLE IF NOT EXISTS comment_likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        comment_id INTEGER NOT NULL,
-        subscriber_id INTEGER NOT NULL,
+        comment_id TEXT NOT NULL,
+        subscriber_id TEXT NOT NULL,
         created_at TEXT DEFAULT (datetime('now')),
-        UNIQUE(comment_id, subscriber_id),
-        FOREIGN KEY (comment_id) REFERENCES comments(id),
-        FOREIGN KEY (subscriber_id) REFERENCES subscribers(id)
+        UNIQUE(comment_id, subscriber_id)
       );
     `);
 
@@ -111,9 +107,7 @@ export function getPostBySlug(slug: string): Post | undefined {
 
 export function getFeaturedPosts(limit = 3): Post[] {
   return getDb()
-    .prepare(
-      "SELECT * FROM posts WHERE featured = 1 ORDER BY published_at DESC LIMIT ?",
-    )
+    .prepare("SELECT * FROM posts WHERE featured = 1 ORDER BY published_at DESC LIMIT ?")
     .all(limit) as Post[];
 }
 
@@ -121,23 +115,6 @@ export function getLatestPosts(limit = 20): Post[] {
   return getDb()
     .prepare("SELECT * FROM posts ORDER BY published_at DESC LIMIT ?")
     .all(limit) as Post[];
-}
-
-export function getAdjacentPosts(
-  publishedAt: string,
-): { prev?: Post; next?: Post } {
-  const db = getDb();
-  const prev = db
-    .prepare(
-      "SELECT * FROM posts WHERE published_at < ? ORDER BY published_at DESC LIMIT 1",
-    )
-    .get(publishedAt) as Post | undefined;
-  const next = db
-    .prepare(
-      "SELECT * FROM posts WHERE published_at > ? ORDER BY published_at ASC LIMIT 1",
-    )
-    .get(publishedAt) as Post | undefined;
-  return { prev, next };
 }
 
 export function getAllTags(): string[] {
@@ -160,28 +137,18 @@ export function createPost(
 ) {
   const db = getDb();
   if (featured) {
-    const count = db
-      .prepare("SELECT COUNT(*) as c FROM posts WHERE featured = 1")
-      .get() as { c: number };
+    const count = db.prepare("SELECT COUNT(*) as c FROM posts WHERE featured = 1").get() as { c: number };
     if (count.c >= 3) {
-      db.prepare(
-        "UPDATE posts SET featured = 0 WHERE id = (SELECT id FROM posts WHERE featured = 1 ORDER BY published_at ASC LIMIT 1)",
-      ).run();
+      db.prepare("UPDATE posts SET featured = 0 WHERE id = (SELECT id FROM posts WHERE featured = 1 ORDER BY published_at ASC LIMIT 1)").run();
     }
   }
-  return db
-    .prepare(
-      "INSERT INTO posts (title, slug, content, excerpt, featured, tags, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    )
-    .run(title, slug, content, excerpt, featured ? 1 : 0, tags, coverImage);
+  return db.prepare("INSERT INTO posts (title, slug, content, excerpt, featured, tags, cover_image) VALUES (?, ?, ?, ?, ?, ?, ?)").run(title, slug, content, excerpt, featured ? 1 : 0, tags, coverImage);
 }
 
 // ── Likes ──
 
 export function getLikeCount(postSlug: string): number {
-  const r = getDb()
-    .prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?")
-    .get(postSlug) as { c: number };
+  const r = getDb().prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?").get(postSlug) as { c: number };
   return r.c;
 }
 
@@ -193,20 +160,13 @@ export function addLike(postSlug: string): number {
 // ── Subscribers ──
 
 export function getSubscriberByEmail(email: string): Subscriber | undefined {
-  return getDb()
-    .prepare("SELECT * FROM subscribers WHERE email = ?")
-    .get(email) as Subscriber | undefined;
+  return getDb().prepare("SELECT * FROM subscribers WHERE email = ?").get(email) as Subscriber | undefined;
 }
 
-export function createSubscriber(name: string, email: string): Subscriber {
+export function createSubscriber(id: string, email: string): Subscriber {
   const db = getDb();
-  db.prepare("INSERT INTO subscribers (name, email) VALUES (?, ?)").run(
-    name,
-    email,
-  );
-  return db
-    .prepare("SELECT * FROM subscribers WHERE email = ?")
-    .get(email) as Subscriber;
+  db.prepare("INSERT INTO subscribers (id, email) VALUES (?, ?)").run(id, email);
+  return db.prepare("SELECT * FROM subscribers WHERE id = ?").get(id) as Subscriber;
 }
 
 // ── Comments ──
@@ -214,10 +174,9 @@ export function createSubscriber(name: string, email: string): Subscriber {
 export function getComments(postSlug: string): Comment[] {
   return getDb()
     .prepare(
-      `SELECT c.*, s.name as subscriber_name,
+      `SELECT c.*,
         (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id) as like_count
        FROM comments c
-       JOIN subscribers s ON c.subscriber_id = s.id
        WHERE c.post_slug = ?
        ORDER BY c.created_at ASC`,
     )
@@ -226,30 +185,26 @@ export function getComments(postSlug: string): Comment[] {
 
 export function addComment(
   postSlug: string,
-  subscriberId: number,
+  subscriberId: string,
   content: string,
-  parentId: number | null,
-): void {
+  parentId: string | null,
+): string {
+  const id = createId();
   getDb()
-    .prepare(
-      "INSERT INTO comments (post_slug, subscriber_id, content, parent_id) VALUES (?, ?, ?, ?)",
-    )
-    .run(postSlug, subscriberId, content, parentId);
+    .prepare("INSERT INTO comments (id, post_slug, subscriber_id, content, parent_id) VALUES (?, ?, ?, ?, ?)")
+    .run(id, postSlug, subscriberId, content, parentId);
+  return id;
 }
 
 // ── Comment Likes ──
 
-export function addCommentLike(commentId: number, subscriberId: number): void {
+export function addCommentLike(commentId: string, subscriberId: string): void {
   getDb()
-    .prepare(
-      "INSERT OR IGNORE INTO comment_likes (comment_id, subscriber_id) VALUES (?, ?)",
-    )
+    .prepare("INSERT OR IGNORE INTO comment_likes (comment_id, subscriber_id) VALUES (?, ?)")
     .run(commentId, subscriberId);
 }
 
-export function getCommentLikeCount(commentId: number): number {
-  const r = getDb()
-    .prepare("SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?")
-    .get(commentId) as { c: number };
+export function getCommentLikeCount(commentId: string): number {
+  const r = getDb().prepare("SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?").get(commentId) as { c: number };
   return r.c;
 }

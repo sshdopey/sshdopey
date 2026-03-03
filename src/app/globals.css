@@ -3,31 +3,29 @@
 @theme inline {
   --color-page: #060606;
   --color-surface: #0c0c0c;
-  --color-surface-hover: #131313;
+  --color-surface-hover: #141414;
   --color-primary: #f0f0f0;
-  --color-secondary: #a0a0a0;
-  --color-muted: #707070;
-  --color-dim: #505050;
-  --color-ghost: #383838;
-  --color-line: #222222;
-  --color-line-faint: #1a1a1a;
+  --color-secondary: #b0b0b0;
+  --color-muted: #8a8a8a;
+  --color-dim: #666666;
+  --color-ghost: #4a4a4a;
+  --color-line: #262626;
+  --color-line-faint: #1e1e1e;
   --color-inverse: #060606;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ═══ Light Mode — clean B&W, no warm tint ═══ */
-
 :root.light {
   --color-page: #ffffff;
-  --color-surface: #f7f7f7;
-  --color-surface-hover: #efefef;
+  --color-surface: #f8f8f8;
+  --color-surface-hover: #f0f0f0;
   --color-primary: #111111;
-  --color-secondary: #444444;
-  --color-muted: #777777;
-  --color-dim: #aaaaaa;
-  --color-ghost: #cccccc;
-  --color-line: #e0e0e0;
+  --color-secondary: #333333;
+  --color-muted: #555555;
+  --color-dim: #777777;
+  --color-ghost: #999999;
+  --color-line: #dddddd;
   --color-line-faint: #eeeeee;
   --color-inverse: #ffffff;
 }
@@ -43,7 +41,7 @@ body {
 }
 
 ::selection { background: rgba(113, 113, 122, 0.2); }
-:root.light ::selection { background: rgba(17, 17, 17, 0.1); }
+:root.light ::selection { background: rgba(17, 17, 17, 0.12); }
 
 /* ═══ Scrollbar ═══ */
 
@@ -73,11 +71,11 @@ body {
   background-repeat: repeat;
 }
 
-:root.light .noise::before { opacity: 0.01; filter: invert(1); }
+:root.light .noise::before { opacity: 0.015; filter: invert(1); }
 
-/* ═══ Code Blocks ═══ */
+/* ═══ Code Blocks (rehype-pretty-code) ═══ */
 
-.code-block {
+figure[data-rehype-pretty-code-figure] {
   margin: 1.5em 0;
   border-radius: 8px;
   overflow: hidden;
@@ -85,7 +83,7 @@ body {
   background: var(--color-surface);
 }
 
-.code-header {
+figure[data-rehype-pretty-code-figure] .code-header {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -115,40 +113,52 @@ body {
 
 .copy-btn:hover { color: var(--color-primary); background: var(--color-line-faint); }
 
-.code-block pre {
+figure[data-rehype-pretty-code-figure] pre {
   margin: 0;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1rem;
   overflow-x: auto;
   background: transparent !important;
 }
 
-.code-block pre code {
+figure[data-rehype-pretty-code-figure] code {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
-  font-size: 0.82rem;
-  line-height: 1.65;
-  background: none !important;
-  padding: 0 !important;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  counter-reset: line;
 }
 
-/* hljs — dark */
-.hljs-keyword, .hljs-selector-tag, .hljs-built_in { color: #ff7b72; }
-.hljs-string, .hljs-attr { color: #a5d6ff; }
-.hljs-comment, .hljs-quote { color: #6e7681; font-style: italic; }
-.hljs-function .hljs-title, .hljs-title.function_ { color: #d2a8ff; }
-.hljs-number, .hljs-literal { color: #79c0ff; }
-.hljs-type, .hljs-title.class_ { color: #ffa657; }
-.hljs-variable, .hljs-template-variable { color: #ffa657; }
-.hljs-meta { color: #8b949e; }
-.hljs-params { color: inherit; }
+figure[data-rehype-pretty-code-figure] code > [data-line] {
+  padding: 0 0.25rem;
+}
 
-/* hljs — light */
-:root.light .hljs-keyword, :root.light .hljs-selector-tag, :root.light .hljs-built_in { color: #cf222e; }
-:root.light .hljs-string, :root.light .hljs-attr { color: #0a3069; }
-:root.light .hljs-comment, :root.light .hljs-quote { color: #6e7781; }
-:root.light .hljs-function .hljs-title, :root.light .hljs-title.function_ { color: #8250df; }
-:root.light .hljs-number, :root.light .hljs-literal { color: #0550ae; }
-:root.light .hljs-type, :root.light .hljs-title.class_ { color: #953800; }
-:root.light .hljs-variable, :root.light .hljs-template-variable { color: #953800; }
+figure[data-rehype-pretty-code-figure] code > [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1.25rem;
+  margin-right: 0.85rem;
+  text-align: right;
+  color: var(--color-ghost);
+  font-size: 0.75rem;
+}
+
+/* Shiki dual theme: dark by default, light on toggle */
+[data-rehype-pretty-code-figure] code span {
+  color: var(--shiki-dark, inherit);
+}
+
+html.light [data-rehype-pretty-code-figure] code span {
+  color: var(--shiki-light, inherit) !important;
+}
+
+/* Inline code highlighted by rehype-pretty-code (wrapped in span, not figure) */
+.prose span[data-rehype-pretty-code-figure] code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.85em;
+  background: var(--color-line-faint);
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+}
 
 /* ═══ Prose ═══ */
 
@@ -160,16 +170,6 @@ body {
 
 .prose > * + * { margin-top: 1.5em; }
 .prose > *:first-child { margin-top: 0; }
-
-.prose > p:first-child::first-letter {
-  float: left;
-  font-size: 3.2em;
-  line-height: 0.85;
-  padding-right: 0.08em;
-  padding-top: 0.04em;
-  font-weight: 700;
-  color: var(--color-primary);
-}
 
 .prose h1 { font-size: 2rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.025em; color: var(--color-primary); margin-top: 2.5em; margin-bottom: 0.4em; }
 .prose h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.015em; color: var(--color-primary); margin-top: 2.25em; margin-bottom: 0.5em; }
@@ -183,7 +183,7 @@ body {
 .prose strong { color: var(--color-primary); font-weight: 600; }
 .prose em { font-style: italic; }
 
-.prose code {
+.prose :not(pre) > code {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.85em;
   background: var(--color-line-faint);
@@ -192,8 +192,7 @@ body {
   color: var(--color-primary);
 }
 
-.prose pre { background: transparent; margin: 0; padding: 0; border: none; border-radius: 0; overflow: visible; }
-.prose pre code { background: none; padding: 0; border-radius: 0; font-size: inherit; color: inherit; }
+.prose figure[data-rehype-pretty-code-figure] code { background: none; padding: 0; border-radius: 0; font-size: 0.875rem; }
 
 .prose blockquote { border-left: 2px solid var(--color-line); padding-left: 1.25rem; margin: 1.75em 0; color: var(--color-muted); font-style: italic; }
 .prose blockquote p { margin-bottom: 0; }

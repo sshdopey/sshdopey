@@ -9,6 +9,8 @@ import {
   postCommentAction,
   likeCommentAction,
 } from "@/lib/actions";
+import { getDisplayName } from "@/lib/utils";
+import { useSidebar } from "./client-layout";
 import type { Comment, Subscriber, Post } from "@/lib/db";
 
 // ── Helpers ──
@@ -163,6 +165,7 @@ function AuthorSubscribe({
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const { toggle } = useSidebar();
 
   function handleSubscribe(e: React.FormEvent) {
     e.preventDefault();
@@ -180,21 +183,41 @@ function AuthorSubscribe({
 
   return (
     <div className="py-8 border-t border-line-faint">
-      <div className="flex items-start gap-4">
-        <img
-          src="/sshdopey.jpeg"
-          alt="Dopey"
-          className="w-12 h-12 rounded-full object-cover shrink-0"
-        />
-        <div className="min-w-0">
-          <p className="font-semibold text-primary text-sm">
-            Written by Dopey
-          </p>
-          <p className="text-sm text-muted mt-1 leading-relaxed">
-            Building AI systems and high-performance tools. Python for the
-            models. Rust for everything else.
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <img
+            src="/sshdopey.jpeg"
+            alt="Dopey"
+            className="w-12 h-12 rounded-full object-cover shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="font-semibold text-primary text-sm">
+              Written by Dopey
+            </p>
+            <p className="text-sm text-muted mt-1 leading-relaxed">
+              Building AI systems and high-performance tools. Python for the
+              models. Rust for everything else.
+            </p>
+          </div>
         </div>
+
+        <button
+          onClick={toggle}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line-faint text-sm text-muted hover:text-primary hover:border-line transition-all cursor-pointer whitespace-nowrap shrink-0"
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
+            <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" />
+          </svg>
+          Ask AI
+        </button>
       </div>
 
       <div className="mt-5">
@@ -202,7 +225,7 @@ function AuthorSubscribe({
           <p className="text-sm text-muted">
             Subscribed as{" "}
             <span className="text-secondary font-medium">
-              {subscriber.name}
+              {getDisplayName(subscriber.id)}
             </span>{" "}
             ✓
           </p>
@@ -242,7 +265,7 @@ interface ThreadedComment extends Comment {
 }
 
 function buildThreads(comments: Comment[]): ThreadedComment[] {
-  const map = new Map<number, ThreadedComment>();
+  const map = new Map<string, ThreadedComment>();
   const roots: ThreadedComment[] = [];
   for (const c of comments) map.set(c.id, { ...c, children: [] });
   for (const c of comments) {
@@ -261,7 +284,7 @@ function CommentLikeBtn({
   initialCount,
   email,
 }: {
-  commentId: number;
+  commentId: string;
   initialCount: number;
   email: string | null;
 }) {
@@ -284,9 +307,7 @@ function CommentLikeBtn({
       onClick={handleLike}
       disabled={!email}
       className={`flex items-center gap-1 text-xs cursor-pointer ${
-        liked
-          ? "text-primary"
-          : "text-ghost hover:text-muted"
+        liked ? "text-primary" : "text-ghost hover:text-muted"
       } ${!email ? "opacity-30 cursor-default" : ""}`}
     >
       <svg
@@ -338,6 +359,7 @@ function ThreadNode({
   }
 
   const indent = Math.min(depth, 3);
+  const displayName = getDisplayName(node.subscriber_id);
 
   return (
     <div style={{ marginLeft: indent > 0 ? `${indent * 20}px` : 0 }}>
@@ -352,9 +374,11 @@ function ThreadNode({
             className="w-6 h-6 rounded-full shrink-0"
           />
           <span className="text-xs font-medium text-secondary">
-            {node.subscriber_name}
+            {displayName}
           </span>
-          <span className="text-xs text-ghost">{timeAgo(node.created_at)}</span>
+          <span className="text-xs text-ghost">
+            {timeAgo(node.created_at)}
+          </span>
         </div>
 
         <p className="text-sm text-secondary leading-relaxed mb-2 pl-[34px]">
@@ -461,6 +485,8 @@ function DiscussionSection({
     });
   }
 
+  const displayName = subscriber ? getDisplayName(subscriber.id) : "";
+
   return (
     <div className="py-8 border-t border-line-faint">
       <h2 className="text-sm font-semibold text-primary mb-6">
@@ -491,7 +517,7 @@ function DiscussionSection({
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder={`Comment as ${subscriber.name}...`}
+            placeholder={`Comment as ${displayName}...`}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePost()}
@@ -523,9 +549,7 @@ function KeepReading({
   posts: Post[];
   currentSlug: string;
 }) {
-  const others = posts
-    .filter((p) => p.slug !== currentSlug)
-    .slice(0, 3);
+  const others = posts.filter((p) => p.slug !== currentSlug).slice(0, 3);
 
   if (others.length === 0) return null;
 
@@ -535,7 +559,7 @@ function KeepReading({
         <h2 className="text-sm font-semibold text-primary">Keep Reading</h2>
         <Link
           href="/blog"
-          className="text-xs text-ghost hover:text-muted transition-colors"
+          className="text-xs text-muted hover:text-primary transition-colors"
         >
           View all writing →
         </Link>
@@ -559,7 +583,12 @@ function KeepReading({
               <h3 className="text-sm font-medium text-primary leading-snug line-clamp-2 group-hover:text-secondary transition-colors">
                 {post.title}
               </h3>
-              <p className="text-xs text-dim mt-1.5">
+              {post.excerpt && (
+                <p className="text-xs text-muted mt-1.5 leading-relaxed line-clamp-2">
+                  {post.excerpt}
+                </p>
+              )}
+              <p className="text-xs text-dim mt-2">
                 {readingTime(post.content)} min read
               </p>
             </div>

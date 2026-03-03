@@ -1,11 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import {
-  uniqueNamesGenerator,
-  adjectives,
-  animals,
-} from "unique-names-generator";
+import { createId } from "./utils";
 import {
   addLike,
   addComment,
@@ -17,15 +13,6 @@ import {
   createSubscriber,
 } from "./db";
 import type { Comment, Subscriber } from "./db";
-
-function generateName(): string {
-  return uniqueNamesGenerator({
-    dictionaries: [adjectives, animals],
-    separator: " ",
-    style: "capital",
-    length: 2,
-  });
-}
 
 export async function likePost(postSlug: string): Promise<{ count: number }> {
   return { count: addLike(postSlug) };
@@ -41,8 +28,8 @@ export async function subscribeAction(
   if (existing) return { subscriber: existing };
 
   try {
-    const name = generateName();
-    return { subscriber: createSubscriber(name, cleaned) };
+    const id = createId();
+    return { subscriber: createSubscriber(id, cleaned) };
   } catch {
     return { error: "Could not subscribe. Try again." };
   }
@@ -52,7 +39,7 @@ export async function postCommentAction(
   postSlug: string,
   email: string,
   content: string,
-  parentId: number | null,
+  parentId: string | null,
 ): Promise<{ comments?: Comment[]; error?: string }> {
   if (!content?.trim()) return { error: "Comment cannot be empty." };
   const subscriber = getSubscriberByEmail(email);
@@ -64,7 +51,7 @@ export async function postCommentAction(
 }
 
 export async function likeCommentAction(
-  commentId: number,
+  commentId: string,
   email: string,
 ): Promise<{ count: number; error?: string }> {
   const subscriber = getSubscriberByEmail(email);
@@ -86,27 +73,11 @@ export async function publishPost(
   if (!title?.trim() || !content?.trim())
     return { error: "Title and content are required." };
 
-  const slug = title
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  const excerpt = content
-    .trim()
-    .slice(0, 160)
-    .replace(/[#*_`>\[\]]/g, "")
-    .trim();
+  const slug = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const excerpt = content.trim().slice(0, 160).replace(/[#*_`>\[\]]/g, "").trim();
 
   try {
-    createPost(
-      title.trim(),
-      slug,
-      content.trim(),
-      excerpt,
-      featured,
-      tags.trim(),
-      coverImage.trim(),
-    );
+    createPost(title.trim(), slug, content.trim(), excerpt, featured, tags.trim(), coverImage.trim());
     revalidatePath("/blog");
     revalidatePath("/");
     return { success: true, slug };
