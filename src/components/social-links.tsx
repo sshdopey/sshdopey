@@ -1,14 +1,7 @@
+import { Github, Linkedin, Mail, Send } from "lucide-react";
+
 const socials = [
-  {
-    name: "GitHub",
-    href: "https://github.com/sshdopey",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-        <path d="M9 18c-4.51 2-5-2-7-2" />
-      </svg>
-    ),
-  },
+  { name: "GitHub", href: "https://github.com/sshdopey", icon: <Github size={16} /> },
   {
     name: "X",
     href: "https://x.com/sshdopey",
@@ -18,37 +11,9 @@ const socials = [
       </svg>
     ),
   },
-  {
-    name: "LinkedIn",
-    href: "https://linkedin.com/in/sshdopey",
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-        <rect x="2" y="9" width="4" height="12" />
-        <circle cx="4" cy="4" r="2" />
-      </svg>
-    ),
-  },
-  {
-    name: "Telegram",
-    href: "https://t.me/sshdopey",
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m22 2-7 20-4-9-9-4z" />
-        <path d="M22 2 11 13" />
-      </svg>
-    ),
-  },
-  {
-    name: "Email",
-    href: "mailto:hello@sshdopey.com",
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-      </svg>
-    ),
-  },
+  { name: "LinkedIn", href: "https://linkedin.com/in/sshdopey", icon: <Linkedin size={16} /> },
+  { name: "Telegram", href: "https://t.me/sshdopey", icon: <Send size={16} /> },
+  { name: "Email", href: "mailto:hello@sshdopey.com", icon: <Mail size={16} /> },
 ];
 
 export function SocialLinks({
@@ -67,9 +32,9 @@ export function SocialLinks({
             href={s.href}
             target={s.href.startsWith("mailto:") ? undefined : "_blank"}
             rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-            className="group flex items-center gap-2 px-3.5 py-2 rounded-lg border border-line-faint hover:border-line bg-surface/60 hover:bg-surface-hover text-sm text-muted hover:text-primary transition-all"
+            className="group flex items-center gap-2.5 px-4 py-2.5 rounded-lg border border-line hover:border-accent/40 bg-surface/60 hover:bg-surface-hover text-sm text-secondary hover:text-primary transition-all"
           >
-            <span className="opacity-60 group-hover:opacity-100 transition-opacity">
+            <span className="text-muted group-hover:text-accent transition-colors">
               {s.icon}
             </span>
             <span>{s.name}</span>
@@ -88,7 +53,7 @@ export function SocialLinks({
             href={s.href}
             target={s.href.startsWith("mailto:") ? undefined : "_blank"}
             rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-            className="text-sm text-muted hover:text-primary transition-colors"
+            className="text-sm text-secondary hover:text-accent transition-colors"
           >
             {s.name}
           </a>
@@ -105,7 +70,7 @@ export function SocialLinks({
           href={s.href}
           target={s.href.startsWith("mailto:") ? undefined : "_blank"}
           rel={s.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-          className="text-muted hover:text-primary transition-colors"
+          className="text-secondary hover:text-accent transition-colors"
           title={s.name}
         >
           {s.icon}

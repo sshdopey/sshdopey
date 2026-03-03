@@ -1,19 +1,17 @@
 import Link from "next/link";
-import { getFeaturedPosts } from "@/lib/db";
+import { Heart, ArrowDown } from "lucide-react";
+import { getFeaturedPosts, getLikeCounts } from "@/lib/db";
+import { readingTime } from "@/lib/utils";
 import { StaggerText } from "@/components/stagger-text";
 import { FadeIn, FadeInOnScroll } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
 
-function readingTime(content: string) {
-  return Math.max(1, Math.round(content.split(/\s+/).length / 230));
-}
-
 export default function Home() {
   const featured = getFeaturedPosts(3);
+  const likeCounts = getLikeCounts();
 
   return (
     <>
-      {/* ─── Hero ─── */}
       <section className="min-h-[calc(100vh-3.5rem)] flex flex-col justify-center relative px-6">
         <div className="max-w-5xl mx-auto w-full">
           <h1 className="text-7xl sm:text-8xl lg:text-9xl font-bold tracking-tighter leading-[0.85]">
@@ -41,7 +39,7 @@ export default function Home() {
                 href="https://fairmeld.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary underline underline-offset-4 decoration-ghost hover:decoration-secondary transition-all"
+                className="text-primary underline underline-offset-4 decoration-ghost hover:decoration-accent transition-all"
               >
                 Fairmeld
               </a>{" "}
@@ -56,24 +54,11 @@ export default function Home() {
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
           <FadeIn delay={1.2}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-ghost"
-            >
-              <path d="M12 5v14M19 12l-7 7-7-7" />
-            </svg>
+            <ArrowDown size={20} className="text-ghost" />
           </FadeIn>
         </div>
       </section>
 
-      {/* ─── Featured Writing ─── */}
       {featured.length > 0 && (
         <section className="max-w-5xl mx-auto px-6 pb-24">
           <FadeInOnScroll>
@@ -83,7 +68,7 @@ export default function Home() {
               </h2>
               <Link
                 href="/blog"
-                className="text-xs text-ghost hover:text-muted transition-colors group"
+                className="text-xs text-muted hover:text-accent transition-colors group"
               >
                 All posts{" "}
                 <span className="inline-block group-hover:translate-x-0.5 transition-transform">
@@ -106,6 +91,7 @@ export default function Home() {
               const tags = post.tags
                 ? post.tags.split(",").map((t) => t.trim())
                 : [];
+              const likes = likeCounts[post.slug] ?? 0;
 
               return (
                 <FadeInOnScroll key={post.id} delay={i * 0.1}>
@@ -143,7 +129,7 @@ export default function Home() {
                         {post.excerpt}
                       </p>
 
-                      <div className="flex items-center gap-2.5 text-xs text-muted">
+                      <div className="flex items-center gap-3 text-xs text-muted">
                         <time>
                           {new Date(post.published_at).toLocaleDateString(
                             "en-US",
@@ -152,6 +138,15 @@ export default function Home() {
                         </time>
                         <span className="text-dim">·</span>
                         <span>{readingTime(post.content)} min</span>
+                        {likes > 0 && (
+                          <>
+                            <span className="text-dim">·</span>
+                            <span className="flex items-center gap-1">
+                              <Heart size={11} />
+                              {likes}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Link>

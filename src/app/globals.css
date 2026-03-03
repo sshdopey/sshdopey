@@ -12,6 +12,7 @@
   --color-line: #262626;
   --color-line-faint: #1e1e1e;
   --color-inverse: #060606;
+  --color-accent: #C8FF00;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -28,6 +29,7 @@
   --color-line: #dddddd;
   --color-line-faint: #eeeeee;
   --color-inverse: #ffffff;
+  --color-accent: #5C7A00;
 }
 
 /* ═══ Base ═══ */
@@ -40,8 +42,8 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-::selection { background: rgba(113, 113, 122, 0.2); }
-:root.light ::selection { background: rgba(17, 17, 17, 0.12); }
+::selection { background: rgba(200, 255, 0, 0.15); }
+:root.light ::selection { background: rgba(92, 122, 0, 0.12); }
 
 /* ═══ Scrollbar ═══ */
 
@@ -86,8 +88,7 @@ figure[data-rehype-pretty-code-figure] {
 figure[data-rehype-pretty-code-figure] .code-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
   padding: 0.4rem 0.85rem;
   border-bottom: 1px solid var(--color-line-faint);
   font-family: var(--font-geist-mono), ui-monospace, monospace;
@@ -101,6 +102,9 @@ figure[data-rehype-pretty-code-figure] .code-header {
 }
 
 .copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--color-dim);
   cursor: pointer;
   background: none;
@@ -142,7 +146,7 @@ figure[data-rehype-pretty-code-figure] code > [data-line]::before {
   font-size: 0.75rem;
 }
 
-/* Shiki dual theme: dark by default, light on toggle */
+/* Shiki dual theme */
 [data-rehype-pretty-code-figure] code span {
   color: var(--shiki-dark, inherit);
 }
@@ -151,7 +155,6 @@ html.light [data-rehype-pretty-code-figure] code span {
   color: var(--shiki-light, inherit) !important;
 }
 
-/* Inline code highlighted by rehype-pretty-code (wrapped in span, not figure) */
 .prose span[data-rehype-pretty-code-figure] code {
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   font-size: 0.85em;
@@ -178,7 +181,7 @@ html.light [data-rehype-pretty-code-figure] code span {
 .prose p { margin-top: 0; margin-bottom: 1.5em; }
 
 .prose a { color: var(--color-primary); text-decoration: underline; text-decoration-color: var(--color-ghost); text-underline-offset: 3px; }
-.prose a:hover { text-decoration-color: var(--color-secondary); }
+.prose a:hover { text-decoration-color: var(--color-accent); }
 
 .prose strong { color: var(--color-primary); font-weight: 600; }
 .prose em { font-style: italic; }
@@ -194,7 +197,7 @@ html.light [data-rehype-pretty-code-figure] code span {
 
 .prose figure[data-rehype-pretty-code-figure] code { background: none; padding: 0; border-radius: 0; font-size: 0.875rem; }
 
-.prose blockquote { border-left: 2px solid var(--color-line); padding-left: 1.25rem; margin: 1.75em 0; color: var(--color-muted); font-style: italic; }
+.prose blockquote { border-left: 2px solid var(--color-accent); padding-left: 1.25rem; margin: 1.75em 0; color: var(--color-muted); font-style: italic; }
 .prose blockquote p { margin-bottom: 0; }
 
 .prose ul { list-style-type: disc; padding-left: 1.5em; }
@@ -208,6 +211,26 @@ html.light [data-rehype-pretty-code-figure] code span {
 .prose th { text-align: left; font-weight: 600; color: var(--color-primary); padding: 0.6em 0.8em; border-bottom: 2px solid var(--color-line); }
 .prose td { padding: 0.6em 0.8em; border-bottom: 1px solid var(--color-line-faint); }
 .prose tr:last-child td { border-bottom: none; }
+
+/* ═══ Audio Reading ═══ */
+
+.prose.audio-active .audio-word {
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.1s ease;
+}
+
+.prose.audio-active .audio-word:hover {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.audio-word-active {
+  background: var(--color-accent) !important;
+  color: #111 !important;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+}
 
 /* ═══ MD Editor ═══ */
 

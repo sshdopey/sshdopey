@@ -126,6 +126,15 @@ export function getAllTags(): string[] {
   return Array.from(tagSet).sort();
 }
 
+export function getLikeCounts(): Record<string, number> {
+  const rows = getDb()
+    .prepare("SELECT post_slug, COUNT(*) as c FROM likes GROUP BY post_slug")
+    .all() as { post_slug: string; c: number }[];
+  const map: Record<string, number> = {};
+  for (const r of rows) map[r.post_slug] = r.c;
+  return map;
+}
+
 export function createPost(
   title: string,
   slug: string,

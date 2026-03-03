@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useSidebar } from "./client-layout";
 
 export function Navigation() {
-  const { toggle } = useSidebar();
+  const { isOpen, toggle } = useSidebar();
 
   return (
     <motion.nav
@@ -16,7 +17,8 @@ export function Navigation() {
         duration: 0.5,
         ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
       }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-page/80 border-b border-line-faint"
+      className="fixed top-0 left-0 z-50 backdrop-blur-md bg-page/80 border-b border-line-faint transition-[right] duration-300 ease-in-out"
+      style={{ right: isOpen ? "380px" : "0" }}
     >
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
@@ -40,21 +42,9 @@ export function Navigation() {
 
           <button
             onClick={toggle}
-            className="flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-line-faint text-sm text-muted hover:text-accent hover:border-accent/40 transition-all cursor-pointer"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z" />
-              <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" />
-            </svg>
+            <Sparkles size={14} />
             <span className="hidden sm:inline">Ask AI</span>
           </button>
 

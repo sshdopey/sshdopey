@@ -103,7 +103,7 @@ export function PublishForm() {
         <button
           onClick={handlePublish}
           disabled={!title.trim() || !content.trim()}
-          className="px-6 py-2.5 bg-primary text-inverse text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-30 transition-opacity cursor-pointer"
+          className="px-6 py-2.5 bg-accent text-inverse text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-30 transition-opacity cursor-pointer"
         >
           Deploy
         </button>

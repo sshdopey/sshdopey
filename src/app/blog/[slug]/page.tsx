@@ -1,20 +1,20 @@
 import { notFound } from "next/navigation";
+import { Clock } from "lucide-react";
 import {
   getPostBySlug,
   getComments,
   getLikeCount,
   getLatestPosts,
+  getLikeCounts,
 } from "@/lib/db";
 import { renderMarkdown } from "@/lib/markdown";
+import { readingTime } from "@/lib/utils";
 import { ReadingProgress } from "@/components/reading-progress";
 import { CodeCopy } from "@/components/code-copy";
 import { AudioPlayer } from "@/components/audio-player";
 import { FadeIn } from "@/components/fade-in";
 import { PostInteractions } from "@/components/post-interactions";
-
-function readingTime(content: string) {
-  return Math.max(1, Math.round(content.split(/\s+/).length / 230));
-}
+import { KeepReading } from "@/components/keep-reading";
 
 export async function generateMetadata({
   params,
@@ -47,6 +47,7 @@ export default async function BlogPost({
   const comments = getComments(slug);
   const likeCount = getLikeCount(slug);
   const recommended = getLatestPosts(10);
+  const likeCounts = getLikeCounts();
   const html = await renderMarkdown(post.content);
 
   const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
@@ -84,19 +85,7 @@ export default async function BlogPost({
             <div className="flex flex-wrap items-center justify-between gap-y-3">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="flex items-center gap-1.5 text-sm text-muted">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
+                  <Clock size={14} />
                   {mins} min read
                 </span>
                 {tags.map((tag) => (
@@ -128,9 +117,14 @@ export default async function BlogPost({
           post={post}
           likeCount={likeCount}
           initialComments={comments}
-          recommended={recommended}
         />
       </article>
+
+      <KeepReading
+        posts={recommended}
+        currentSlug={slug}
+        likeCounts={likeCounts}
+      />
     </>
   );
 }

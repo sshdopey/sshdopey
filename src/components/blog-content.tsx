@@ -3,16 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Search } from "lucide-react";
+import { readingTime } from "@/lib/utils";
 import type { Post } from "@/lib/db";
 
-function readingTime(content: string) {
-  return Math.max(1, Math.round(content.split(/\s+/).length / 230));
-}
-
-function PostCard({ post, index }: { post: Post; index: number }) {
-  const tags = post.tags
-    ? post.tags.split(",").map((t) => t.trim())
-    : [];
+function PostCard({
+  post,
+  index,
+  likes,
+}: {
+  post: Post;
+  index: number;
+  likes: number;
+}) {
+  const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
 
   return (
     <motion.div
@@ -55,7 +59,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
             {post.excerpt}
           </p>
 
-          <div className="flex items-center gap-2.5 text-xs text-muted">
+          <div className="flex items-center gap-3 text-xs text-muted">
             <time>
               {new Date(post.published_at).toLocaleDateString("en-US", {
                 month: "short",
@@ -65,6 +69,15 @@ function PostCard({ post, index }: { post: Post; index: number }) {
             </time>
             <span className="text-dim">·</span>
             <span>{readingTime(post.content)} min read</span>
+            {likes > 0 && (
+              <>
+                <span className="text-dim">·</span>
+                <span className="flex items-center gap-1">
+                  <Heart size={11} />
+                  {likes}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </Link>
@@ -72,10 +85,14 @@ function PostCard({ post, index }: { post: Post; index: number }) {
   );
 }
 
-function FeaturedCard({ post }: { post: Post }) {
-  const tags = post.tags
-    ? post.tags.split(",").map((t) => t.trim())
-    : [];
+function FeaturedCard({
+  post,
+  likes,
+}: {
+  post: Post;
+  likes: number;
+}) {
+  const tags = post.tags ? post.tags.split(",").map((t) => t.trim()) : [];
 
   return (
     <Link
@@ -96,7 +113,7 @@ function FeaturedCard({ post }: { post: Post }) {
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="text-[11px] text-dim px-2 py-0.5 rounded-full border border-line-faint"
+                className="text-[11px] text-muted px-2 py-0.5 rounded-full border border-line-faint"
               >
                 {tag}
               </span>
@@ -112,7 +129,7 @@ function FeaturedCard({ post }: { post: Post }) {
           {post.excerpt}
         </p>
 
-        <div className="flex items-center gap-2.5 text-xs text-muted">
+        <div className="flex items-center gap-3 text-xs text-muted">
           <time>
             {new Date(post.published_at).toLocaleDateString("en-US", {
               month: "short",
@@ -121,6 +138,15 @@ function FeaturedCard({ post }: { post: Post }) {
           </time>
           <span className="text-dim">·</span>
           <span>{readingTime(post.content)} min</span>
+          {likes > 0 && (
+            <>
+              <span className="text-dim">·</span>
+              <span className="flex items-center gap-1">
+                <Heart size={11} />
+                {likes}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </Link>
@@ -131,10 +157,12 @@ export function BlogContent({
   posts,
   featured,
   allTags,
+  likeCounts,
 }: {
   posts: Post[];
   featured: Post[];
   allTags: string[];
+  likeCounts: Record<string, number>;
 }) {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -159,39 +187,27 @@ export function BlogContent({
 
   return (
     <>
-      {/* Search */}
       <div className="relative mb-6">
-        <svg
+        <Search
+          size={15}
           className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ghost"
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        />
         <input
           type="text"
           placeholder="Search posts..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-line"
+          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40"
         />
       </div>
 
-      {/* Tags */}
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-10">
           <button
             onClick={() => setActiveTag(null)}
-            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer ${
+            className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
               activeTag === null
-                ? "border-primary text-primary bg-primary/5"
+                ? "border-accent text-accent bg-accent/5"
                 : "border-line-faint text-muted hover:text-primary hover:border-line"
             }`}
           >
@@ -203,9 +219,9 @@ export function BlogContent({
               onClick={() =>
                 setActiveTag(activeTag === tag ? null : tag)
               }
-              className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer ${
+              className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                 activeTag === tag
-                  ? "border-primary text-primary bg-primary/5"
+                  ? "border-accent text-accent bg-accent/5"
                   : "border-line-faint text-muted hover:text-primary hover:border-line"
               }`}
             >
@@ -215,7 +231,6 @@ export function BlogContent({
         </div>
       )}
 
-      {/* Featured */}
       {showFeatured && (
         <section className="mb-12">
           <h2 className="text-xs text-muted uppercase tracking-[0.2em] font-medium mb-5">
@@ -231,13 +246,16 @@ export function BlogContent({
             }`}
           >
             {featured.map((p) => (
-              <FeaturedCard key={p.id} post={p} />
+              <FeaturedCard
+                key={p.id}
+                post={p}
+                likes={likeCounts[p.slug] ?? 0}
+              />
             ))}
           </div>
         </section>
       )}
 
-      {/* All posts */}
       <section>
         {(showFeatured || search || activeTag) && (
           <h2 className="text-xs text-muted uppercase tracking-[0.2em] font-medium mb-5">
@@ -248,7 +266,12 @@ export function BlogContent({
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {(showFeatured ? nonFeaturedFiltered : filtered).map(
               (post, idx) => (
-                <PostCard key={post.id} post={post} index={idx} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  index={idx}
+                  likes={likeCounts[post.slug] ?? 0}
+                />
               ),
             )}
           </div>
