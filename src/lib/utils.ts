@@ -13,11 +13,21 @@ export function readingTime(content: string): number {
   return Math.max(1, Math.round(content.split(/\s+/).length / 230));
 }
 
+export const DOPEY_SUBSCRIPTION_ID =
+  process.env.NEXT_PUBLIC_DOPEY_SUBSCRIPTION_ID ?? "";
+
 export function getDisplayName(id: string): string {
+  if (DOPEY_SUBSCRIPTION_ID && id === DOPEY_SUBSCRIPTION_ID) {
+    return "Dopey";
+  }
   return uniqueNamesGenerator({
     dictionaries: [adjectives, animals],
     separator: " ",
     style: "capital",
     seed: id,
   });
+}
+
+export function isDopey(subscriberId: string): boolean {
+  return DOPEY_SUBSCRIPTION_ID !== "" && subscriberId === DOPEY_SUBSCRIPTION_ID;
 }

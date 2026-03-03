@@ -8,6 +8,26 @@ import rehypeStringify from "rehype-stringify";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
 
+function rehypeVideoEmbed() {
+  return (tree: Root) => {
+    visit(tree, "element", (node: Element, index, parent) => {
+      if (
+        node.tagName === "iframe" &&
+        parent &&
+        index !== undefined
+      ) {
+        const wrapper: Element = {
+          type: "element",
+          tagName: "div",
+          properties: { className: ["video-embed"] },
+          children: [node],
+        };
+        (parent as Element).children[index] = wrapper;
+      }
+    });
+  };
+}
+
 function rehypeImageCaptions() {
   return (tree: Root) => {
     visit(tree, "element", (node: Element, index, parent) => {
@@ -46,6 +66,7 @@ export async function renderMarkdown(content: string): Promise<string> {
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeRaw)
+    .use(rehypeVideoEmbed)
     .use(rehypeImageCaptions)
     .use(rehypePrettyCode, {
       theme: {

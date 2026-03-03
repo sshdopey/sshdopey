@@ -23,6 +23,7 @@ function useTypewriter() {
   const charIdx = useRef(0);
   const deleting = useRef(false);
   const pauseUntil = useRef(0);
+  const started = useRef(false);
 
   useEffect(() => {
     if (focused) return;
@@ -34,11 +35,12 @@ function useTypewriter() {
       const phrase = placeholders[phraseIdx.current];
 
       if (!deleting.current) {
+        if (!started.current) started.current = true;
         charIdx.current++;
         setText(phrase.slice(0, charIdx.current));
         if (charIdx.current >= phrase.length) {
           deleting.current = true;
-          pauseUntil.current = now + 2000;
+          pauseUntil.current = now + 2200;
         }
       } else {
         charIdx.current--;
@@ -46,15 +48,15 @@ function useTypewriter() {
         if (charIdx.current <= 0) {
           deleting.current = false;
           phraseIdx.current = (phraseIdx.current + 1) % placeholders.length;
-          pauseUntil.current = now + 300;
+          pauseUntil.current = now + 80;
         }
       }
-    }, 60);
+    }, 55);
 
     return () => clearInterval(interval);
   }, [focused]);
 
-  return { placeholder: text || placeholders[0], setFocused };
+  return { placeholder: text, setFocused };
 }
 
 function PostCard({

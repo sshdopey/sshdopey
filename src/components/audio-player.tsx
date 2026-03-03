@@ -11,6 +11,10 @@ interface WordInfo {
   text: string;
 }
 
+/* Maximum characters per utterance — keeps the charIndex mapping accurate.
+   Long utterances cause the browser to lose track of word boundaries. */
+const CHUNK_SIZE = 800;
+
 export function AudioPlayer() {
   const [state, setState] = useState<AudioState>("idle");
   const [autoScroll, setAutoScroll] = useState(true);
@@ -22,6 +26,7 @@ export function AudioPlayer() {
   const isAutoScrollingRef = useRef(false);
   const pausedAtRef = useRef(0);
   const seekingRef = useRef(false);
+  const chunkStartRef = useRef(0);
 
   const clearAllHighlights = useCallback(() => {
     const words = wordsRef.current;
@@ -38,6 +43,8 @@ export function AudioPlayer() {
 
   const highlightWord = useCallback((globalIdx: number) => {
     const words = wordsRef.current;
+
+    // Clear previous trail
     for (const idx of trailRef.current) {
       const w = words[idx];
       if (w) w.element.classList.remove(
@@ -60,9 +67,15 @@ export function AudioPlayer() {
     activeIdxRef.current = globalIdx;
 
     if (autoScrollRef.current && globalIdx >= 0 && globalIdx < words.length) {
-      isAutoScrollingRef.current = true;
-      words[globalIdx].element.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => { isAutoScrollingRef.current = false; }, 500);
+      const el = words[globalIdx].element;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Only scroll if the word is outside the middle 40% of the viewport
+      if (rect.top < vh * 0.3 || rect.bottom > vh * 0.7) {
+        isAutoScrollingRef.current = true;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => { isAutoScrollingRef.current = false; }, 600);
+      }
     }
   }, []);
 
@@ -83,7 +96,9 @@ export function AudioPlayer() {
       acceptNode(node) {
         let el = node.parentElement;
         while (el && el !== prose) {
-          if (el.tagName === "PRE" || el.tagName === "FIGURE" || el.tagName === "CODE") {
+          const tag = el.tagName;
+          if (tag === "PRE" || tag === "FIGURE" || tag === "CODE" ||
+              tag === "SCRIPT" || tag === "STYLE" || tag === "SVG") {
             return NodeFilter.FILTER_REJECT;
           }
           el = el.parentElement;
@@ -123,18 +138,42 @@ export function AudioPlayer() {
     return words;
   }, []);
 
-  const speak = useCallback(
+  const speakChunk = useCallback(
     (startIdx: number) => {
       const words = wordsRef.current;
-      if (words.length === 0) return;
+      if (startIdx >= words.length) {
+        // All done
+        clearAllHighlights();
+        stateRef.current = "idle";
+        setState("idle");
+        document.querySelector(".prose")?.classList.remove("audio-active");
+        return;
+      }
 
-      const activeWords = words.slice(startIdx);
-      const text = activeWords.map((w) => w.text).join(" ");
-      if (!text.trim()) return;
+      chunkStartRef.current = startIdx;
 
+      // Build a chunk that doesn't exceed CHUNK_SIZE characters
+      let endIdx = startIdx;
+      let charCount = 0;
+      while (endIdx < words.length) {
+        const wordLen = words[endIdx].text.length + 1;
+        if (charCount + wordLen > CHUNK_SIZE && endIdx > startIdx) break;
+        charCount += wordLen;
+        endIdx++;
+      }
+
+      const chunkWords = words.slice(startIdx, endIdx);
+      const text = chunkWords.map((w) => w.text).join(" ");
+      if (!text.trim()) {
+        // Skip empty chunks
+        speakChunk(endIdx);
+        return;
+      }
+
+      // Build char-to-word mapping for this chunk
       const charStarts: number[] = [];
       let pos = 0;
-      for (const w of activeWords) {
+      for (const w of chunkWords) {
         charStarts.push(pos);
         pos += w.text.length + 1;
       }
@@ -155,10 +194,8 @@ export function AudioPlayer() {
       utterance.onend = () => {
         if (seekingRef.current) return;
         if (stateRef.current === "playing") {
-          clearAllHighlights();
-          stateRef.current = "idle";
-          setState("idle");
-          document.querySelector(".prose")?.classList.remove("audio-active");
+          // Move to next chunk
+          speakChunk(endIdx);
         }
       };
 
@@ -188,8 +225,8 @@ export function AudioPlayer() {
     setState("playing");
     setAutoScroll(true);
     autoScrollRef.current = true;
-    speak(0);
-  }, [wrapWords, speak]);
+    speakChunk(0);
+  }, [wrapWords, speakChunk]);
 
   const pause = useCallback(() => {
     stateRef.current = "paused";
@@ -203,8 +240,8 @@ export function AudioPlayer() {
   const resume = useCallback(() => {
     stateRef.current = "playing";
     setState("playing");
-    speak(Math.max(0, pausedAtRef.current));
-  }, [speak]);
+    speakChunk(Math.max(0, pausedAtRef.current));
+  }, [speakChunk]);
 
   const dismiss = useCallback(() => {
     seekingRef.current = true;
@@ -233,7 +270,7 @@ export function AudioPlayer() {
       if (w) {
         isAutoScrollingRef.current = true;
         w.element.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => { isAutoScrollingRef.current = false; }, 500);
+        setTimeout(() => { isAutoScrollingRef.current = false; }, 600);
       }
     }
   }, []);
@@ -249,21 +286,24 @@ export function AudioPlayer() {
 
       seekingRef.current = true;
       speechSynthesis.cancel();
-      seekingRef.current = false;
 
       stateRef.current = "playing";
       setState("playing");
-      speak(idx);
+      speakChunk(idx);
+      setTimeout(() => {
+        seekingRef.current = false;
+      }, 150);
     }
 
     document.addEventListener("click", handleWordClick);
     return () => document.removeEventListener("click", handleWordClick);
-  }, [speak]);
+  }, [speakChunk]);
 
   useEffect(() => {
     if (state !== "playing" && state !== "paused") return;
 
     function onInput() {
+      if (isAutoScrollingRef.current) return;
       autoScrollRef.current = false;
       setAutoScroll(false);
     }

@@ -10,7 +10,7 @@ import {
   postCommentAction,
   likeCommentAction,
 } from "@/lib/actions";
-import { getDisplayName } from "@/lib/utils";
+import { getDisplayName, isDopey } from "@/lib/utils";
 import { useSidebar } from "./client-layout";
 import type { Comment, Subscriber } from "@/lib/db";
 
@@ -382,6 +382,7 @@ function ThreadNode({
 
   const indent = Math.min(depth, 3);
   const displayName = getDisplayName(node.subscriber_id);
+  const isOwner = isDopey(node.subscriber_id);
 
   return (
     <div style={{ marginLeft: indent > 0 ? `${indent * 20}px` : 0 }}>
@@ -391,11 +392,15 @@ function ThreadNode({
         <div className="flex items-center gap-2.5 mb-1.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`https://api.dicebear.com/9.x/fun-emoji/svg?seed=${node.subscriber_id}`}
+            src={
+              isOwner
+                ? "/sshdopey.jpeg"
+                : `https://api.dicebear.com/9.x/fun-emoji/svg?seed=${node.subscriber_id}`
+            }
             alt=""
-            className="w-6 h-6 rounded-full shrink-0"
+            className="w-6 h-6 rounded-full shrink-0 object-cover"
           />
-          <span className="text-xs font-medium text-secondary">
+          <span className={`text-xs font-medium ${isOwner ? "text-accent" : "text-secondary"}`}>
             {displayName}
           </span>
           <span className="text-xs text-ghost">

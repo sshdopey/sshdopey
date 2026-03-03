@@ -1,11 +1,24 @@
+import type { Metadata } from "next";
 import { getAllPostsMeta, getFeaturedPosts, getAllTags } from "@/lib/posts";
 import { getLikeCounts } from "@/lib/db";
 import { FadeIn } from "@/components/fade-in";
 import { BlogContent } from "@/components/blog-content";
 
-export const metadata = {
-  title: "Writing — Dopey",
+export const metadata: Metadata = {
+  title: "Writing",
   description: "Thoughts on engineering, architecture, and building things that last.",
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    title: "Writing — Dopey",
+    description: "Thoughts on engineering, architecture, and building things that last.",
+    url: "/blog",
+    images: [{ url: "/og/blog.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Writing — Dopey",
+    description: "Thoughts on engineering, architecture, and building things that last.",
+  },
 };
 
 export default function BlogIndex() {

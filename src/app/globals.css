@@ -36,6 +36,16 @@
 
 html { scroll-behavior: auto; }
 
+/* Hide native cursor on desktop — transparent 1×1 PNG is more
+   reliable than bare `cursor:none` across browser edge-cases. */
+@media (min-width: 769px) {
+  *,
+  *::before,
+  *::after {
+    cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=') 0 0, none !important;
+  }
+}
+
 body {
   background: var(--color-page);
   color: var(--color-primary);
@@ -90,6 +100,24 @@ body {
 
 .animate-subtle-pulse { animation: subtle-pulse 3s ease-in-out infinite; }
 
+/* ═══ Custom cursor glow (desktop) ═══ */
+.cursor-glow {
+  background: radial-gradient(
+    circle,
+    rgba(200, 255, 0, 0.12) 0%,
+    rgba(200, 255, 0, 0.04) 40%,
+    transparent 70%
+  );
+}
+:root.light .cursor-glow {
+  background: radial-gradient(
+    circle,
+    rgba(74, 140, 0, 0.10) 0%,
+    rgba(74, 140, 0, 0.03) 40%,
+    transparent 70%
+  );
+}
+
 /* ═══ Hero Grid ═══ */
 
 .hero-grid {
@@ -97,8 +125,8 @@ body {
     linear-gradient(var(--color-ghost) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-ghost) 1px, transparent 1px);
   background-size: 50px 50px;
-  opacity: 0.18;
-  mask-image: radial-gradient(ellipse 85% 70% at 35% 50%, black 0%, transparent 75%);
+  opacity: 0.22;
+  mask-image: radial-gradient(ellipse 95% 80% at 40% 50%, black 0%, transparent 88%);
 }
 
 :root.light .hero-grid {
@@ -336,16 +364,48 @@ html.light [data-rehype-pretty-code-figure] code span {
   margin-bottom: 1.5em;
 }
 
-/* ═══ YouTube Embeds ═══ */
+/* ═══ YouTube / Video Embeds ═══ */
 
-.prose iframe {
+.prose .video-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 2em auto;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-line-faint);
+}
+
+.prose .video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Overlay to block native cursor inside cross-origin iframes (desktop) */
+@media (min-width: 769px) {
+  .prose .video-embed::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .prose .video-embed[data-active]::after {
+    pointer-events: none;
+  }
+}
+
+.prose iframe:not(.video-embed iframe) {
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: auto;
+  min-height: 200px;
   border-radius: 10px;
   margin: 2em auto;
-  max-width: 100%;
-  display: block;
   border: 1px solid var(--color-line-faint);
-  aspect-ratio: 16/9;
-  width: 100%;
 }
 
 .prose table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.9em; }
@@ -356,12 +416,14 @@ html.light [data-rehype-pretty-code-figure] code span {
 /* ═══ Audio Reading ═══ */
 
 .audio-word {
-  transition: background-color 0.35s ease-out, color 0.35s ease-out, text-decoration-color 0.35s ease-out;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              text-decoration-color 0.25s ease-out;
+  border-radius: 2px;
 }
 
 .prose.audio-active .audio-word {
   cursor: pointer;
-  border-radius: 2px;
 }
 
 .prose.audio-active .audio-word:hover {
@@ -369,33 +431,29 @@ html.light [data-rehype-pretty-code-figure] code span {
 }
 
 .audio-word-active {
-  background: color-mix(in srgb, var(--color-accent) 35%, transparent) !important;
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent) !important;
   color: var(--color-primary) !important;
   text-decoration: underline;
   text-decoration-color: var(--color-accent);
   text-underline-offset: 3px;
-  border-radius: 2px;
-  padding: 0 2px;
-  margin: 0 -2px;
+  padding: 1px 3px;
+  margin: 0 -3px;
 }
 
 .audio-word-trail-1 {
-  background: color-mix(in srgb, var(--color-accent) 18%, transparent) !important;
-  border-radius: 2px;
-  padding: 0 2px;
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent) !important;
+  padding: 1px 2px;
   margin: 0 -2px;
 }
 
 .audio-word-trail-2 {
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent) !important;
-  border-radius: 2px;
-  padding: 0 2px;
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent) !important;
+  padding: 1px 2px;
   margin: 0 -2px;
 }
 
 .audio-word-trail-3 {
-  background: color-mix(in srgb, var(--color-accent) 4%, transparent) !important;
-  border-radius: 2px;
-  padding: 0 2px;
+  background: color-mix(in srgb, var(--color-accent) 3%, transparent) !important;
+  padding: 1px 2px;
   margin: 0 -2px;
 }

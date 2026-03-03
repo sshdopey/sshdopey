@@ -1,204 +1,289 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 
-const VISITED_KEY = "dopey-visited";
-const quotes = [
-  "ship it or quit it ⚡",
-  "zero-cost abstractions loaded 🦀",
-  "it compiles, ship it",
-  "built different, built to last",
-  "sleep is overrated when you're shipping",
-  "cargo build --release 🚀",
-  "trust the process, trust the compiler",
-  "Python for the models. Rust for everything else.",
-  "the best code is no code",
-  "make it work, make it fast, make it beautiful",
-];
+/* Use cursor:none — the CSS in <head> already sets this globally,
+   but JS re-applies it as a safety net for dynamically added elements. */
+const HIDDEN = "none";
 
 function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
-  const trailRefs = useRef<HTMLDivElement[]>([]);
+  const glowRef = useRef<HTMLDivElement>(null);
   const pos = useRef({ x: -100, y: -100 });
-  const trailPositions = useRef(
-    Array.from({ length: 5 }, () => ({ x: -100, y: -100 })),
-  );
+  const glowPos = useRef({ x: -100, y: -100 });
+  const modeRef = useRef<"default" | "pointer" | "grab">("default");
+  const shownOnce = useRef(false);
   const [visible, setVisible] = useState(false);
+  const [cursorMode, setCursorMode] = useState<
+    "default" | "pointer" | "grab"
+  >("default");
   const [clicking, setClicking] = useState(false);
 
   useEffect(() => {
+    /* ── Nuclear native-cursor kill ──
+       The problem: when the mouse exits the viewport (especially at the
+       top edge into browser chrome) and re-enters, the browser renders
+       one or more frames with the default cursor before our CSS takes
+       effect. We use a multi-layer defense:
+
+       1. A <style> tag in <head> (in layout.tsx) applies cursor:none via
+          CSS on *, so it's there before any JS runs.
+       2. On pointerenter (fires the instant the pointer re-enters,
+          BEFORE mousemove), we set cursor AND force a synchronous style
+          recalc via offsetHeight so the change paints in the same frame.
+       3. On every pointermove (high-frequency, passive) we re-apply.
+       4. On every RAF tick we re-apply as ongoing enforcement.
+       5. We also stamp every element that gets hovered via mouseover. */
+
+    function ensureHidden() {
+      const h = document.documentElement;
+      const b = document.body;
+      h.style.setProperty("cursor", HIDDEN, "important");
+      b.style.setProperty("cursor", HIDDEN, "important");
+    }
+
+    function onPointerEnter() {
+      ensureHidden();
+      // Force synchronous style recalc — makes cursor change paint
+      // within this frame instead of the next one
+      void document.documentElement.offsetHeight;
+    }
+
+    /* Stamp any element the user hovers so it also has cursor hidden.
+       This catches elements with inline cursor styles the CSS rule
+       might not override. */
+    function onMouseOver(e: MouseEvent) {
+      const el = e.target as HTMLElement;
+      if (el && el.style) {
+        el.style.setProperty("cursor", HIDDEN, "important");
+      }
+    }
+
+    function updateMode(target: Element | null) {
+      if (!target) return;
+
+      let mode: "default" | "pointer" | "grab" = "default";
+
+      if (target.closest("[data-cursor-grab]")) {
+        mode = "grab";
+      } else if (
+        target.closest(".video-embed:not([data-active])") ||
+        target.closest("a") ||
+        target.closest("button") ||
+        target.closest("[role='button']") ||
+        target.closest('input[type="submit"]') ||
+        target.closest('input[type="button"]') ||
+        target.closest("[type='button']") ||
+        target.closest("label[for]") ||
+        target.closest("select") ||
+        target.closest(".cursor-pointer") ||
+        (target as HTMLElement)?.style?.cursor === "pointer"
+      ) {
+        mode = "pointer";
+      } else {
+        try {
+          const cs = window.getComputedStyle(target as HTMLElement);
+          if (cs.cursor === "pointer") mode = "pointer";
+        } catch {}
+      }
+
+      if (mode !== modeRef.current) {
+        modeRef.current = mode;
+        setCursorMode(mode);
+      }
+    }
+
     function onMove(e: MouseEvent) {
       pos.current = { x: e.clientX, y: e.clientY };
-      if (!visible) setVisible(true);
+
+      if (!shownOnce.current) {
+        shownOnce.current = true;
+        setVisible(true);
+      }
+
+      updateMode(document.elementFromPoint(e.clientX, e.clientY));
     }
-    function onLeave() { setVisible(false); }
-    function onDown() { setClicking(true); }
-    function onUp() { setClicking(false); }
+
+    function onDown() {
+      setClicking(true);
+    }
+    function onUp() {
+      setClicking(false);
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        ensureHidden();
+        void document.documentElement.offsetHeight;
+      }
+    }
+
+    /* Video embed overlay toggle */
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as Element;
+      const embed = target.closest(".video-embed");
+
+      if (embed && !embed.hasAttribute("data-active")) {
+        embed.setAttribute("data-active", "");
+        return;
+      }
+
+      document
+        .querySelectorAll(".video-embed[data-active]")
+        .forEach((el) => {
+          if (!el.contains(target)) el.removeAttribute("data-active");
+        });
+    }
+
+    ensureHidden();
 
     let raf: number;
     function tick() {
+      ensureHidden();
+
       if (cursorRef.current) {
         cursorRef.current.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px)`;
       }
-      for (let i = 0; i < trailPositions.current.length; i++) {
-        const prev = i === 0 ? pos.current : trailPositions.current[i - 1];
-        const lerp = 0.25 - i * 0.03;
-        trailPositions.current[i] = {
-          x: trailPositions.current[i].x + (prev.x - trailPositions.current[i].x) * lerp,
-          y: trailPositions.current[i].y + (prev.y - trailPositions.current[i].y) * lerp,
+      if (glowRef.current) {
+        const g = glowPos.current;
+        const p = pos.current;
+        glowPos.current = {
+          x: g.x + (p.x - g.x) * 0.22,
+          y: g.y + (p.y - g.y) * 0.22,
         };
-        if (trailRefs.current[i]) {
-          trailRefs.current[i].style.transform = `translate(${trailPositions.current[i].x}px, ${trailPositions.current[i].y}px)`;
-        }
+        glowRef.current.style.transform = `translate(${glowPos.current.x}px, ${glowPos.current.y}px) translate(-50%, -50%)`;
       }
       raf = requestAnimationFrame(tick);
     }
 
+    window.addEventListener("pointerenter", onPointerEnter);
+    window.addEventListener("pointermove", ensureHidden, { passive: true });
+    document.addEventListener("mouseover", onMouseOver, { passive: true });
     window.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseleave", onLeave);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    document.addEventListener("click", onDocClick);
     raf = requestAnimationFrame(tick);
 
     return () => {
+      window.removeEventListener("pointerenter", onPointerEnter);
+      window.removeEventListener("pointermove", ensureHidden);
+      document.removeEventListener("mouseover", onMouseOver);
       window.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      document.removeEventListener("click", onDocClick);
       cancelAnimationFrame(raf);
     };
-  }, [visible]);
+  }, []);
+
+  const size = clicking ? 20 : 22;
+  const halo =
+    "drop-shadow(0 0 1px var(--color-page)) drop-shadow(0 0 1px var(--color-page))";
 
   return (
     <>
-      <style>{`
-        * { cursor: none !important; }
-        a, button, [role="button"], input, textarea, select, label { cursor: none !important; }
-      `}</style>
-
-      {trailPositions.current.map((_, i) => (
-        <div
-          key={i}
-          ref={(el) => { if (el) trailRefs.current[i] = el; }}
-          className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full"
-          style={{
-            width: 4 - i * 0.5,
-            height: 4 - i * 0.5,
-            marginLeft: -(4 - i * 0.5) / 2,
-            marginTop: -(4 - i * 0.5) / 2,
-            background: `var(--color-accent)`,
-            opacity: visible ? 0.3 - i * 0.05 : 0,
-            transition: "opacity 0.2s",
-          }}
-        />
-      ))}
+      {/* Gradient glow that trails the cursor */}
+      <div
+        ref={glowRef}
+        className="fixed top-0 left-0 pointer-events-none z-[9998] rounded-full cursor-glow"
+        style={{
+          width: 240,
+          height: 240,
+          opacity: visible ? 0.7 : 0,
+          transition: "opacity 0.2s",
+          transform: `translate(${glowPos.current.x}px, ${glowPos.current.y}px) translate(-50%, -50%)`,
+        }}
+      />
 
       <div
         ref={cursorRef}
         className="fixed top-0 left-0 pointer-events-none z-[9999]"
-        style={{ opacity: visible ? 1 : 0, transition: "opacity 0.15s" }}
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.12s",
+          transform: `translate(${pos.current.x}px, ${pos.current.y}px)`,
+        }}
       >
-        <div
-          className="rounded-full border-[1.5px] border-accent"
-          style={{
-            width: clicking ? 14 : 18,
-            height: clicking ? 14 : 18,
-            marginLeft: clicking ? -7 : -9,
-            marginTop: clicking ? -7 : -9,
-            transition: "width 0.1s, height 0.1s, margin 0.1s",
-            background: clicking ? "var(--color-accent)" : "transparent",
-            opacity: clicking ? 0.3 : 1,
-          }}
-        />
+        {cursorMode === "grab" ? (
+          clicking ? (
+            /* ── Lucide "hand-grab" — closed hand (outline) ── */
+            <svg
+              width={size}
+              height={size}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent"
+              style={{ filter: halo, transform: "translate(-50%, -50%)" }}
+            >
+              <path d="M18 11.5V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1.4" />
+              <path d="M14 10V8a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+              <path d="M10 9.9V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v5" />
+              <path d="M6 14a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+              <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8 2 2 0 1 1 4 0" />
+            </svg>
+          ) : (
+            /* ── Lucide "hand" — open hand (outline) ── */
+            <svg
+              width={size}
+              height={size}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent"
+              style={{ filter: halo, transform: "translate(-50%, -50%)" }}
+            >
+              <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+              <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+              <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+            </svg>
+          )
+        ) : cursorMode === "pointer" ? (
+          /* ── Lucide "pointer" — pointing hand (outline) ── */
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-accent"
+            style={{ filter: halo, transform: "translate(-7px, -2px)" }}
+          >
+            <path d="M22 14a8 8 0 0 1-8 8" />
+            <path d="M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+            <path d="M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1" />
+            <path d="M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10" />
+            <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+          </svg>
+        ) : (
+          /* ── Lucide "mouse-pointer-2" — default arrow (filled) ── */
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            stroke="none"
+            className="text-accent"
+            style={{ filter: halo, transform: "translate(-4px, -4px)" }}
+          >
+            <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" />
+          </svg>
+        )}
       </div>
     </>
-  );
-}
-
-function FirstVisitConfetti() {
-  const [particles, setParticles] = useState<
-    { id: number; x: number; y: number; emoji: string; delay: number }[]
-  >([]);
-
-  useEffect(() => {
-    const visited = localStorage.getItem(VISITED_KEY);
-    if (visited) return;
-
-    localStorage.setItem(VISITED_KEY, "true");
-
-    const emojis = ["🎉", "🚀", "⚡", "🦀", "🐍", "✨", "💻", "🔥", "⭐", "💜"];
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const newParticles = Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      x: Math.random() * w,
-      y: h + 50,
-      emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      delay: Math.random() * 0.8,
-    }));
-    setParticles(newParticles);
-    setTimeout(() => setParticles([]), 4000);
-  }, []);
-
-  return (
-    <AnimatePresence>
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ opacity: 1, y: p.y, x: p.x, scale: 0, rotate: 0 }}
-          animate={{
-            opacity: [1, 1, 0],
-            y: [p.y, p.y - 400 - Math.random() * 400],
-            x: [p.x, p.x + (Math.random() - 0.5) * 300],
-            scale: [0, 1.2 + Math.random() * 0.5, 0.8],
-            rotate: [0, (Math.random() - 0.5) * 360],
-          }}
-          exit={{ opacity: 0 }}
-          transition={{
-            duration: 2.5 + Math.random(),
-            delay: p.delay,
-            ease: "easeOut",
-          }}
-          className="fixed pointer-events-none z-[9999] text-2xl sm:text-3xl"
-        >
-          {p.emoji}
-        </motion.div>
-      ))}
-    </AnimatePresence>
-  );
-}
-
-function HomeReloadQuote() {
-  const pathname = usePathname();
-  const [quote, setQuote] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (pathname !== "/") return;
-    const visited = localStorage.getItem(VISITED_KEY);
-    if (!visited) return;
-
-    const msg = quotes[Math.floor(Math.random() * quotes.length)];
-    setQuote(msg);
-    const timer = setTimeout(() => setQuote(null), 3500);
-    return () => clearTimeout(timer);
-  }, [pathname]);
-
-  return (
-    <AnimatePresence>
-      {quote && (
-        <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -15, scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 250, damping: 20 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-2.5 rounded-full bg-surface border border-line text-sm text-muted font-mono shadow-lg backdrop-blur-md whitespace-nowrap max-w-[90vw] truncate"
-        >
-          {quote}
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 
@@ -206,18 +291,12 @@ export function Magic() {
   const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
     const mq = window.matchMedia("(max-width: 768px)");
-    const h = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", h);
-    return () => mq.removeEventListener("change", h);
+    mq.addEventListener("change", check);
+    return () => mq.removeEventListener("change", check);
   }, []);
 
-  return (
-    <>
-      {!isMobile && <CustomCursor />}
-      <FirstVisitConfetti />
-      <HomeReloadQuote />
-    </>
-  );
+  return <>{!isMobile && <CustomCursor />}</>;
 }

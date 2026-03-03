@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, ArrowDown } from "lucide-react";
@@ -8,6 +9,19 @@ import { HeroVisual } from "@/components/hero-visual";
 import { TiltCard } from "@/components/tilt-card";
 import { FadeIn, FadeInOnScroll } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
+import { PersonJsonLd } from "@/components/json-ld";
+
+export const metadata: Metadata = {
+  title: "Dopey — Software Engineer",
+  description:
+    "Building AI systems and high-performance tools. Python for the models. Rust for everything else.",
+  openGraph: {
+    title: "Dopey — Software Engineer",
+    description:
+      "Building AI systems and high-performance tools. Python for the models. Rust for everything else.",
+    images: [{ url: "/og/home.png", width: 1200, height: 630 }],
+  },
+};
 
 export default function Home() {
   const featured = getFeaturedPosts(3);
@@ -15,6 +29,7 @@ export default function Home() {
 
   return (
     <>
+      <PersonJsonLd />
       <section className="min-h-[calc(100vh-3.5rem)] flex flex-col justify-center relative px-4 sm:px-6 overflow-visible">
         <div className="absolute inset-0 hero-grid pointer-events-none" />
 

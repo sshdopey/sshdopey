@@ -12,6 +12,7 @@ import { HeaderShareBtn } from "@/components/header-share";
 import { FadeIn } from "@/components/fade-in";
 import { PostInteractions } from "@/components/post-interactions";
 import { KeepReading } from "@/components/keep-reading";
+import { ArticleJsonLd } from "@/components/json-ld";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -25,13 +26,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return { title: "Not Found" };
+
+  const ogImage = `/og/${slug}.png`;
+
   return {
-    title: `${post.title} — Dopey`,
+    title: post.title,
     description: post.excerpt,
+    alternates: { canonical: `/blog/${slug}` },
     openGraph: {
+      type: "article",
       title: post.title,
       description: post.excerpt,
-      images: post.cover_image ? [post.cover_image] : undefined,
+      url: `/blog/${slug}`,
+      publishedTime: post.published_at,
+      authors: ["Dopey"],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [ogImage],
     },
   };
 }
@@ -59,6 +74,13 @@ export default async function BlogPost({
 
   return (
     <>
+      <ArticleJsonLd
+        title={post.title}
+        excerpt={post.excerpt}
+        slug={post.slug}
+        publishedAt={post.published_at}
+        coverImage={post.cover_image}
+      />
       <ReadingProgress />
       <CodeCopy />
 

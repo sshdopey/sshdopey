@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "og:generate": "npx tsx scripts/generate-og.tsx"
   },
   "dependencies": {
     "@uiw/react-md-editor": "^4.0.11",
+    "@vercel/og": "^0.10.1",
     "better-sqlite3": "^12.6.2",
     "framer-motion": "^12.34.4",
     "gray-matter": "^4.0.3",
@@ -25,6 +27,8 @@
     "remark-gfm": "^4.0.1",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
+    "satori": "^0.24.1",
+    "sharp": "^0.34.5",
     "unified": "^11.0.5",
     "unique-names-generator": "^4.7.1"
   },
@@ -34,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sharp": "^0.31.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",

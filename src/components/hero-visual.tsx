@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useDragControls } from "framer-motion";
 import { Terminal, Grip } from "lucide-react";
-import { TerminalSnake } from "./terminal-snake";
+import { TerminalPacman } from "./terminal-pacman";
 
 type Color = "accent" | "muted" | "ghost" | "secondary" | "dim" | "primary";
 
@@ -178,13 +178,13 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
 export function HeroVisual() {
   const [fs] = useState(buildFS);
   const [cwd, setCwd] = useState("/home/dopey");
-  const [lines, setLines] = useState<{ text: string; color: Color }[]>([]);
+  const [lines, setLines] = useState<{ text: string; color: Color }[]>(() => []);
   const [inputValue, setInputValue] = useState("");
   const [ready, setReady] = useState(false);
   const [bootDone, setBoot] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
-  const [gameMode, setGameMode] = useState<"none" | "snake">("none");
+  const [gameMode, setGameMode] = useState<"none" | "game">("none");
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
@@ -228,18 +228,14 @@ export function HeroVisual() {
         case "help": {
           out.push(
             { text: "Commands:", color: "muted" },
-            { text: "  ls [path]     list directory", color: "ghost" },
-            { text: "  cd <path>     change directory", color: "ghost" },
-            { text: "  cat <file>    read file", color: "ghost" },
-            { text: "  pwd           working directory", color: "ghost" },
-            { text: "  tree [path]   directory tree", color: "ghost" },
-            { text: "  echo <text>   print text", color: "ghost" },
-            { text: "  whoami        about me", color: "ghost" },
+            { text: "  whoami        who is dopey?", color: "ghost" },
+            { text: "  stack         tech stack", color: "ghost" },
+            { text: "  projects      what i'm building", color: "ghost" },
             { text: "  neofetch      system info", color: "ghost" },
+            { text: "  social        find me online", color: "ghost" },
+            { text: "  pacman        🕹️ play pac-man", color: "ghost" },
             { text: "  cowsay <msg>  🐄", color: "ghost" },
-            { text: "  date          current date", color: "ghost" },
-            { text: "  history       command history", color: "ghost" },
-            { text: "  snake         🐍 play snake!", color: "ghost" },
+            { text: "  ls · cd · cat file explorer", color: "ghost" },
             { text: "  clear         clear terminal", color: "ghost" },
           );
           break;
@@ -309,10 +305,52 @@ export function HeroVisual() {
           break;
         case "whoami":
           out.push(
-            { text: "  Dopey — Software Engineer", color: "accent" },
-            { text: "  AI systems & high-performance tools", color: "muted" },
-            { text: "  Python · Rust · TypeScript", color: "muted" },
-            { text: "  Currently shipping Fairmeld", color: "muted" },
+            { text: "  ╭─────────────────────────────╮", color: "dim" },
+            { text: "  │  Dopey — Software Engineer  │", color: "accent" },
+            { text: "  ├─────────────────────────────┤", color: "dim" },
+            { text: "  │  Building AI systems &      │", color: "muted" },
+            { text: "  │  high-performance tools.    │", color: "muted" },
+            { text: "  │                             │", color: "dim" },
+            { text: "  │  Python for the models.     │", color: "muted" },
+            { text: "  │  Rust for everything else.  │", color: "muted" },
+            { text: "  ╰─────────────────────────────╯", color: "dim" },
+          );
+          break;
+        case "stack":
+          out.push(
+            { text: "  Languages", color: "accent" },
+            { text: "    Python · Rust · TypeScript", color: "primary" },
+            { text: "  AI/ML", color: "accent" },
+            { text: "    PyTorch · Transformers · ONNX", color: "primary" },
+            { text: "  Infra", color: "accent" },
+            { text: "    Docker · SQLite · Cloudflare", color: "primary" },
+            { text: "  Frontend", color: "accent" },
+            { text: "    Next.js · Tailwind · Motion", color: "primary" },
+            { text: "  Editor", color: "accent" },
+            { text: "    Neovim + tmux (obviously)", color: "primary" },
+          );
+          break;
+        case "projects":
+          out.push(
+            { text: "  🚀 Fairmeld", color: "accent" },
+            { text: "     An AI system everyone would trust", color: "muted" },
+            { text: "     Rust + Python | shipping fast", color: "ghost" },
+            { text: "", color: "ghost" },
+            { text: "  🧠 Neural Engine", color: "accent" },
+            { text: "     Custom ML inference runtime", color: "muted" },
+            { text: "     PyTorch + ONNX | 12 layers", color: "ghost" },
+            { text: "", color: "ghost" },
+            { text: "  🌐 sshdopey.com", color: "accent" },
+            { text: "     This website — you're in it", color: "muted" },
+            { text: "     Next.js 16 + SQLite + Tailwind", color: "ghost" },
+          );
+          break;
+        case "social":
+          out.push(
+            { text: "  GitHub    github.com/sshdopey", color: "primary" },
+            { text: "  Twitter   twitter.com/sshdopey", color: "primary" },
+            { text: "  LinkedIn  linkedin.com/in/sshdopey", color: "primary" },
+            { text: "  Email     hi@sshdopey.com", color: "primary" },
           );
           break;
         case "date":
@@ -323,15 +361,16 @@ export function HeroVisual() {
           break;
         case "neofetch":
           out.push(
-            { text: "        ▄▄▄       dopey@fairmeld", color: "accent" },
-            { text: "       █████      ─────────────────", color: "accent" },
-            { text: "      ███████     OS: macOS Sequoia", color: "primary" },
-            { text: "     █████████    Shell: zsh 5.9", color: "primary" },
-            { text: "    ███████████   Editor: neovim", color: "primary" },
-            { text: "     █████████    Languages: 🐍 🦀 📜", color: "primary" },
-            { text: "      ███████     Coffee: ∞ cups", color: "primary" },
-            { text: "       █████", color: "accent" },
-            { text: "        ▀▀▀", color: "accent" },
+            { text: "   ▄▀▀▀▀▀▀▀▄   dopey@sshdopey", color: "accent" },
+            { text: "   █ ◉   ◉ █   ────────────────", color: "accent" },
+            { text: "   █   ▽   █   OS: macOS Sequoia", color: "primary" },
+            { text: "   ▀▄▄▄▄▄▄▄▀   Shell: zsh 5.9", color: "primary" },
+            { text: "    ╱╱  ╲╲     Editor: neovim", color: "primary" },
+            { text: "   ╱╱    ╲╲    Terminal: ghostty", color: "primary" },
+            { text: "               WM: yabai + skhd", color: "primary" },
+            { text: "               Coffee: ∞ cups", color: "muted" },
+            { text: "               Uptime: shipping", color: "muted" },
+            { text: "   ● ● ● ● ●   █ █ █ █ █", color: "accent" },
           );
           break;
         case "history":
@@ -341,10 +380,11 @@ export function HeroVisual() {
             history.forEach((h, i) => out.push({ text: `  ${i + 1}  ${h}`, color: "muted" }));
           }
           break;
-        case "snake":
+        case "pacman":
+        case "game":
         case "play": {
           addLines(out);
-          setGameMode("snake");
+          setGameMode("game");
           return;
         }
         case "clear":
@@ -408,8 +448,8 @@ export function HeroVisual() {
         case "": break;
         default:
           out.push(
-            { text: `  command not found: ${cmd}`, color: "ghost" },
-            { text: "  type 'help' for commands", color: "ghost" },
+            { text: `  zsh: command not found: ${cmd}`, color: "ghost" },
+            { text: "  try 'help' — I promise it's worth it", color: "dim" },
           );
       }
 
@@ -476,6 +516,7 @@ export function HeroVisual() {
   return (
     <div className="hidden lg:block absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] w-[420px] xl:w-[460px] select-none z-10">
       <motion.div
+        data-cursor-grab
         drag
         dragControls={dragControls}
         dragMomentum={false}
@@ -505,15 +546,15 @@ export function HeroVisual() {
 
         <div
           ref={scrollRef}
-          className="px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] h-[400px] xl:h-[440px] overflow-y-auto terminal-scroll"
+          className={`px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] h-[400px] xl:h-[440px] terminal-scroll ${gameMode === "game" ? "flex flex-col min-h-0 overflow-hidden" : "overflow-y-auto"}`}
           onClick={() => gameMode === "none" && inputRef.current?.focus()}
         >
-          {gameMode === "snake" ? (
-            <TerminalSnake
+          {gameMode === "game" ? (
+            <TerminalPacman
               onExit={(finalScore) => {
                 setGameMode("none");
                 addLines([
-                  { text: `  🐍 Game over! Final score: ${finalScore}`, color: "accent" },
+                  { text: `  🕹️ Final score: ${finalScore}`, color: "accent" },
                 ]);
                 setTimeout(() => inputRef.current?.focus(), 50);
               }}
@@ -533,7 +574,7 @@ export function HeroVisual() {
                 animate={{ opacity: ready ? 0.7 : 0 }}
                 className="text-ghost"
               >
-                Connected. Type &apos;help&apos; for commands.
+                Welcome. Type &apos;help&apos; to get started.
               </motion.div>
               <div className="h-2" />
 
@@ -559,7 +600,6 @@ export function HeroVisual() {
                     spellCheck={false}
                     autoComplete="off"
                   />
-                  {!inputValue && <span className="blink-cursor text-[11px]" />}
                 </div>
               )}
             </>
