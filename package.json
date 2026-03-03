@@ -12,11 +12,13 @@
     "@uiw/react-md-editor": "^4.0.11",
     "better-sqlite3": "^12.6.2",
     "framer-motion": "^12.34.4",
+    "highlight.js": "^11.11.1",
     "isomorphic-dompurify": "^3.0.0",
     "marked": "^17.0.3",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

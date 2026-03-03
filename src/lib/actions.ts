@@ -2,40 +2,49 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  uniqueNamesGenerator,
+  adjectives,
+  animals,
+} from "unique-names-generator";
+import {
   addLike,
   addComment,
+  addCommentLike,
   createPost,
   getComments,
+  getCommentLikeCount,
   getSubscriberByEmail,
   createSubscriber,
 } from "./db";
 import type { Comment, Subscriber } from "./db";
 
+function generateName(): string {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    separator: " ",
+    style: "capital",
+    length: 2,
+  });
+}
+
 export async function likePost(postSlug: string): Promise<{ count: number }> {
-  const count = addLike(postSlug);
-  return { count };
+  return { count: addLike(postSlug) };
 }
 
 export async function subscribeAction(
-  formData: FormData,
+  email: string,
 ): Promise<{ subscriber?: Subscriber; error?: string }> {
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
+  if (!email?.trim()) return { error: "Email is required." };
 
-  if (!name?.trim() || !email?.trim()) {
-    return { error: "Name and email are required." };
-  }
-
-  const existing = getSubscriberByEmail(email.trim().toLowerCase());
-  if (existing) {
-    return { subscriber: existing };
-  }
+  const cleaned = email.trim().toLowerCase();
+  const existing = getSubscriberByEmail(cleaned);
+  if (existing) return { subscriber: existing };
 
   try {
-    const subscriber = createSubscriber(name.trim(), email.trim().toLowerCase());
-    return { subscriber };
+    const name = generateName();
+    return { subscriber: createSubscriber(name, cleaned) };
   } catch {
-    return { error: "Could not subscribe. Try a different email." };
+    return { error: "Could not subscribe. Try again." };
   }
 }
 
@@ -45,19 +54,24 @@ export async function postCommentAction(
   content: string,
   parentId: number | null,
 ): Promise<{ comments?: Comment[]; error?: string }> {
-  if (!content?.trim()) {
-    return { error: "Comment cannot be empty." };
-  }
-
+  if (!content?.trim()) return { error: "Comment cannot be empty." };
   const subscriber = getSubscriberByEmail(email);
-  if (!subscriber) {
-    return { error: "Please subscribe first." };
-  }
+  if (!subscriber) return { error: "Please subscribe first." };
 
   addComment(postSlug, subscriber.id, content.trim(), parentId);
   revalidatePath(`/blog/${postSlug}`);
-  const comments = getComments(postSlug);
-  return { comments };
+  return { comments: getComments(postSlug) };
+}
+
+export async function likeCommentAction(
+  commentId: number,
+  email: string,
+): Promise<{ count: number; error?: string }> {
+  const subscriber = getSubscriberByEmail(email);
+  if (!subscriber) return { count: 0, error: "Subscribe first." };
+
+  addCommentLike(commentId, subscriber.id);
+  return { count: getCommentLikeCount(commentId) };
 }
 
 export async function publishPost(
@@ -66,17 +80,17 @@ export async function publishPost(
   const title = formData.get("title") as string;
   const content = formData.get("content") as string;
   const featured = formData.get("featured") === "on";
+  const tags = (formData.get("tags") as string) || "";
+  const coverImage = (formData.get("cover_image") as string) || "";
 
-  if (!title?.trim() || !content?.trim()) {
+  if (!title?.trim() || !content?.trim())
     return { error: "Title and content are required." };
-  }
 
   const slug = title
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-
   const excerpt = content
     .trim()
     .slice(0, 160)
@@ -84,12 +98,19 @@ export async function publishPost(
     .trim();
 
   try {
-    createPost(title.trim(), slug, content.trim(), excerpt, featured);
+    createPost(
+      title.trim(),
+      slug,
+      content.trim(),
+      excerpt,
+      featured,
+      tags.trim(),
+      coverImage.trim(),
+    );
     revalidatePath("/blog");
     revalidatePath("/");
     return { success: true, slug };
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Failed to publish.";
-    return { error: message };
+    return { error: e instanceof Error ? e.message : "Failed to publish." };
   }
 }

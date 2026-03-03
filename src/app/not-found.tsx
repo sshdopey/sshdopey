@@ -2,19 +2,19 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-svh px-6 text-center">
-      <h1 className="text-6xl sm:text-7xl font-bold tracking-tight text-zinc-300 mb-4">
+    <div className="min-h-[70vh] flex flex-col items-center justify-center px-6 text-center">
+      <h1 className="text-7xl sm:text-8xl font-bold tracking-tighter text-primary">
         404
       </h1>
-      <p className="text-base text-zinc-600 mb-10">
+      <p className="text-muted mt-4 text-sm">
         Nothing here. Wrong tunnel.
       </p>
       <Link
         href="/"
-        className="font-mono text-sm text-zinc-500 hover:text-white transition-colors duration-200"
+        className="mt-8 text-sm text-dim hover:text-primary transition-colors"
       >
         ← home
       </Link>
-    </main>
+    </div>
   );
 }
