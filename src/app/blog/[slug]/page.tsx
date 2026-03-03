@@ -8,6 +8,7 @@ import { getLatestPostsMeta } from "@/lib/posts";
 import { ReadingProgress } from "@/components/reading-progress";
 import { CodeCopy } from "@/components/code-copy";
 import { AudioPlayer } from "@/components/audio-player";
+import { HeaderShareBtn } from "@/components/header-share";
 import { FadeIn } from "@/components/fade-in";
 import { PostInteractions } from "@/components/post-interactions";
 import { KeepReading } from "@/components/keep-reading";
@@ -63,18 +64,16 @@ export default async function BlogPost({
 
       {post.cover_image && (
         <FadeIn>
-          <div className="relative w-full max-w-6xl mx-auto mt-4 mb-10 px-4 sm:px-6">
-            <div className="relative w-full aspect-[2.4/1] rounded-2xl overflow-hidden">
-              <Image
-                src={post.cover_image}
-                alt={post.title}
-                fill
-                priority
-                className="object-cover"
-                sizes="100vw"
-              />
-              <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-page/60" />
-            </div>
+          <div className="relative w-full h-56 sm:h-72 lg:h-96 overflow-hidden">
+            <Image
+              src={post.cover_image}
+              alt={post.title}
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-page" />
           </div>
         </FadeIn>
       )}
@@ -104,6 +103,7 @@ export default async function BlogPost({
 
               <div className="flex items-center gap-3 sm:gap-4">
                 <AudioPlayer />
+                <HeaderShareBtn slug={post.slug} title={post.title} />
                 <time className="text-xs sm:text-sm text-muted">{date}</time>
               </div>
             </div>

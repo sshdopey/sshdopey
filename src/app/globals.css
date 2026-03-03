@@ -29,7 +29,7 @@
   --color-line: #e0e0e0;
   --color-line-faint: #efefef;
   --color-inverse: #ffffff;
-  --color-accent: #3a5800;
+  --color-accent: #4f7d00;
 }
 
 /* ═══ Base ═══ */
@@ -43,18 +43,24 @@ body {
 }
 
 ::selection { background: rgba(200, 255, 0, 0.15); }
-:root.light ::selection { background: rgba(58, 88, 0, 0.14); }
+:root.light ::selection { background: rgba(79, 125, 0, 0.15); }
 
 /* ═══ Scrollbar ═══ */
 
-::-webkit-scrollbar { width: 6px; height: 4px; }
+::-webkit-scrollbar { width: 4px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-ghost); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-dim); }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ghost); }
 
 @supports not selector(::-webkit-scrollbar) {
-  * { scrollbar-width: thin; scrollbar-color: var(--color-ghost) transparent; }
+  * { scrollbar-width: thin; scrollbar-color: var(--color-line) transparent; }
 }
+
+/* ═══ Terminal Scrollbar ═══ */
+
+.terminal-scroll::-webkit-scrollbar { width: 3px; }
+.terminal-scroll::-webkit-scrollbar-track { background: transparent; }
+.terminal-scroll::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 99px; }
 
 /* ═══ Animations ═══ */
 
@@ -187,9 +193,9 @@ figure[data-rehype-pretty-code-figure] pre {
   background: transparent !important;
 }
 
-figure[data-rehype-pretty-code-figure] pre::-webkit-scrollbar { height: 3px; }
+figure[data-rehype-pretty-code-figure] pre::-webkit-scrollbar { height: 2px; }
 figure[data-rehype-pretty-code-figure] pre::-webkit-scrollbar-track { background: transparent; }
-figure[data-rehype-pretty-code-figure] pre::-webkit-scrollbar-thumb { background: var(--color-ghost); border-radius: 99px; }
+figure[data-rehype-pretty-code-figure] pre::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 99px; }
 
 figure[data-rehype-pretty-code-figure] code {
   font-family: var(--font-geist-mono), ui-monospace, monospace;

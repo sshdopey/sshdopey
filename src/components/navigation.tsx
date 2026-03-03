@@ -25,11 +25,13 @@ export function Navigation() {
 
   return (
     <motion.nav
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.5,
-        ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+        type: "spring",
+        stiffness: 200,
+        damping: 20,
+        delay: 0.1,
       }}
       className="fixed top-0 left-0 z-50 backdrop-blur-md bg-page/80 border-b border-line-faint transition-[right] duration-300 ease-in-out"
       style={{ right: isOpen && !isMobile ? "380px" : "0" }}

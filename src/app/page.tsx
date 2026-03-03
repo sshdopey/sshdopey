@@ -5,6 +5,7 @@ import { getFeaturedPosts } from "@/lib/posts";
 import { getLikeCounts } from "@/lib/db";
 import { HeroName, HeroHandle } from "@/components/hero-name";
 import { HeroVisual } from "@/components/hero-visual";
+import { TiltCard } from "@/components/tilt-card";
 import { FadeIn, FadeInOnScroll } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
 
@@ -97,6 +98,7 @@ export default function Home() {
 
               return (
                 <FadeInOnScroll key={post.slug} delay={i * 0.1}>
+                  <TiltCard className="h-full">
                   <Link
                     href={`/blog/${post.slug}`}
                     className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
@@ -142,6 +144,7 @@ export default function Home() {
                       </div>
                     </div>
                   </Link>
+                  </TiltCard>
                 </FadeInOnScroll>
               );
             })}

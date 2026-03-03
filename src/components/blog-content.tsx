@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Search } from "lucide-react";
+import { TiltCard } from "@/components/tilt-card";
 import type { PostMeta } from "@/lib/posts";
 
 function PostCard({
@@ -18,16 +19,17 @@ function PostCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ delay: index * 0.04, duration: 0.4 }}
+      transition={{ delay: index * 0.05, type: "spring", stiffness: 200, damping: 20 }}
       className="h-full"
     >
-      <Link
-        href={`/blog/${post.slug}`}
-        className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
-      >
+      <TiltCard className="h-full">
+        <Link
+          href={`/blog/${post.slug}`}
+          className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
+        >
         {post.cover_image && (
           <div className="relative w-full h-36 overflow-hidden">
             <Image
@@ -70,6 +72,7 @@ function PostCard({
           </div>
         </div>
       </Link>
+      </TiltCard>
     </motion.div>
   );
 }
@@ -82,10 +85,11 @@ function FeaturedCard({
   likes: number;
 }) {
   return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className="group flex flex-col h-full rounded-xl border border-line overflow-hidden hover:border-ghost bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
-    >
+    <TiltCard className="h-full">
+      <Link
+        href={`/blog/${post.slug}`}
+        className="group flex flex-col h-full rounded-xl border border-line overflow-hidden hover:border-ghost bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
+      >
       {post.cover_image && (
         <div className="relative w-full h-40 overflow-hidden">
           <Image
@@ -128,6 +132,7 @@ function FeaturedCard({
         </div>
       </div>
     </Link>
+    </TiltCard>
   );
 }
 

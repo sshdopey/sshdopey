@@ -3,8 +3,6 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
-const ease = [0.25, 0.1, 0.25, 1] as [number, number, number, number];
-
 export function FadeIn({
   children,
   delay = 0,
@@ -30,7 +28,7 @@ export function FadeIn({
     <motion.div
       initial={{ opacity: 0, ...offsets[direction] }}
       animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration, delay, ease }}
+      transition={{ duration, delay, ease: [0.25, 0.1, 0.25, 1] }}
       className={className}
     >
       {children}
@@ -50,18 +48,24 @@ export function FadeInOnScroll({
   direction?: "up" | "down" | "left" | "right";
 }) {
   const offsets = {
-    up: { y: 30 },
-    down: { y: -30 },
-    left: { x: 30 },
-    right: { x: -30 },
+    up: { y: 25 },
+    down: { y: -25 },
+    left: { x: 25 },
+    right: { x: -25 },
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, ...offsets[direction] }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.7, delay, ease }}
+      initial={{ opacity: 0, scale: 0.98, ...offsets[direction] }}
+      whileInView={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{
+        duration: 0.6,
+        delay,
+        type: "spring",
+        stiffness: 150,
+        damping: 20,
+      }}
       className={className}
     >
       {children}

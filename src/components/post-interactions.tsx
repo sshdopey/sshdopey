@@ -49,8 +49,9 @@ function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
   }
 
   function shareOnX() {
+    const text = `Just read "${title}" by @sshdopey — absolutely worth your time 🔥`;
     window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
       "_blank",
     );
     setOpen(false);

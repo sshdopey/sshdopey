@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
+import { TiltCard } from "@/components/tilt-card";
 import type { PostMeta } from "@/lib/posts";
 
 export function KeepReading({
@@ -33,8 +34,8 @@ export function KeepReading({
           const likes = likeCounts[post.slug] ?? 0;
 
           return (
+            <TiltCard key={post.slug} className="h-full">
             <Link
-              key={post.slug}
               href={`/blog/${post.slug}`}
               className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all"
             >
@@ -79,6 +80,7 @@ export function KeepReading({
                 </div>
               </div>
             </Link>
+            </TiltCard>
           );
         })}
       </div>
