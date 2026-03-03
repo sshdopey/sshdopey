@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, useDragControls } from "framer-motion";
 import { Terminal, Grip } from "lucide-react";
+import { TerminalSnake } from "./terminal-snake";
 
 type Color = "accent" | "muted" | "ghost" | "secondary" | "dim" | "primary";
 
@@ -40,7 +41,7 @@ function buildFS(): FSNode {
                       "README.md": {
                         type: "file",
                         content:
-                          "# Fairmeld\n\nAn AI system everyone would trust.\n\nBuilt with Rust + Python.\nStatus: shipping fast 🚀",
+                          "# Fairmeld\n\nAn AI system everyone would trust.\nBuilt with Rust + Python.\nStatus: shipping fast 🚀",
                       },
                       "Cargo.toml": {
                         type: "file",
@@ -70,7 +71,7 @@ function buildFS(): FSNode {
                       "requirements.txt": {
                         type: "file",
                         content:
-                          "torch>=2.1.0\ntransformers>=4.35.0\nonnxruntime>=1.16.0\nnumpy>=1.24.0\nscikit-learn>=1.3.0",
+                          "torch>=2.1.0\ntransformers>=4.35.0\nonnxruntime>=1.16.0\nnumpy>=1.24.0",
                       },
                     },
                   },
@@ -112,7 +113,7 @@ function buildFS(): FSNode {
                   config: {
                     type: "file",
                     content:
-                      "Host fairmeld\n  HostName fairmeld.com\n  User dopey\n  IdentityFile ~/.ssh/id_ed25519\n\nHost *\n  AddKeysToAgent yes\n  UseKeychain yes",
+                      "Host fairmeld\n  HostName fairmeld.com\n  User dopey\n  IdentityFile ~/.ssh/id_ed25519",
                   },
                 },
               },
@@ -130,13 +131,9 @@ function resolvePath(
   target: string,
 ): { node: FSNode; path: string } | null {
   let abs: string;
-  if (target.startsWith("/")) {
-    abs = target;
-  } else if (target.startsWith("~")) {
-    abs = "/home/dopey" + target.slice(1);
-  } else {
-    abs = cwd === "/" ? "/" + target : cwd + "/" + target;
-  }
+  if (target.startsWith("/")) abs = target;
+  else if (target.startsWith("~")) abs = "/home/dopey" + target.slice(1);
+  else abs = cwd === "/" ? "/" + target : cwd + "/" + target;
 
   const parts = abs.split("/").filter(Boolean);
   const resolved: string[] = [];
@@ -178,34 +175,29 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
   return result;
 }
 
-const bootLines: { text: string; delay: number; color: Color }[] = [
-  { text: "$ ssh dopey@fairmeld.ai", delay: 0.4, color: "accent" },
-  { text: "Connected.", delay: 0.7, color: "ghost" },
-  { text: "", delay: 0.8, color: "ghost" },
-  { text: "dopey ~> cargo build --release", delay: 1.0, color: "secondary" },
-  { text: "   Compiling fairmeld v0.8.0", delay: 1.3, color: "muted" },
-  { text: "    Finished release [optimized] in 0.8s", delay: 1.6, color: "accent" },
-  { text: "", delay: 1.7, color: "ghost" },
-  { text: "dopey ~> python train.py", delay: 1.9, color: "secondary" },
-  { text: "  ✓ accuracy: 99.2%", delay: 2.2, color: "accent" },
-  { text: "", delay: 2.3, color: "ghost" },
-  { text: "dopey ~> status", delay: 2.5, color: "secondary" },
-  { text: "  shipping something dope ▮", delay: 2.8, color: "dim" },
-];
-
-const HISTORY_KEY = "dopey-terminal-history";
-
 export function HeroVisual() {
   const [fs] = useState(buildFS);
   const [cwd, setCwd] = useState("/home/dopey");
   const [lines, setLines] = useState<{ text: string; color: Color }[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [showInput, setShowInput] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [bootDone, setBoot] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
+  const [gameMode, setGameMode] = useState<"none" | "snake">("none");
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setReady(true), 600);
+    const t2 = setTimeout(() => setBoot(true), 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  useEffect(() => {
+    if (bootDone) inputRef.current?.focus();
+  }, [bootDone]);
 
   const prompt = useCallback(
     () => `dopey ${cwd === "/home/dopey" ? "~" : cwd.replace("/home/dopey", "~")}>`,
@@ -235,37 +227,36 @@ export function HeroVisual() {
       switch (cmd) {
         case "help": {
           out.push(
-            { text: "Available commands:", color: "muted" },
-            { text: "  ls [path]       list directory", color: "ghost" },
-            { text: "  cd <path>       change directory", color: "ghost" },
-            { text: "  cat <file>      read file", color: "ghost" },
-            { text: "  pwd             print working directory", color: "ghost" },
-            { text: "  tree [path]     show directory tree", color: "ghost" },
-            { text: "  echo <text>     print text", color: "ghost" },
-            { text: "  whoami          who are you", color: "ghost" },
-            { text: "  date            current date", color: "ghost" },
-            { text: "  uptime          how long we've been up", color: "ghost" },
-            { text: "  neofetch        system info", color: "ghost" },
-            { text: "  history         command history", color: "ghost" },
-            { text: "  clear           clear terminal", color: "ghost" },
+            { text: "Commands:", color: "muted" },
+            { text: "  ls [path]     list directory", color: "ghost" },
+            { text: "  cd <path>     change directory", color: "ghost" },
+            { text: "  cat <file>    read file", color: "ghost" },
+            { text: "  pwd           working directory", color: "ghost" },
+            { text: "  tree [path]   directory tree", color: "ghost" },
+            { text: "  echo <text>   print text", color: "ghost" },
+            { text: "  whoami        about me", color: "ghost" },
+            { text: "  neofetch      system info", color: "ghost" },
+            { text: "  cowsay <msg>  🐄", color: "ghost" },
+            { text: "  date          current date", color: "ghost" },
+            { text: "  history       command history", color: "ghost" },
+            { text: "  snake         🐍 play snake!", color: "ghost" },
+            { text: "  clear         clear terminal", color: "ghost" },
           );
           break;
         }
         case "ls": {
-          const target = args[0] || ".";
           const showHidden = args.includes("-a") || args.includes("-la") || args.includes("-al");
           const pathArg = args.find((a) => !a.startsWith("-")) || ".";
           const resolved = resolvePath(fs, cwd, pathArg);
           if (!resolved || resolved.node.type !== "dir") {
-            out.push({ text: `ls: cannot access '${target}': No such directory`, color: "ghost" });
+            out.push({ text: `ls: no such directory: ${pathArg}`, color: "ghost" });
           } else {
             const items = listDir(resolved.node);
             const filtered = showHidden ? items : items.filter((i) => !i.startsWith("."));
             if (filtered.length === 0) {
               out.push({ text: "(empty)", color: "ghost" });
             } else {
-              const line = filtered.join("  ");
-              out.push({ text: `  ${line}`, color: "primary" });
+              out.push({ text: `  ${filtered.join("  ")}`, color: "primary" });
             }
           }
           break;
@@ -277,14 +268,13 @@ export function HeroVisual() {
             out.push({ text: `cd: no such directory: ${target}`, color: "ghost" });
           } else {
             setCwd(resolved.path);
-            // no output on success
           }
           break;
         }
         case "cat": {
           const target = args[0];
           if (!target) {
-            out.push({ text: "cat: missing file operand", color: "ghost" });
+            out.push({ text: "cat: missing operand", color: "ghost" });
           } else {
             const resolved = resolvePath(fs, cwd, target);
             if (!resolved || resolved.node.type !== "file") {
@@ -297,152 +287,130 @@ export function HeroVisual() {
           }
           break;
         }
-        case "pwd": {
+        case "pwd":
           out.push({ text: `  ${cwd}`, color: "primary" });
           break;
-        }
         case "tree": {
           const target = args[0] || ".";
           const resolved = resolvePath(fs, cwd, target);
           if (!resolved || resolved.node.type !== "dir") {
-            out.push({ text: `tree: '${target}' not a directory`, color: "ghost" });
+            out.push({ text: `tree: not a directory: ${target}`, color: "ghost" });
           } else {
             const name = resolved.path.split("/").pop() || "/";
             out.push({ text: `  ${name}/`, color: "accent" });
-            const str = treeStr(resolved.node);
-            for (const line of str.split("\n").filter(Boolean)) {
+            for (const line of treeStr(resolved.node).split("\n").filter(Boolean)) {
               out.push({ text: `  ${line}`, color: "muted" });
             }
           }
           break;
         }
-        case "echo": {
+        case "echo":
           out.push({ text: `  ${args.join(" ")}`, color: "primary" });
           break;
-        }
-        case "whoami": {
+        case "whoami":
           out.push(
             { text: "  Dopey — Software Engineer", color: "accent" },
-            { text: "  Building AI systems & high-performance tools", color: "muted" },
-            { text: '  Python for the models. Rust for everything else.', color: "muted" },
+            { text: "  AI systems & high-performance tools", color: "muted" },
+            { text: "  Python · Rust · TypeScript", color: "muted" },
             { text: "  Currently shipping Fairmeld", color: "muted" },
           );
           break;
-        }
-        case "date": {
+        case "date":
           out.push({ text: `  ${new Date().toString()}`, color: "muted" });
           break;
-        }
-        case "uptime": {
-          out.push({
-            text: `  up ${Math.floor(Math.random() * 90 + 10)} days, shipping non-stop`,
-            color: "muted",
-          });
+        case "uptime":
+          out.push({ text: `  up ${Math.floor(Math.random() * 90 + 10)} days, shipping non-stop`, color: "muted" });
           break;
-        }
-        case "neofetch": {
+        case "neofetch":
           out.push(
-            { text: "           ▄▄▄       dopey@fairmeld", color: "accent" },
-            { text: "          █████      ─────────────────", color: "accent" },
-            { text: "         ███████     OS: macOS Sequoia", color: "primary" },
-            { text: "        █████████    Shell: zsh 5.9", color: "primary" },
-            { text: "       ███████████   Editor: neovim", color: "primary" },
-            { text: "        █████████    Terminal: kitty", color: "primary" },
-            { text: "         ███████     Languages: 🐍 🦀 📜", color: "primary" },
-            { text: "          █████      Coffee: ∞ cups", color: "primary" },
-            { text: "           ▀▀▀", color: "accent" },
+            { text: "        ▄▄▄       dopey@fairmeld", color: "accent" },
+            { text: "       █████      ─────────────────", color: "accent" },
+            { text: "      ███████     OS: macOS Sequoia", color: "primary" },
+            { text: "     █████████    Shell: zsh 5.9", color: "primary" },
+            { text: "    ███████████   Editor: neovim", color: "primary" },
+            { text: "     █████████    Languages: 🐍 🦀 📜", color: "primary" },
+            { text: "      ███████     Coffee: ∞ cups", color: "primary" },
+            { text: "       █████", color: "accent" },
+            { text: "        ▀▀▀", color: "accent" },
           );
           break;
-        }
-        case "history": {
-          history.forEach((h, i) => {
-            out.push({ text: `  ${i + 1}  ${h}`, color: "muted" });
-          });
-          if (history.length === 0) out.push({ text: "  (no history yet)", color: "ghost" });
-          break;
-        }
-        case "clear": {
-          setLines([]);
-          return;
-        }
-        case "exit": {
-          out.push({ text: "  nice try — you're stuck here forever 😏", color: "accent" });
-          break;
-        }
-        case "sudo": {
-          out.push({ text: "  dopey is not in the sudoers file. nice try though.", color: "ghost" });
-          break;
-        }
-        case "rm": {
-          if (args.includes("-rf") && args.includes("/")) {
-            out.push({ text: "  absolutely not. this is a family terminal.", color: "accent" });
+        case "history":
+          if (history.length === 0) {
+            out.push({ text: "  (empty)", color: "ghost" });
           } else {
-            out.push({ text: "  rm: operation not permitted (read-only fs)", color: "ghost" });
+            history.forEach((h, i) => out.push({ text: `  ${i + 1}  ${h}`, color: "muted" }));
           }
           break;
+        case "snake":
+        case "play": {
+          addLines(out);
+          setGameMode("snake");
+          return;
         }
-        case "vim":
-        case "nvim":
-        case "nano": {
-          out.push({ text: "  opening editor... just kidding, use cat instead :)", color: "ghost" });
+        case "clear":
+          setLines([]);
+          return;
+        case "exit":
+          out.push({ text: "  nice try — you're stuck here forever 😏", color: "accent" });
           break;
-        }
-        case "git": {
+        case "sudo":
+          out.push({ text: "  dopey is not in the sudoers file.", color: "ghost" });
+          break;
+        case "rm":
+          if (args.join(" ").includes("-rf")) {
+            out.push({ text: "  absolutely not.", color: "accent" });
+          } else {
+            out.push({ text: "  rm: read-only filesystem", color: "ghost" });
+          }
+          break;
+        case "vim": case "nvim": case "nano":
+          out.push({ text: "  nice taste. use cat for now :)", color: "ghost" });
+          break;
+        case "git":
           out.push({ text: "  everything is committed. always shipping.", color: "accent" });
           break;
-        }
-        case "npm":
-        case "pnpm":
-        case "yarn": {
-          out.push({ text: "  node_modules: 847MB. some things never change.", color: "ghost" });
+        case "npm": case "pnpm": case "yarn":
+          out.push({ text: "  node_modules: 847MB. classic.", color: "ghost" });
           break;
-        }
-        case "python":
-        case "python3": {
-          out.push({ text: "  Python 3.12.0 — use cat to read .py files", color: "muted" });
+        case "python": case "python3":
+          out.push({ text: "  Python 3.12 — try cat on a .py file", color: "muted" });
           break;
-        }
-        case "cargo":
-        case "rustc": {
-          out.push({ text: "  🦀 Rust 1.82.0 — zero-cost abstractions loaded", color: "accent" });
+        case "cargo": case "rustc":
+          out.push({ text: "  🦀 Rust 1.82 — zero-cost abstractions", color: "accent" });
           break;
-        }
         case "cowsay": {
           const msg = args.join(" ") || "moo";
-          const border = "─".repeat(msg.length + 2);
+          const b = "─".repeat(msg.length + 2);
           out.push(
-            { text: `  ┌${border}┐`, color: "muted" },
+            { text: `  ┌${b}┐`, color: "muted" },
             { text: `  │ ${msg} │`, color: "primary" },
-            { text: `  └${border}┘`, color: "muted" },
-            { text: "         \\   ^__^", color: "ghost" },
-            { text: "          \\  (oo)\\_______", color: "ghost" },
-            { text: "             (__)\\       )", color: "ghost" },
-            { text: "                 ||----w |", color: "ghost" },
-            { text: "                 ||     ||", color: "ghost" },
+            { text: `  └${b}┘`, color: "muted" },
+            { text: "       \\   ^__^", color: "ghost" },
+            { text: "        \\  (oo)\\_______", color: "ghost" },
+            { text: "           (__)\\       )", color: "ghost" },
+            { text: "               ||----w |", color: "ghost" },
+            { text: "               ||     ||", color: "ghost" },
           );
           break;
         }
         case "ping": {
           const host = args[0] || "fairmeld.com";
           out.push(
-            { text: `  PING ${host}: 56 data bytes`, color: "muted" },
-            { text: `  64 bytes: icmp_seq=0 ttl=64 time=0.042ms`, color: "muted" },
-            { text: `  --- ${host} ping statistics ---`, color: "muted" },
-            { text: `  1 packet transmitted, 1 received, 0% loss`, color: "accent" },
+            { text: `  PING ${host}: 56 bytes`, color: "muted" },
+            { text: "  64 bytes: ttl=64 time=0.042ms", color: "muted" },
+            { text: "  1 transmitted, 1 received, 0% loss", color: "accent" },
           );
           break;
         }
-        case "curl": {
-          out.push(
-            { text: '  {"status":"ok","engineer":"dopey","vibe":"immaculate"}', color: "accent" },
-          );
+        case "curl":
+          out.push({ text: '  {"status":"ok","vibe":"immaculate"}', color: "accent" });
           break;
-        }
         case "": break;
-        default: {
-          out.push({ text: `  zsh: command not found: ${cmd}`, color: "ghost" });
-          out.push({ text: "  type 'help' for available commands", color: "ghost" });
-        }
+        default:
+          out.push(
+            { text: `  command not found: ${cmd}`, color: "ghost" },
+            { text: "  type 'help' for commands", color: "ghost" },
+          );
       }
 
       addLines(out);
@@ -481,25 +449,19 @@ export function HeroVisual() {
         }
       } else if (e.key === "Tab") {
         e.preventDefault();
-        const parts = inputValue.split(/\s+/);
-        const partial = parts[parts.length - 1];
+        const tokens = inputValue.split(/\s+/);
+        const partial = tokens[tokens.length - 1];
         if (partial) {
-          const dir = partial.includes("/")
-            ? partial.substring(0, partial.lastIndexOf("/") + 1)
-            : ".";
-          const prefix = partial.includes("/")
-            ? partial.substring(partial.lastIndexOf("/") + 1)
-            : partial;
+          const dir = partial.includes("/") ? partial.substring(0, partial.lastIndexOf("/") + 1) : ".";
+          const prefix = partial.includes("/") ? partial.substring(partial.lastIndexOf("/") + 1) : partial;
           const resolved = resolvePath(fs, cwd, dir);
           if (resolved?.node.type === "dir" && resolved.node.children) {
-            const matches = Object.keys(resolved.node.children).filter((k) =>
-              k.startsWith(prefix),
-            );
+            const matches = Object.keys(resolved.node.children).filter((k) => k.startsWith(prefix));
             if (matches.length === 1) {
               const completion = dir === "." ? matches[0] : dir + matches[0];
               const isDir = resolved.node.children[matches[0]].type === "dir";
-              parts[parts.length - 1] = completion + (isDir ? "/" : "");
-              setInputValue(parts.join(" "));
+              tokens[tokens.length - 1] = completion + (isDir ? "/" : "");
+              setInputValue(tokens.join(" "));
             }
           }
         }
@@ -511,11 +473,6 @@ export function HeroVisual() {
     [inputValue, execute, history, historyIdx, fs, cwd],
   );
 
-  const activate = useCallback(() => {
-    if (!showInput) setShowInput(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  }, [showInput]);
-
   return (
     <div className="hidden lg:block absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] w-[420px] xl:w-[460px] select-none z-10">
       <motion.div
@@ -525,13 +482,10 @@ export function HeroVisual() {
         dragElastic={0.08}
         initial={{ opacity: 0, x: 40, y: 10 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ delay: 0.3, duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
         className="rounded-xl border border-line bg-surface/80 backdrop-blur-md overflow-hidden shadow-2xl shadow-black/25 cursor-grab active:cursor-grabbing"
-        whileDrag={{
-          scale: 1.02,
-          boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)",
-        }}
-        onClick={activate}
+        whileDrag={{ scale: 1.02, boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)" }}
+        onClick={() => inputRef.current?.focus()}
       >
         <div
           className="flex items-center justify-between px-4 py-2 border-b border-line-faint bg-surface/50"
@@ -552,54 +506,63 @@ export function HeroVisual() {
         <div
           ref={scrollRef}
           className="px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] h-[400px] xl:h-[440px] overflow-y-auto terminal-scroll"
-          onClick={() => inputRef.current?.focus()}
+          onClick={() => gameMode === "none" && inputRef.current?.focus()}
         >
-          {bootLines.map((line, i) => (
-            <motion.div
-              key={`boot-${i}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: line.text ? 0.85 : 0 }}
-              transition={{ delay: line.delay, duration: 0.3 }}
-              className={`${colorMap[line.color]} ${!line.text ? "h-2" : ""}`}
-            >
-              {line.text}
-            </motion.div>
-          ))}
+          {gameMode === "snake" ? (
+            <TerminalSnake
+              onExit={(finalScore) => {
+                setGameMode("none");
+                addLines([
+                  { text: `  🐍 Game over! Final score: ${finalScore}`, color: "accent" },
+                ]);
+                setTimeout(() => inputRef.current?.focus(), 50);
+              }}
+            />
+          ) : (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.85 }}
+                transition={{ delay: 0.5 }}
+                className="text-accent"
+              >
+                $ ssh dopey@sshdopey.com
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: ready ? 0.7 : 0 }}
+                className="text-ghost"
+              >
+                Connected. Type &apos;help&apos; for commands.
+              </motion.div>
+              <div className="h-2" />
 
-          {lines.map((line, i) => (
-            <div
-              key={`line-${i}`}
-              className={`${colorMap[line.color]} ${!line.text ? "h-2" : ""}`}
-            >
-              {line.text}
-            </div>
-          ))}
+              {lines.map((line, i) => (
+                <div
+                  key={`l-${i}`}
+                  className={`${colorMap[line.color]} ${!line.text ? "h-2" : ""}`}
+                >
+                  {line.text}
+                </div>
+              ))}
 
-          {showInput && (
-            <div className="flex items-center">
-              <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-primary font-mono text-[11px] p-0 caret-accent"
-                spellCheck={false}
-                autoComplete="off"
-              />
-            </div>
-          )}
-
-          {!showInput && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              transition={{ delay: 3.2 }}
-              className="text-ghost mt-2 text-[10px]"
-            >
-              click anywhere to start · drag to move
-            </motion.div>
+              {bootDone && (
+                <div className="flex items-center">
+                  <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 bg-transparent border-none outline-none text-primary font-mono text-[11px] p-0 caret-accent"
+                    spellCheck={false}
+                    autoComplete="off"
+                  />
+                  {!inputValue && <span className="blink-cursor text-[11px]" />}
+                </div>
+              )}
+            </>
           )}
         </div>
       </motion.div>

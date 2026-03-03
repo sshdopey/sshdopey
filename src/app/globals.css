@@ -29,12 +29,12 @@
   --color-line: #e0e0e0;
   --color-line-faint: #efefef;
   --color-inverse: #ffffff;
-  --color-accent: #4f7d00;
+  --color-accent: #4a8c00;
 }
 
 /* ═══ Base ═══ */
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; }
 
 body {
   background: var(--color-page);
@@ -43,7 +43,7 @@ body {
 }
 
 ::selection { background: rgba(200, 255, 0, 0.15); }
-:root.light ::selection { background: rgba(79, 125, 0, 0.15); }
+:root.light ::selection { background: rgba(74, 140, 0, 0.15); }
 
 /* ═══ Scrollbar ═══ */
 
@@ -71,19 +71,41 @@ body {
 
 .animate-float { animation: float 2.5s ease-in-out infinite; }
 
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.blink-cursor::after {
+  content: "▮";
+  animation: blink-cursor 1s ease-in-out infinite;
+  color: var(--color-accent);
+  font-weight: normal;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.animate-subtle-pulse { animation: subtle-pulse 3s ease-in-out infinite; }
+
 /* ═══ Hero Grid ═══ */
 
 .hero-grid {
   background-image:
-    linear-gradient(var(--color-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
-  background-size: 60px 60px;
-  opacity: 0.35;
-  mask-image: radial-gradient(ellipse 80% 60% at 30% 50%, black 0%, transparent 70%);
+    linear-gradient(var(--color-ghost) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-ghost) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.18;
+  mask-image: radial-gradient(ellipse 85% 70% at 35% 50%, black 0%, transparent 75%);
 }
 
 :root.light .hero-grid {
-  opacity: 0.25;
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  opacity: 0.5;
 }
 
 /* ═══ Ask AI Glow Effect ═══ */
@@ -280,10 +302,28 @@ html.light [data-rehype-pretty-code-figure] code span {
 
 .prose img {
   border-radius: 10px;
-  margin: 2em auto;
+  margin: 2em auto 0.5em;
   max-width: 100%;
   display: block;
   border: 1px solid var(--color-line-faint);
+}
+
+.prose figure.prose-figure {
+  margin: 2em 0;
+  text-align: center;
+}
+
+.prose figure.prose-figure img {
+  margin: 0 auto 0.5em;
+}
+
+.prose figure.prose-figure figcaption {
+  font-size: 0.82rem;
+  color: var(--color-dim);
+  font-style: italic;
+  line-height: 1.5;
+  max-width: 80%;
+  margin: 0 auto;
 }
 
 .prose img + em,
@@ -294,6 +334,18 @@ html.light [data-rehype-pretty-code-figure] code span {
   color: var(--color-dim);
   margin-top: -1em;
   margin-bottom: 1.5em;
+}
+
+/* ═══ YouTube Embeds ═══ */
+
+.prose iframe {
+  border-radius: 10px;
+  margin: 2em auto;
+  max-width: 100%;
+  display: block;
+  border: 1px solid var(--color-line-faint);
+  aspect-ratio: 16/9;
+  width: 100%;
 }
 
 .prose table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.9em; }

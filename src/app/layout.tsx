@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { ClientLayout } from "@/components/client-layout";
+import { Magic } from "@/components/magic";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} noise antialiased`}
       >
         <ClientLayout>
+          <Magic />
           <Navigation />
           <main className="pt-14 min-h-screen">{children}</main>
           <Footer />

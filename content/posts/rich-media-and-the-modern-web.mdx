@@ -1,0 +1,85 @@
+---
+title: "Rich Media and the Modern Web"
+excerpt: "Exploring how embedded video, animated images, and interactive content transform the reading experience on the web."
+published_at: "2026-02-28"
+cover_image: "https://picsum.photos/seed/rich-media/1200/600"
+tags: ["web", "media", "frontend"]
+featured: false
+---
+
+The web was born as a text medium. HTML 1.0 didn't even support images inline — Tim Berners-Lee added `<img>` as an afterthought in 1993. Three decades later, the modern web is a multimedia powerhouse, and how we embed rich content directly shapes the reading experience.
+
+Let's look at what that actually means in practice.
+
+## Video Embeds
+
+YouTube embeds are the most common form of embedded video on the web. A well-placed video can explain in 60 seconds what would take 2,000 words to describe.
+
+Here's a great talk on the future of the web platform:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video embed example" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+The key to good video embeds is **responsive sizing**. A fixed-width iframe breaks on mobile. The `aspect-ratio: 16/9` CSS property combined with `width: 100%` solves this elegantly without the old padding-hack.
+
+## Animated Images (GIFs)
+
+GIFs remain the internet's most expressive format. They're lossy, heavy, and technically ancient — but nothing else captures a moment quite the same way.
+
+![A satisfying CSS animation loop demonstrating smooth transitions](https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif)
+
+Modern alternatives like WebP and AVIF offer animated sequences at a fraction of the file size, but GIF compatibility remains universal. When embedding GIFs in articles, the critical considerations are:
+
+1. **File size** — compress aggressively or host on a CDN
+2. **Alt text** — accessibility matters, even for fun content
+3. **Lazy loading** — don't tank your LCP score for a meme
+
+## Code Alongside Media
+
+When you're writing a technical article, mixing code with visuals makes concepts click faster. Here's how you'd implement a responsive video embed component in React:
+
+```tsx
+function VideoEmbed({ id, title }: { id: string; title: string }) {
+  return (
+    <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+      <iframe
+        src={`https://www.youtube.com/embed/${id}`}
+        title={title}
+        className="absolute inset-0 w-full h-full rounded-lg"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+```
+
+Notice how the `aspectRatio` CSS property eliminates the need for the classic padding-bottom hack. This works in every modern browser.
+
+## Static Images with Context
+
+Not all images need to move. A well-captioned static image can anchor an entire section:
+
+![Architecture diagram showing how a CDN serves media assets to edge locations globally](https://picsum.photos/seed/cdn-arch/800/450)
+
+The alt text above isn't just for screen readers — on this site, it renders as a visible caption beneath the image. This is intentional. Alt text should be descriptive enough to serve double duty.
+
+## Tables and Structured Data
+
+Rich media isn't limited to images and video. Well-formatted tables convey information that would be awkward as prose:
+
+| Format | Animated | Compression | Browser Support |
+|--------|----------|-------------|-----------------|
+| GIF    | Yes      | Lossless    | Universal       |
+| WebP   | Yes      | Lossy/Less  | 97%+            |
+| AVIF   | Yes      | Best        | 92%+            |
+| MP4    | Video    | Best        | Universal       |
+
+## The Takeaway
+
+Embedding rich media isn't about showing off — it's about meeting your readers where they are. Some concepts are visual. Some are temporal. Some need interactivity. The best technical writing uses every tool available to make understanding effortless.
+
+The web gave us `<img>`, then `<video>`, then `<iframe>`, then Web Components. Each layer expanded what "reading" means online. Use them all. Use them well.
+
+![A minimalist workspace setup with dual monitors showing code and design side by side](https://picsum.photos/seed/workspace-media/800/400)
+
+The best content doesn't just inform — it *shows*.

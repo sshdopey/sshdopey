@@ -1,12 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Search } from "lucide-react";
 import { TiltCard } from "@/components/tilt-card";
 import type { PostMeta } from "@/lib/posts";
+
+const placeholders = [
+  "Search posts...",
+  'Try "Rust"...',
+  'Try "AI agents"...',
+  'Try "performance"...',
+  "What are you curious about?",
+];
+
+function useTypewriter() {
+  const [text, setText] = useState("");
+  const [focused, setFocused] = useState(false);
+  const phraseIdx = useRef(0);
+  const charIdx = useRef(0);
+  const deleting = useRef(false);
+  const pauseUntil = useRef(0);
+
+  useEffect(() => {
+    if (focused) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now < pauseUntil.current) return;
+
+      const phrase = placeholders[phraseIdx.current];
+
+      if (!deleting.current) {
+        charIdx.current++;
+        setText(phrase.slice(0, charIdx.current));
+        if (charIdx.current >= phrase.length) {
+          deleting.current = true;
+          pauseUntil.current = now + 2000;
+        }
+      } else {
+        charIdx.current--;
+        setText(phrase.slice(0, charIdx.current));
+        if (charIdx.current <= 0) {
+          deleting.current = false;
+          phraseIdx.current = (phraseIdx.current + 1) % placeholders.length;
+          pauseUntil.current = now + 300;
+        }
+      }
+    }, 60);
+
+    return () => clearInterval(interval);
+  }, [focused]);
+
+  return { placeholder: text || placeholders[0], setFocused };
+}
 
 function PostCard({
   post,
@@ -149,6 +198,7 @@ export function BlogContent({
 }) {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const { placeholder, setFocused } = useTypewriter();
 
   const filtered = posts.filter((post) => {
     const matchSearch =
@@ -171,17 +221,21 @@ export function BlogContent({
         />
         <input
           type="text"
-          placeholder="Search posts..."
+          placeholder={placeholder}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40 transition-all focus:shadow-[0_0_0_3px_rgba(200,255,0,0.06)]"
         />
       </div>
 
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-10">
-          <button
+          <motion.button
             onClick={() => setActiveTag(null)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
               activeTag === null
                 ? "bg-accent/10 text-accent"
@@ -189,13 +243,15 @@ export function BlogContent({
             }`}
           >
             All
-          </button>
+          </motion.button>
           {allTags.map((tag) => (
-            <button
+            <motion.button
               key={tag}
               onClick={() =>
                 setActiveTag(activeTag === tag ? null : tag)
               }
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.93 }}
               className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
                 activeTag === tag
                   ? "bg-accent/10 text-accent"
@@ -203,7 +259,7 @@ export function BlogContent({
               }`}
             >
               {tag}
-            </button>
+            </motion.button>
           ))}
         </div>
       )}
