@@ -27,6 +27,8 @@ function loadDb(): import("better-sqlite3").Database | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
+    // Lazy require so the native addon isn't loaded at build time (SSG can run without bindings).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require("better-sqlite3") as new (
       path: string,
     ) => import("better-sqlite3").Database;
