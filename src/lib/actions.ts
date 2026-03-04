@@ -134,3 +134,13 @@ export async function getCommentLikedIdsAction(
   const commentIds = getCommentLikedIdsForPost(postSlug, subscriber.id);
   return { commentIds };
 }
+
+/** Fetch comments for a post (for dynamic load on client). Optional email for liked_by_me. */
+export async function getCommentsForPostAction(
+  postSlug: string,
+  email: string | null,
+): Promise<{ comments: Comment[] }> {
+  const subscriber = email ? getSubscriberByEmail(email) : undefined;
+  const comments = getComments(postSlug, subscriber?.id);
+  return { comments };
+}

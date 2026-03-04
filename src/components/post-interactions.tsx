@@ -16,6 +16,7 @@ import {
   likePost,
   unlikePost,
   getPostLikeStatus,
+  getCommentsForPostAction,
   subscribeAction,
   postCommentAction,
   likeCommentAction,
@@ -167,10 +168,11 @@ function LikeShareBar({
 
   const liked = serverLiked || isLiked(postSlug);
 
+  // Always fetch real like count (with or without subscriber) so static shell hydrates with correct count
   useEffect(() => {
-    if (!subscriber?.email || loaded) return;
     let cancelled = false;
-    getPostLikeStatus(postSlug, subscriber.email).then((r) => {
+    const email = subscriber?.email ?? null;
+    getPostLikeStatus(postSlug, email).then((r) => {
       if (!cancelled) {
         setCount(r.count);
         setServerLiked(r.liked);
@@ -180,14 +182,7 @@ function LikeShareBar({
     return () => {
       cancelled = true;
     };
-  }, [postSlug, subscriber?.email, loaded]);
-
-  useEffect(() => {
-    if (!subscriber && loaded === false) {
-      const t = setTimeout(() => setLoaded(true), 0);
-      return () => clearTimeout(t);
-    }
-  }, [subscriber, loaded]);
+  }, [postSlug, subscriber?.email]);
 
   function handleLike() {
     if (liked && subscriber) {
@@ -721,6 +716,18 @@ export function PostInteractions({
       }
     } catch {}
   }, []);
+
+  // Fetch comments on mount (and when subscriber loads) so static shell shows real replies
+  useEffect(() => {
+    let cancelled = false;
+    const email = subscriber?.email ?? null;
+    getCommentsForPostAction(postSlug, email).then((r) => {
+      if (!cancelled) setComments(r.comments);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [postSlug, subscriber?.email]);
 
   return (
     <>
