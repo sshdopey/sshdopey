@@ -230,7 +230,6 @@ function OgImage({ post, avatarSrc }: { post: PostData; avatarSrc: string }) {
             padding: "3px",
           }}
         >
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <img
             alt=""
             src={avatarSrc}

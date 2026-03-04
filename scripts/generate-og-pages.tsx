@@ -168,7 +168,6 @@ function HomeOgImage({ avatarSrc }: { avatarSrc: string }) {
             padding: "3px",
           }}
         >
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <img
             alt=""
             src={avatarSrc}
@@ -440,7 +439,6 @@ function BlogOgImage({ avatarSrc }: { avatarSrc: string }) {
             padding: "3px",
           }}
         >
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <img
             alt=""
             src={avatarSrc}
