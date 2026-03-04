@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { TiltCard } from "@/components/tilt-card";
 import { PostLikeBadge } from "@/components/liked-posts-provider";
 import { FadeInOnScroll } from "@/components/fade-in";
+import { useLikeCounts } from "@/hooks/use-like-counts";
 import type { PostMeta } from "@/lib/posts";
 
 function PostGridCard({
@@ -99,11 +100,12 @@ function PostGridCard({
 
 export function FeaturedCarousel({
   posts,
-  likeCounts,
+  likeCounts: initialLikeCounts,
 }: {
   posts: PostMeta[];
   likeCounts: Record<string, number>;
 }) {
+  const likeCounts = useLikeCounts(initialLikeCounts);
   if (posts.length === 0) return null;
 
   return (

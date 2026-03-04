@@ -7,6 +7,7 @@ import {
   removePostLike,
   hasUserLikedPost,
   getLikeCount,
+  getLikeCounts,
   getLikedPostSlugsForSubscriber,
   addComment,
   addCommentLike,
@@ -143,6 +144,14 @@ export async function getCommentsForPostAction(
   const subscriber = email ? getSubscriberByEmail(email) : undefined;
   const comments = getComments(postSlug, subscriber?.id);
   return { comments };
+}
+
+/** Fetch all like counts for preview cards (blog list, carousel, keep reading) so they show real-time data. */
+export async function getLikeCountsAction(): Promise<{
+  likeCounts: Record<string, number>;
+}> {
+  const likeCounts = getLikeCounts();
+  return { likeCounts };
 }
 
 /** Single fetch for post stats (like count, liked, comments) so client gets both in one round-trip. */

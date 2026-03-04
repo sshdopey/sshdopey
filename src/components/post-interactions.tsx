@@ -166,15 +166,25 @@ function LikeShareBar({
   const { toggle } = useSidebar();
   const { isLiked, addLiked, removeLiked } = useLikedPosts();
 
-  // Sync from parent's single fetch (likes + comments together) so we don't show stale SSG count
+  // Sync from parent when liveLikeStats arrives (deferred to avoid synchronous setState in effect)
   useEffect(() => {
-    if (liveLikeStats) {
-      setCount(liveLikeStats.count);
-      setServerLiked(liveLikeStats.liked);
-    }
+    if (!liveLikeStats) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setCount(liveLikeStats.count);
+        setServerLiked(liveLikeStats.liked);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [liveLikeStats]);
 
-  const liked = serverLiked || isLiked(postSlug);
+  const liked =
+    (liveLikeStats ? liveLikeStats.liked : serverLiked) || isLiked(postSlug);
+  // Use liveLikeStats for display so count appears in same paint as replies (no extra render delay)
+  const displayCount = liveLikeStats?.count ?? count;
   const countLoaded = liveLikeStats !== null;
 
   function handleLike() {
@@ -246,7 +256,7 @@ function LikeShareBar({
           </AnimatePresence>
         </span>
         <span className="text-sm tabular-nums min-w-5 text-center inline-block">
-          {countLoaded ? count : "—"}
+          {countLoaded ? displayCount : "—"}
         </span>
       </motion.button>
 

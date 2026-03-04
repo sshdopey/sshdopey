@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { TiltCard } from "@/components/tilt-card";
 import { PostLikeBadge } from "@/components/liked-posts-provider";
+import { useLikeCounts } from "@/hooks/use-like-counts";
 import type { PostMeta } from "@/lib/posts";
 
 function sharedTagCount(a: PostMeta, b: PostMeta): number {
@@ -15,13 +16,14 @@ export function KeepReading({
   posts,
   currentSlug,
   currentPost,
-  likeCounts,
+  likeCounts: initialLikeCounts,
 }: {
   posts: PostMeta[];
   currentSlug: string;
   currentPost?: PostMeta | null;
   likeCounts: Record<string, number>;
 }) {
+  const likeCounts = useLikeCounts(initialLikeCounts);
   const others = posts
     .filter((p) => p.slug !== currentSlug)
     .sort((a, b) => {

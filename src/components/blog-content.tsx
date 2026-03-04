@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import { TiltCard } from "@/components/tilt-card";
 import { PostLikeBadge } from "@/components/liked-posts-provider";
+import { useLikeCounts } from "@/hooks/use-like-counts";
 import type { PostMeta } from "@/lib/posts";
 
 const placeholders = [
@@ -207,13 +208,14 @@ export function BlogContent({
   posts,
   featured,
   allTags,
-  likeCounts,
+  likeCounts: initialLikeCounts,
 }: {
   posts: PostMeta[];
   featured: PostMeta[];
   allTags: string[];
   likeCounts: Record<string, number>;
 }) {
+  const likeCounts = useLikeCounts(initialLikeCounts);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const { placeholder, setFocused } = useTypewriter();
