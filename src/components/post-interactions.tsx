@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -162,50 +162,44 @@ function LikeShareBar({
   const [count, setCount] = useState(initialCount);
   const [serverLiked, setServerLiked] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
-  const [, startTransition] = useTransition();
+  const pendingRef = useRef(false);
   const { toggle } = useSidebar();
   const { isLiked, addLiked, removeLiked } = useLikedPosts();
 
-  // Sync from parent when liveLikeStats arrives (deferred to avoid synchronous setState in effect)
+  // Sync from parent when liveLikeStats arrives
   useEffect(() => {
-    if (!liveLikeStats) return;
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (!cancelled) {
-        setCount(liveLikeStats.count);
-        setServerLiked(liveLikeStats.liked);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
+    if (!liveLikeStats || pendingRef.current) return;
+    setCount(liveLikeStats.count);
+    setServerLiked(liveLikeStats.liked);
   }, [liveLikeStats]);
 
   const liked =
     (liveLikeStats ? liveLikeStats.liked : serverLiked) || isLiked(postSlug);
-  // count state is already synced from liveLikeStats via the effect above,
-  // AND gets updated by optimistic like/unlike. So always use count for display.
-  const countLoaded = liveLikeStats !== null;
 
   function handleLike() {
-    if (liked && subscriber) {
+    if (pendingRef.current) return;
+    if (liked) {
+      // Unlike - works for both subscribers and anonymous (localStorage-tracked)
       removeLiked(postSlug);
       setServerLiked(false);
       setCount((c) => Math.max(0, c - 1));
-      startTransition(async () => {
-        const r = await unlikePost(postSlug, subscriber.email);
-        setCount(r.count);
-      });
+      if (subscriber) {
+        pendingRef.current = true;
+        unlikePost(postSlug, subscriber.email).then((r) => {
+          setCount(r.count);
+          pendingRef.current = false;
+        });
+      }
       return;
     }
-    if (liked) return;
+    // Like
     addLiked(postSlug);
     setServerLiked(true);
     setCount((c) => c + 1);
     setParticles(Array.from({ length: 8 }, (_, i) => i));
     const email = subscriber?.email ?? null;
-    startTransition(async () => {
-      const r = await likePost(postSlug, email);
+    pendingRef.current = true;
+    likePost(postSlug, email).then((r) => {
       if (r.error) {
         removeLiked(postSlug);
         setServerLiked(false);
@@ -213,6 +207,7 @@ function LikeShareBar({
       } else {
         setCount(r.count);
       }
+      pendingRef.current = false;
     });
     setTimeout(() => setParticles([]), 800);
   }
@@ -256,7 +251,7 @@ function LikeShareBar({
           </AnimatePresence>
         </span>
         <span className="text-sm tabular-nums min-w-5 text-center inline-block">
-          {countLoaded ? count : "—"}
+          {count}
         </span>
       </motion.button>
 
