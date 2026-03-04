@@ -19,6 +19,8 @@ for (const f of [".env", ".env.local"]) {
   }
 }
 
-const { getDb } = await import("../src/lib/db");
-getDb();
-console.log("Database ready and seeded (if empty).");
+(async () => {
+  const { getDb } = await import("../src/lib/db");
+  getDb();
+  console.log("Database ready and seeded (if empty).");
+})();
