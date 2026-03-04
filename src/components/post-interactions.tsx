@@ -6,12 +6,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Share, Sparkles, X, Link2, Check, Linkedin } from "lucide-react";
 import {
   likePost,
+  unlikePost,
+  getPostLikeStatus,
   subscribeAction,
   postCommentAction,
   likeCommentAction,
+  unlikeCommentAction,
+  getCommentLikedIdsAction,
 } from "@/lib/actions";
 import { getDisplayName, isDopey } from "@/lib/utils";
+import { fireSubscribeConfetti } from "@/lib/confetti";
 import { useSidebar } from "./client-layout";
+import { useLikedPosts } from "./liked-posts-provider";
 import type { Comment, Subscriber } from "@/lib/db";
 
 function timeAgo(dateStr: string): string {
@@ -126,25 +132,70 @@ function LikeShareBar({
   postSlug,
   initialCount,
   title,
+  subscriber,
 }: {
   postSlug: string;
   initialCount: number;
   title: string;
+  subscriber: Subscriber | null;
 }) {
   const [count, setCount] = useState(initialCount);
-  const [liked, setLiked] = useState(false);
+  const [serverLiked, setServerLiked] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [, startTransition] = useTransition();
   const { toggle } = useSidebar();
+  const { isLiked, addLiked, removeLiked } = useLikedPosts();
+
+  const liked = serverLiked || isLiked(postSlug);
+
+  useEffect(() => {
+    if (!subscriber?.email || loaded) return;
+    let cancelled = false;
+    getPostLikeStatus(postSlug, subscriber.email).then((r) => {
+      if (!cancelled) {
+        setCount(r.count);
+        setServerLiked(r.liked);
+        setLoaded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [postSlug, subscriber?.email, loaded]);
+
+  useEffect(() => {
+    if (!subscriber && loaded === false) {
+      setLoaded(true);
+    }
+  }, [subscriber, loaded]);
 
   function handleLike() {
+    if (liked && subscriber) {
+      removeLiked(postSlug);
+      setServerLiked(false);
+      setCount((c) => Math.max(0, c - 1));
+      startTransition(async () => {
+        const r = await unlikePost(postSlug, subscriber.email);
+        setCount(r.count);
+      });
+      return;
+    }
     if (liked) return;
-    setLiked(true);
+    addLiked(postSlug);
+    setServerLiked(true);
     setCount((c) => c + 1);
     setParticles(Array.from({ length: 8 }, (_, i) => i));
+    const email = subscriber?.email ?? null;
     startTransition(async () => {
-      const r = await likePost(postSlug);
-      setCount(r.count);
+      const r = await likePost(postSlug, email);
+      if (r.error) {
+        removeLiked(postSlug);
+        setServerLiked(false);
+        setCount((c) => Math.max(0, c - 1));
+      } else {
+        setCount(r.count);
+      }
     });
     setTimeout(() => setParticles([]), 800);
   }
@@ -227,6 +278,7 @@ function AuthorSubscribe({
       if (result.subscriber) {
         localStorage.setItem("subscriber", JSON.stringify(result.subscriber));
         onSubscribed(result.subscriber);
+        fireSubscribeConfetti();
       }
       if (result.error) setError(result.error);
     });
@@ -313,20 +365,40 @@ function buildThreads(comments: Comment[]): ThreadedComment[] {
 function CommentLikeBtn({
   commentId,
   initialCount,
+  initialLiked,
   email,
+  onLikedChange,
 }: {
   commentId: string;
   initialCount: number;
+  initialLiked: boolean;
   email: string | null;
+  onLikedChange?: (commentId: string, liked: boolean) => void;
 }) {
   const [count, setCount] = useState(initialCount);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(initialLiked);
   const [, startTransition] = useTransition();
 
+  useEffect(() => {
+    setLiked(initialLiked);
+    setCount(initialCount);
+  }, [initialLiked, initialCount]);
+
   function handleLike() {
-    if (!email || liked) return;
+    if (!email) return;
+    if (liked) {
+      setLiked(false);
+      setCount((c) => Math.max(0, c - 1));
+      onLikedChange?.(commentId, false);
+      startTransition(async () => {
+        const r = await unlikeCommentAction(commentId, email);
+        if (!r.error) setCount(r.count);
+      });
+      return;
+    }
     setLiked(true);
     setCount((c) => c + 1);
+    onLikedChange?.(commentId, true);
     startTransition(async () => {
       const r = await likeCommentAction(commentId, email);
       if (!r.error) setCount(r.count);
@@ -353,12 +425,14 @@ function ThreadNode({
   postSlug,
   subscriber,
   onCommentAdded,
+  onCommentLikedChange,
 }: {
   node: ThreadedComment;
   depth: number;
   postSlug: string;
   subscriber: Subscriber | null;
   onCommentAdded: (comments: Comment[]) => void;
+  onCommentLikedChange?: (commentId: string, liked: boolean) => void;
 }) {
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -416,7 +490,9 @@ function ThreadNode({
           <CommentLikeBtn
             commentId={node.id}
             initialCount={node.like_count}
+            initialLiked={node.liked_by_me ?? false}
             email={subscriber?.email ?? null}
+            onLikedChange={onCommentLikedChange}
           />
           {subscriber && (
             <button
@@ -476,6 +552,7 @@ function ThreadNode({
           postSlug={postSlug}
           subscriber={subscriber}
           onCommentAdded={onCommentAdded}
+          onCommentLikedChange={onCommentLikedChange}
         />
       ))}
     </div>
@@ -494,8 +571,25 @@ function DiscussionSection({
   onCommentAdded: (comments: Comment[]) => void;
 }) {
   const [text, setText] = useState("");
+  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
-  const threads = buildThreads(initialComments);
+
+  useEffect(() => {
+    if (!subscriber?.email) return;
+    let cancelled = false;
+    getCommentLikedIdsAction(postSlug, subscriber.email).then((r) => {
+      if (!cancelled) setLikedCommentIds(new Set(r.commentIds));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [postSlug, subscriber?.email]);
+
+  const commentsWithLiked = initialComments.map((c) => ({
+    ...c,
+    liked_by_me: c.liked_by_me ?? likedCommentIds.has(c.id),
+  }));
+  const threads = buildThreads(commentsWithLiked);
 
   function handlePost() {
     if (!subscriber || !text.trim()) return;
@@ -535,6 +629,14 @@ function DiscussionSection({
               postSlug={postSlug}
               subscriber={subscriber}
               onCommentAdded={onCommentAdded}
+              onCommentLikedChange={(commentId, liked) => {
+                setLikedCommentIds((prev) => {
+                  const next = new Set(prev);
+                  if (liked) next.add(commentId);
+                  else next.delete(commentId);
+                  return next;
+                });
+              }}
             />
           ))}
         </div>
@@ -596,6 +698,7 @@ export function PostInteractions({
         postSlug={postSlug}
         initialCount={likeCount}
         title={postTitle}
+        subscriber={subscriber}
       />
       <AuthorSubscribe subscriber={subscriber} onSubscribed={setSubscriber} />
       <DiscussionSection

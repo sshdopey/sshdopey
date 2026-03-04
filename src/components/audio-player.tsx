@@ -289,6 +289,8 @@ export function AudioPlayer() {
 
       stateRef.current = "playing";
       setState("playing");
+      autoScrollRef.current = true;
+      setAutoScroll(true);
       speakChunk(idx);
       setTimeout(() => {
         seekingRef.current = false;

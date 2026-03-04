@@ -5,12 +5,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 /*
   Terminal Pac-Man — a faithful ASCII recreation.
   Grid-based with dots, power pellets, 4 ghosts with different AI,
-  and smooth gameplay at ~10fps (terminal style).
+  smooth gameplay ~12fps, touch/swipe support, and optional sound.
 */
 
 const ROWS = 21;
 const COLS = 21;
-const TICK_MS = 150;
+const TICK_MS = 145;
+const GHOST_TICK_MS = 160;
+const SWIPE_THRESHOLD = 25;
 
 type Dir = "up" | "down" | "left" | "right";
 type Pos = { r: number; c: number };
@@ -93,8 +95,54 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   const [won, setWon] = useState(false);
   const [powerTimer, setPowerTimer] = useState(0);
   const [mouthOpen, setMouthOpen] = useState(true);
-  const tickRef = useRef(0);
+  const lastTickRef = useRef(0);
+  const ghostTickRef = useRef(0);
   const gameRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mazeRef = useRef(maze);
+  const pacDirRef = useRef(pacDir);
+  const nextDirRef = useRef(nextDir);
+  mazeRef.current = maze;
+  pacDirRef.current = pacDir;
+  nextDirRef.current = nextDir;
+
+  // Optional sound feedback (respects user prefs, no autoplay)
+  const playDotSound = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      g.gain.setValueAtTime(0.06, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.05);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const playPowerSound = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.frequency.value = 440;
+      osc.type = "square";
+      g.gain.setValueAtTime(0.08, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.12);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Count remaining dots
   const dotsLeft = maze.flat().filter((c) => c === 0 || c === 3).length;
@@ -116,7 +164,6 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     setGameOver(false);
     setWon(false);
     setPowerTimer(0);
-    tickRef.current = 0;
     gameRef.current?.focus();
   }, []);
 
@@ -150,43 +197,44 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     [gameOver, won, score, resetGame, onExit],
   );
 
-  // Main game loop
+  // Main game loop — requestAnimationFrame + delta time for smooth, consistent speed
   useEffect(() => {
     if (gameOver || won) return;
 
-    const interval = setInterval(() => {
-      tickRef.current++;
+    let rafId: number;
+    let lastTime = performance.now();
+    let accum = 0;
+
+    function frame(now: number) {
+      rafId = requestAnimationFrame(frame);
+      const delta = Math.min(now - lastTime, 100);
+      lastTime = now;
+      accum += delta;
+      if (accum < TICK_MS) return;
+      accum -= TICK_MS;
+
       setMouthOpen((prev) => !prev);
-
-      // Decrease power timer
-      setPowerTimer((prev) => Math.max(0, prev - 1));
-
-      // Move Pac-Man
+      setPowerTimer((p) => Math.max(0, p - 1));
       setPacman((prev) => {
-        const nd = DIRS[nextDir];
+        const m = mazeRef.current;
+        const nd = DIRS[nextDirRef.current];
         const nr = ((prev.r + nd.r) % ROWS + ROWS) % ROWS;
         const nc = ((prev.c + nd.c) % COLS + COLS) % COLS;
-
-        if (canMove(maze, nr, nc) && maze[nr][nc] !== 4) {
-          setPacDir(nextDir);
+        if (canMove(m, nr, nc) && m[nr][nc] !== 4) {
+          setPacDir(nextDirRef.current);
           return { r: nr, c: nc };
         }
-
-        // Try current direction
-        const cd = DIRS[pacDir];
+        const cd = DIRS[pacDirRef.current];
         const cr = ((prev.r + cd.r) % ROWS + ROWS) % ROWS;
         const cc = ((prev.c + cd.c) % COLS + COLS) % COLS;
-
-        if (canMove(maze, cr, cc) && maze[cr][cc] !== 4) {
-          return { r: cr, c: cc };
-        }
-
+        if (canMove(m, cr, cc) && m[cr][cc] !== 4) return { r: cr, c: cc };
         return prev;
       });
-    }, TICK_MS);
+    }
 
-    return () => clearInterval(interval);
-  }, [gameOver, won, maze, pacDir, nextDir]);
+    rafId = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafId);
+  }, [gameOver, won]);
 
   // Collect dots and check ghost collisions
   useEffect(() => {
@@ -195,16 +243,18 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     setMaze((prev) => {
       const cell = prev[pacman.r]?.[pacman.c];
       if (cell === 0) {
+        playDotSound();
         const next = prev.map((r) => [...r]);
         next[pacman.r][pacman.c] = 2;
         setScore((s) => s + 10);
         return next;
       }
       if (cell === 3) {
+        playPowerSound();
         const next = prev.map((r) => [...r]);
         next[pacman.r][pacman.c] = 2;
         setScore((s) => s + 50);
-        setPowerTimer(30); // ~4.5 seconds of power
+        setPowerTimer(30);
         setGhosts((gs) => gs.map((g) => ({ ...g, scared: true })));
         return next;
       }
@@ -249,7 +299,7 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
       });
       return ate ? newGhosts : gs === newGhosts ? gs : newGhosts;
     });
-  }, [pacman, gameOver, won, maze]);
+  }, [pacman, gameOver, won, maze, playDotSound, playPowerSound]);
 
   // Power timer effect on ghosts
   useEffect(() => {
@@ -348,7 +398,7 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
           return ghost;
         }),
       );
-    }, TICK_MS + 30); // Ghosts slightly slower than Pac-Man
+    }, GHOST_TICK_MS);
 
     return () => clearInterval(interval);
   }, [gameOver, won, maze, pacman]);
@@ -364,26 +414,56 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     ghostPositions.set(`${g.pos.r},${g.pos.c}`, g);
   }
 
+  // Touch: swipe to change direction
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t) touchStartRef.current = { x: t.clientX, y: t.clientY };
+  }, []);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      if (!start || gameOver || won) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > SWIPE_THRESHOLD) setNextDir("right");
+        else if (dx < -SWIPE_THRESHOLD) setNextDir("left");
+      } else {
+        if (dy > SWIPE_THRESHOLD) setNextDir("down");
+        else if (dy < -SWIPE_THRESHOLD) setNextDir("up");
+      }
+    },
+    [gameOver, won],
+  );
+
   return (
     <div
       ref={gameRef}
       tabIndex={0}
       onKeyDown={handleKey}
-      className="outline-none h-full flex flex-col min-h-0 font-mono select-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="outline-none h-full flex flex-col min-h-0 font-mono select-none touch-none"
       style={{ caretColor: "transparent" }}
     >
-      <div className="flex items-center justify-between text-[10px] shrink-0 mb-1">
-        <span className="text-accent">
-          PAC-MAN — Score: {score}
+      <div className="flex items-center justify-between text-xs shrink-0 mb-2 px-0.5">
+        <span className="text-accent font-semibold">
+          PAC-MAN
         </span>
-        <span className="text-muted">
-          {"C ".repeat(lives).trim()} | WASD
+        <span className="text-primary font-medium tabular-nums">
+          {score}
+        </span>
+        <span className="text-muted text-[10px]">
+          ♥ {lives} · WASD / Arrows
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 flex items-center justify-center">
+      <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto">
         <pre
-          className="text-[10px] xl:text-[11px] leading-[1.35] xl:leading-[1.4]"
+          className="text-[13px] leading-[1.4] shrink-0 scale-110 origin-center"
           style={{ fontFamily: "inherit" }}
         >
           {maze.map((row, r) => (
@@ -409,7 +489,7 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
                       className={`font-bold ${ghost.scared ? (powerTimer < 8 ? "animate-pulse text-blue-300" : "text-blue-400") : ghost.color}`}
                       style={{ width: "1ch", textAlign: "center", display: "inline-block" }}
                     >
-                      {ghost.scared ? "W" : "A"}
+                      {ghost.scared ? "◎" : "◉"}
                     </span>
                   );
                 }
@@ -421,11 +501,11 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
                 switch (cell) {
                   case 1: // Wall
                     char = "█";
-                    color = "text-blue-900";
+                    color = "text-blue-600/80";
                     break;
                   case 0: // Dot
                     char = "·";
-                    color = "text-secondary";
+                    color = "text-amber-200/90";
                     break;
                   case 3: // Power pellet
                     char = "●";
@@ -454,17 +534,17 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
         </pre>
       </div>
 
-      <div className="text-ghost text-[9px] mt-1 shrink-0">
+      <div className="text-ghost text-[10px] mt-2 shrink-0 px-0.5">
         {gameOver ? (
-          <span className="text-red-500/90">
-            Game Over! Score: {score} — [R] Restart · [Q] Quit
+          <span className="text-red-400/90 font-medium">
+            Game Over — Score: {score} · [R] Restart · [Q] Quit
           </span>
         ) : won ? (
-          <span className="text-accent">
-            You win! Score: {score} — [R] Restart · [Q] Quit
+          <span className="text-accent font-medium">
+            You win! Score: {score} · [R] Restart · [Q] Quit
           </span>
         ) : (
-          <span>Eat all dots · ● = power mode · Avoid ghosts</span>
+          <span>● power pellet · Avoid ghosts · Swipe on touch</span>
         )}
       </div>
     </div>

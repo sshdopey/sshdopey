@@ -23,12 +23,12 @@ export const metadata: Metadata = {
 
 export default function BlogIndex() {
   const posts = getAllPostsMeta();
-  const featured = getFeaturedPosts(3);
+  const featured = getFeaturedPosts(1);
   const allTags = getAllTags();
   const likeCounts = getLikeCounts();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24">
       <FadeIn>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
           Writing<span className="text-accent animate-subtle-pulse">.</span>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, useDragControls } from "framer-motion";
+import { motion, useDragControls, AnimatePresence } from "framer-motion";
 import { Terminal, Grip } from "lucide-react";
 import { TerminalPacman } from "./terminal-pacman";
+
+type WindowState = "normal" | "minimized" | "maximized" | "closed";
 
 type Color = "accent" | "muted" | "ghost" | "secondary" | "dim" | "primary";
 
@@ -175,6 +177,15 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
   return result;
 }
 
+const TERMINAL_WIDTH_DEFAULT = 420;
+const TERMINAL_WIDTH_XL_DEFAULT = 460;
+const TERMINAL_HEIGHT_DEFAULT = 460;
+const TERMINAL_HEIGHT_XL_DEFAULT = 500;
+const TERMINAL_MIN_W = 320;
+const TERMINAL_MAX_W = 800;
+const TERMINAL_MIN_H = 320;
+const TERMINAL_MAX_H = 900;
+
 export function HeroVisual() {
   const [fs] = useState(buildFS);
   const [cwd, setCwd] = useState("/home/dopey");
@@ -185,9 +196,57 @@ export function HeroVisual() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [gameMode, setGameMode] = useState<"none" | "game">("none");
+  const [windowState, setWindowState] = useState<WindowState>("normal");
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [terminalSize, setTerminalSize] = useState({ w: TERMINAL_WIDTH_DEFAULT, h: TERMINAL_HEIGHT_DEFAULT });
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
+  const resizeStartRef = useRef<{ x: number; y: number; w: number; h: number; edge: "e" | "s" | "se" } | null>(null);
+
+  const clampSize = useCallback((w: number, h: number) => ({
+    w: Math.min(TERMINAL_MAX_W, Math.max(TERMINAL_MIN_W, w)),
+    h: Math.min(TERMINAL_MAX_H, Math.max(TERMINAL_MIN_H, h)),
+  }), []);
+
+  const handleResizeStart = useCallback((e: React.PointerEvent, edge: "e" | "s" | "se") => {
+    e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    resizeStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      w: terminalSize.w,
+      h: terminalSize.h,
+      edge,
+    };
+  }, [terminalSize]);
+
+  useEffect(() => {
+    if (!resizeStartRef.current) return;
+    const onMove = (e: PointerEvent) => {
+      const start = resizeStartRef.current;
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      let { w, h } = start;
+      if (start.edge === "e" || start.edge === "se") w = start.w + dx;
+      if (start.edge === "s" || start.edge === "se") h = start.h + dy;
+      setTerminalSize((prev) => clampSize(w, h));
+    };
+    const onUp = () => {
+      resizeStartRef.current = null;
+      document.body.releasePointerCapture?.(-1);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [clampSize]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setReady(true), 600);
@@ -513,99 +572,263 @@ export function HeroVisual() {
     [inputValue, execute, history, historyIdx, fs, cwd],
   );
 
-  return (
-    <div className="hidden lg:block absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] w-[420px] xl:w-[460px] select-none z-10">
-      <motion.div
-        data-cursor-grab
-        drag
-        dragControls={dragControls}
-        dragMomentum={false}
-        dragElastic={0.08}
-        initial={{ opacity: 0, x: 40, y: 10 }}
-        animate={{ opacity: 1, x: 0, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
-        className="rounded-xl border border-line bg-surface/80 backdrop-blur-md overflow-hidden shadow-2xl shadow-black/25 cursor-grab active:cursor-grabbing"
-        whileDrag={{ scale: 1.02, boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)" }}
-        onClick={() => inputRef.current?.focus()}
+  const isMinimized = windowState === "minimized";
+  const isMaximized = windowState === "maximized";
+  const isClosed = windowState === "closed";
+
+  const handleCloseClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowCloseConfirm(true);
+  }, []);
+
+  const handleCloseConfirm = useCallback(() => {
+    setShowCloseConfirm(false);
+    setWindowState("closed");
+  }, []);
+
+  const handleMinimizeClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setWindowState("minimized");
+  }, []);
+
+  const handleMaximizeClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setWindowState((s) => (s === "maximized" ? "normal" : "maximized"));
+  }, []);
+
+  const terminalContent = (
+    <>
+      <div
+        data-cursor-grab={windowState === "normal" ? "" : undefined}
+        className={`flex items-center justify-between px-4 py-2.5 border-b border-line-faint bg-surface/60 shrink-0 ${windowState === "normal" ? "cursor-grab active:cursor-grabbing" : "cursor-default"}`}
+        onPointerDown={(e) => windowState === "normal" && dragControls.start(e)}
       >
-        <div
-          className="flex items-center justify-between px-4 py-2 border-b border-line-faint bg-surface/50"
-          onPointerDown={(e) => dragControls.start(e)}
-        >
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-            <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-            <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-ghost font-mono">
-            <Terminal size={10} />
-            dopey — zsh
-          </div>
-          <Grip size={11} className="text-ghost/40" />
+        <div className="flex items-center gap-2 [&_button]:cursor-pointer">
+          <button
+            type="button"
+            onClick={handleCloseClick}
+            className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff4a42] transition-colors cursor-pointer shrink-0"
+            aria-label="Close terminal"
+          />
+          <button
+            type="button"
+            onClick={handleMinimizeClick}
+            className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#f5b320] transition-colors cursor-pointer shrink-0"
+            aria-label="Minimize"
+          />
+          <button
+            type="button"
+            onClick={handleMaximizeClick}
+            className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#20b836] transition-colors cursor-pointer shrink-0"
+            aria-label={isMaximized ? "Restore" : "Maximize"}
+          />
         </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-ghost font-mono pointer-events-none">
+          <Terminal size={10} />
+          dopey — zsh
+        </div>
+        {windowState === "normal" && (
+          <Grip size={11} className="text-ghost/40 shrink-0" aria-hidden />
+        )}
+      </div>
 
-        <div
-          ref={scrollRef}
-          className={`px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] h-[400px] xl:h-[440px] terminal-scroll ${gameMode === "game" ? "flex flex-col min-h-0 overflow-hidden" : "overflow-y-auto"}`}
-          onClick={() => gameMode === "none" && inputRef.current?.focus()}
-        >
-          {gameMode === "game" ? (
-            <TerminalPacman
-              onExit={(finalScore) => {
-                setGameMode("none");
-                addLines([
-                  { text: `  🕹️ Final score: ${finalScore}`, color: "accent" },
-                ]);
-                setTimeout(() => inputRef.current?.focus(), 50);
-              }}
-            />
-          ) : (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.85 }}
-                transition={{ delay: 0.5 }}
-                className="text-accent"
-              >
-                $ ssh dopey@sshdopey.com
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: ready ? 0.7 : 0 }}
-                className="text-ghost"
-              >
-                Welcome. Type &apos;help&apos; to get started.
-              </motion.div>
-              <div className="h-2" />
+      <div
+        ref={scrollRef}
+        className={`px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] terminal-scroll flex-1 min-h-0 flex flex-col ${gameMode === "game" ? "overflow-hidden" : "overflow-y-auto"}`}
+        style={
+          isMaximized ? { height: "calc(100vh - 5rem)" } : undefined
+        }
+        onClick={() => gameMode === "none" && inputRef.current?.focus()}
+      >
+        {gameMode === "game" ? (
+          <TerminalPacman
+            onExit={(finalScore) => {
+              setGameMode("none");
+              addLines([
+                { text: `  🕹️ Final score: ${finalScore}`, color: "accent" },
+              ]);
+              setTimeout(() => inputRef.current?.focus(), 50);
+            }}
+          />
+        ) : (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.85 }}
+              transition={{ delay: 0.5 }}
+              className="text-accent"
+            >
+              $ ssh dopey@sshdopey.com
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: ready ? 0.7 : 0 }}
+              className="text-ghost"
+            >
+              Welcome. Type &apos;help&apos; to get started.
+            </motion.div>
+            <div className="h-2" />
 
-              {lines.map((line, i) => (
-                <div
-                  key={`l-${i}`}
-                  className={`${colorMap[line.color]} ${!line.text ? "h-2" : ""}`}
+            {lines.map((line, i) => (
+              <div
+                key={`l-${i}`}
+                className={`${colorMap[line.color]} wrap-break-word ${!line.text ? "h-2" : ""}`}
+              >
+                {line.text}
+              </div>
+            ))}
+
+            {bootDone && (
+              <div className="flex items-center blink-cursor">
+                <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-primary font-mono text-[11px] p-0 caret-accent placeholder:text-ghost"
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-label="Terminal input"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Close confirmation dialog */}
+      <AnimatePresence>
+        {showCloseConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowCloseConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="rounded-2xl border border-line bg-surface shadow-2xl p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-primary font-medium mb-4">Close terminal?</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCloseConfirm(false)}
+                  className="px-4 py-2 rounded-lg text-muted hover:text-primary border border-line-faint cursor-pointer"
                 >
-                  {line.text}
-                </div>
-              ))}
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseConfirm}
+                  className="px-4 py-2 rounded-lg bg-accent text-inverse font-medium cursor-pointer hover:opacity-90"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {bootDone && (
-                <div className="flex items-center">
-                  <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="flex-1 bg-transparent border-none outline-none text-primary font-mono text-[11px] p-0 caret-accent"
-                    spellCheck={false}
-                    autoComplete="off"
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </motion.div>
-    </div>
+      {/* Dock: show when minimized or closed — click to restore / open */}
+      <AnimatePresence>
+        {(isMinimized || isClosed) && (
+          <motion.button
+            type="button"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            onClick={() => setWindowState("normal")}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl border border-line bg-surface/95 backdrop-blur-md shadow-xl shadow-black/30 hover:bg-surface-hover transition-colors cursor-pointer"
+            aria-label={isClosed ? "Open terminal" : "Restore terminal"}
+          >
+            <Terminal size={18} className="text-accent" />
+            <span className="text-sm font-medium text-primary">
+              {isClosed ? "Terminal" : "dopey — zsh"}
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Terminal window: normal (inline, draggable, resizable) or maximized (fixed overlay) */}
+      <AnimatePresence mode="wait">
+        {!isClosed && !isMinimized && (
+          <motion.div
+            key={windowState}
+            drag={!isMaximized}
+            dragControls={dragControls}
+            dragMomentum={false}
+            dragElastic={0.08}
+            initial={isMaximized ? false : { opacity: 0, x: 40, y: 10 }}
+            animate={isMaximized ? {} : { opacity: 1, x: 0, y: 0 }}
+            transition={
+              isMaximized
+                ? undefined
+                : { delay: 0.3, duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }
+            }
+            whileDrag={
+              !isMaximized
+                ? { scale: 1.02, boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)" }
+                : undefined
+            }
+            className={
+              isMaximized
+                ? "fixed inset-6 z-[90] flex flex-col select-none overflow-hidden rounded-2xl border border-line bg-surface/95 backdrop-blur-md shadow-2xl shadow-black/40 cursor-default"
+                : "hidden lg:flex flex-col select-none overflow-hidden rounded-xl border border-line bg-surface/90 backdrop-blur-md shadow-2xl shadow-black/30 absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] z-10 resize-container"
+            }
+            style={
+              isMaximized
+                ? undefined
+                : { width: terminalSize.w, height: terminalSize.h, minWidth: TERMINAL_MIN_W, minHeight: TERMINAL_MIN_H }
+            }
+          >
+            <div
+              className="flex flex-col h-full min-h-0 rounded-inherit overflow-hidden"
+              style={{ borderRadius: "inherit" }}
+              onClick={() => inputRef.current?.focus()}
+            >
+              {terminalContent}
+            </div>
+            {/* Resize handles — only when normal */}
+            {!isMaximized && (
+              <>
+                <div
+                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-accent/20 transition-colors rounded-r"
+                  style={{ touchAction: "none" }}
+                  onPointerDown={(e) => handleResizeStart(e, "e")}
+                  aria-hidden
+                />
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-accent/20 transition-colors rounded-b"
+                  style={{ touchAction: "none" }}
+                  onPointerDown={(e) => handleResizeStart(e, "s")}
+                  aria-hidden
+                />
+                <div
+                  className="absolute right-0 bottom-0 w-3 h-3 cursor-nwse-resize hover:bg-accent/30 transition-colors rounded-br"
+                  style={{ touchAction: "none" }}
+                  onPointerDown={(e) => handleResizeStart(e, "se")}
+                  aria-hidden
+                />
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+    </>
   );
 }

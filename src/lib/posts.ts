@@ -60,10 +60,9 @@ export function getAllPostsMeta(): PostMeta[] {
   return getAllPosts().map(({ content: _, ...meta }) => meta);
 }
 
-export function getFeaturedPosts(limit = 3): PostMeta[] {
-  return getAllPostsMeta()
-    .filter((p) => p.featured)
-    .slice(0, limit);
+export function getFeaturedPosts(limit?: number): PostMeta[] {
+  const featured = getAllPostsMeta().filter((p) => p.featured);
+  return limit == null ? featured : featured.slice(0, limit);
 }
 
 export function getLatestPostsMeta(limit = 20): PostMeta[] {

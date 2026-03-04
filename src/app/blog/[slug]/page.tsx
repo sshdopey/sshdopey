@@ -116,7 +116,7 @@ export default async function BlogPost({
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs text-dim bg-surface-hover px-1.5 py-0.5 rounded-md"
+                    className="text-xs font-semibold uppercase tracking-[0.12em] text-dim bg-surface-hover px-1.5 py-0.5 rounded-md"
                   >
                     {tag}
                   </span>
@@ -150,6 +150,7 @@ export default async function BlogPost({
       <KeepReading
         posts={recommended}
         currentSlug={slug}
+        currentPost={post}
         likeCounts={likeCounts}
       />
     </>

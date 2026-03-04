@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { Heart, ArrowDown } from "lucide-react";
-import { getFeaturedPosts } from "@/lib/posts";
+import { ArrowDown } from "lucide-react";
+import { getLatestPostsMeta } from "@/lib/posts";
 import { getLikeCounts } from "@/lib/db";
 import { HeroName, HeroHandle } from "@/components/hero-name";
 import { HeroVisual } from "@/components/hero-visual";
-import { TiltCard } from "@/components/tilt-card";
+import { FeaturedCarousel } from "@/components/featured-carousel";
 import { FadeIn, FadeInOnScroll } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
 import { PersonJsonLd } from "@/components/json-ld";
@@ -24,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  const featured = getFeaturedPosts(3);
+  const recentPosts = getLatestPostsMeta(3);
   const likeCounts = getLikeCounts();
 
   return (
@@ -80,91 +78,8 @@ export default function Home() {
         </div>
       </section>
 
-      {featured.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-24">
-          <FadeInOnScroll>
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-xs text-muted uppercase tracking-[0.2em] font-medium">
-                Featured Writing
-              </h2>
-              <Link
-                href="/blog"
-                className="text-xs text-muted hover:text-accent transition-colors group"
-              >
-                All posts{" "}
-                <span className="inline-block group-hover:translate-x-0.5 transition-transform">
-                  →
-                </span>
-              </Link>
-            </div>
-          </FadeInOnScroll>
-
-          <div
-            className={`grid gap-4 ${
-              featured.length === 1
-                ? "grid-cols-1"
-                : featured.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {featured.map((post, i) => {
-              const likes = likeCounts[post.slug] ?? 0;
-
-              return (
-                <FadeInOnScroll key={post.slug} delay={i * 0.1}>
-                  <TiltCard className="h-full">
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    {post.cover_image && (
-                      <div className="relative w-full h-40 overflow-hidden">
-                        <Image
-                          src={post.cover_image}
-                          alt={post.title}
-                          fill
-                          className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      </div>
-                    )}
-
-                    <div className="p-5 flex flex-col flex-1">
-                      <h3 className="text-primary font-semibold leading-snug mb-2 group-hover:text-secondary transition-colors">
-                        {post.title}
-                      </h3>
-
-                      <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3 flex-1">
-                        {post.excerpt}
-                      </p>
-
-                      <div className="flex items-center justify-between text-xs text-muted mt-auto">
-                        <div className="flex items-center gap-2.5">
-                          <time>
-                            {new Date(post.published_at).toLocaleDateString(
-                              "en-US",
-                              { month: "short", day: "numeric", year: "numeric" },
-                            )}
-                          </time>
-                          <span className="text-dim">·</span>
-                          <span>{post.reading_time} min</span>
-                        </div>
-                        {likes > 0 && (
-                          <span className="flex items-center gap-1 text-accent">
-                            <Heart size={11} />
-                            {likes}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                  </TiltCard>
-                </FadeInOnScroll>
-              );
-            })}
-          </div>
-        </section>
+      {recentPosts.length > 0 && (
+        <FeaturedCarousel posts={recentPosts} likeCounts={likeCounts} />
       )}
     </>
   );

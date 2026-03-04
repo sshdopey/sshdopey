@@ -17,6 +17,7 @@ export interface Comment {
   content: string;
   created_at: string;
   like_count: number;
+  liked_by_me?: boolean;
 }
 
 const DB_PATH = path.join(process.cwd(), "sshdopey.db");
@@ -38,6 +39,7 @@ function getDb(): Database.Database {
       CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         post_slug TEXT NOT NULL,
+        subscriber_id TEXT,
         created_at TEXT DEFAULT (datetime('now'))
       );
 
@@ -60,6 +62,13 @@ function getDb(): Database.Database {
       );
     `);
 
+    // Migrate existing DBs: add subscriber_id to likes if missing, then create index
+    const info = _db.prepare("PRAGMA table_info(likes)").all() as { name: string }[];
+    if (!info.some((c) => c.name === "subscriber_id")) {
+      _db.exec("ALTER TABLE likes ADD COLUMN subscriber_id TEXT");
+    }
+    _db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_subscriber ON likes(post_slug, subscriber_id)");
+
     seedIfEmpty(_db);
   }
   return _db;
@@ -81,9 +90,33 @@ export function getLikeCount(postSlug: string): number {
   return r.c;
 }
 
-export function addLike(postSlug: string): number {
-  getDb().prepare("INSERT INTO likes (post_slug) VALUES (?)").run(postSlug);
+export function hasUserLikedPost(postSlug: string, subscriberId: string): boolean {
+  const r = getDb()
+    .prepare("SELECT 1 FROM likes WHERE post_slug = ? AND subscriber_id = ?")
+    .get(postSlug, subscriberId);
+  return !!r;
+}
+
+export function addLike(postSlug: string, subscriberId?: string | null): number {
+  const db = getDb();
+  if (subscriberId != null) {
+    db.prepare("INSERT OR IGNORE INTO likes (post_slug, subscriber_id) VALUES (?, ?)").run(postSlug, subscriberId);
+  } else {
+    db.prepare("INSERT INTO likes (post_slug, subscriber_id) VALUES (?, NULL)").run(postSlug);
+  }
   return getLikeCount(postSlug);
+}
+
+export function removePostLike(postSlug: string, subscriberId: string): number {
+  getDb().prepare("DELETE FROM likes WHERE post_slug = ? AND subscriber_id = ?").run(postSlug, subscriberId);
+  return getLikeCount(postSlug);
+}
+
+export function getLikedPostSlugsForSubscriber(subscriberId: string): string[] {
+  const rows = getDb()
+    .prepare("SELECT post_slug FROM likes WHERE subscriber_id = ?")
+    .all(subscriberId) as { post_slug: string }[];
+  return rows.map((r) => r.post_slug);
 }
 
 // ── Subscribers ──
@@ -100,8 +133,8 @@ export function createSubscriber(id: string, email: string): Subscriber {
 
 // ── Comments ──
 
-export function getComments(postSlug: string): Comment[] {
-  return getDb()
+export function getComments(postSlug: string, subscriberId?: string | null): Comment[] {
+  const rows = getDb()
     .prepare(
       `SELECT c.*,
         (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id) as like_count
@@ -110,6 +143,12 @@ export function getComments(postSlug: string): Comment[] {
        ORDER BY c.created_at ASC`,
     )
     .all(postSlug) as Comment[];
+  if (!subscriberId) return rows;
+  const withLiked = getDb()
+    .prepare("SELECT comment_id FROM comment_likes WHERE subscriber_id = ?")
+    .all(subscriberId) as { comment_id: string }[];
+  const likedSet = new Set(withLiked.map((r) => r.comment_id));
+  return rows.map((c) => ({ ...c, liked_by_me: likedSet.has(c.id) }));
 }
 
 export function addComment(
@@ -136,4 +175,19 @@ export function addCommentLike(commentId: string, subscriberId: string): void {
 export function getCommentLikeCount(commentId: string): number {
   const r = getDb().prepare("SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?").get(commentId) as { c: number };
   return r.c;
+}
+
+export function removeCommentLike(commentId: string, subscriberId: string): void {
+  getDb().prepare("DELETE FROM comment_likes WHERE comment_id = ? AND subscriber_id = ?").run(commentId, subscriberId);
+}
+
+export function getCommentLikedIdsForPost(postSlug: string, subscriberId: string): string[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT cl.comment_id FROM comment_likes cl
+       JOIN comments c ON c.id = cl.comment_id AND c.post_slug = ?
+       WHERE cl.subscriber_id = ?`,
+    )
+    .all(postSlug, subscriberId) as { comment_id: string }[];
+  return rows.map((r) => r.comment_id);
 }

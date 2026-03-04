@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { TiltCard } from "@/components/tilt-card";
+import { PostLikeBadge } from "@/components/liked-posts-provider";
 import type { PostMeta } from "@/lib/posts";
 
 const placeholders = [
@@ -70,59 +71,68 @@ function PostCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 25 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ delay: index * 0.05, type: "spring", stiffness: 200, damping: 20 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ delay: index * 0.04, type: "spring", stiffness: 260, damping: 24 }}
       className="h-full"
     >
       <TiltCard className="h-full">
-        <Link
-          href={`/blog/${post.slug}`}
-          className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
-        >
-        {post.cover_image && (
-          <div className="relative w-full h-36 overflow-hidden">
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-              sizes="(max-width: 640px) 100vw, 50vw"
-            />
-          </div>
-        )}
-
-        <div className="p-5 flex flex-col flex-1">
-          <h3 className="text-primary font-semibold leading-snug mb-1.5 group-hover:text-secondary transition-colors">
-            {post.title}
-          </h3>
-
-          <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3 flex-1">
-            {post.excerpt}
-          </p>
-
-          <div className="flex items-center justify-between text-xs text-muted mt-auto">
-            <div className="flex items-center gap-2.5">
-              <time>
-                {new Date(post.published_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </time>
-              <span className="text-dim">·</span>
-              <span>{post.reading_time} min read</span>
-            </div>
-            {likes > 0 && (
-              <span className="flex items-center gap-1 text-accent">
-                <Heart size={11} />
-                {likes}
-              </span>
+        <motion.div whileHover={{ y: -6, scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} className="h-full">
+          <Link
+            href={`/blog/${post.slug}`}
+            className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-colors duration-300 shadow-sm hover:shadow-xl hover:shadow-black/10"
+          >
+            {post.cover_image && (
+              <div className="relative w-full aspect-16/10 overflow-hidden bg-line-faint/30">
+                <Image
+                  src={post.cover_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </div>
             )}
-          </div>
-        </div>
-      </Link>
+
+            <div className="p-5 pt-5 pb-5 flex flex-col flex-1 min-h-0">
+              {post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {post.tags.slice(0, 2).map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] font-semibold uppercase tracking-[0.12em] text-dim bg-line-faint/80 px-1.5 py-0.5 rounded"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <h3 className="text-primary font-semibold leading-snug mb-2 group-hover:text-accent transition-colors line-clamp-2">
+                {post.title}
+              </h3>
+
+              <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-4 flex-1">
+                {post.excerpt}
+              </p>
+
+              <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-line-faint/50">
+                <div className="flex items-center gap-2.5">
+                  <time>
+                    {new Date(post.published_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                  <span className="text-dim">·</span>
+                  <span>{post.reading_time} min</span>
+                </div>
+                <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1" />
+              </div>
+            </div>
+          </Link>
+        </motion.div>
       </TiltCard>
     </motion.div>
   );
@@ -139,31 +149,28 @@ function FeaturedCard({
     <TiltCard className="h-full">
       <Link
         href={`/blog/${post.slug}`}
-        className="group flex flex-col h-full rounded-xl border border-line overflow-hidden hover:border-ghost bg-surface/50 hover:bg-surface-hover transition-all duration-300 hover:-translate-y-0.5"
+        className="group flex flex-col sm:flex-row h-full rounded-xl border-2 border-line overflow-hidden hover:border-accent/40 bg-surface/50 hover:bg-surface-hover transition-all duration-300"
       >
-      {post.cover_image && (
-        <div className="relative w-full h-40 overflow-hidden">
-          <Image
-            src={post.cover_image}
-            alt={post.title}
-            fill
-            className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        </div>
-      )}
-
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="text-lg text-primary font-semibold leading-snug mb-2">
-          {post.title}
-        </h3>
-
-        <p className="text-sm text-muted leading-relaxed line-clamp-2 mb-3 flex-1">
-          {post.excerpt}
-        </p>
-
-        <div className="flex items-center justify-between text-xs text-muted mt-auto">
-          <div className="flex items-center gap-2.5">
+        {post.cover_image && (
+          <div className="relative w-full sm:w-[40%] min-h-[200px] sm:min-h-0 sm:shrink-0 overflow-hidden">
+            <Image
+              src={post.cover_image}
+              alt={post.title}
+              fill
+              className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              sizes="(max-width: 640px) 100vw, 40vw"
+            />
+          </div>
+        )}
+        <div className="p-6 sm:p-8 flex flex-col flex-1 justify-center">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-2 block">Featured</span>
+          <h3 className="text-xl sm:text-2xl font-bold text-primary leading-tight mb-3 group-hover:text-secondary transition-colors">
+            {post.title}
+          </h3>
+          <p className="text-sm text-muted leading-relaxed line-clamp-3 mb-4">
+            {post.excerpt}
+          </p>
+          <div className="flex items-center gap-3 text-xs text-muted">
             <time>
               {new Date(post.published_at).toLocaleDateString("en-US", {
                 month: "short",
@@ -172,17 +179,11 @@ function FeaturedCard({
               })}
             </time>
             <span className="text-dim">·</span>
-            <span>{post.reading_time} min</span>
+            <span>{post.reading_time} min read</span>
+            <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1 ml-auto" />
           </div>
-          {likes > 0 && (
-            <span className="flex items-center gap-1 text-accent">
-              <Heart size={11} />
-              {likes}
-            </span>
-          )}
         </div>
-      </div>
-    </Link>
+      </Link>
     </TiltCard>
   );
 }
@@ -238,7 +239,7 @@ export function BlogContent({
             onClick={() => setActiveTag(null)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
+            className={`text-xs font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
               activeTag === null
                 ? "bg-accent/10 text-accent"
                 : "bg-surface-hover text-muted hover:text-accent"
@@ -254,7 +255,7 @@ export function BlogContent({
               }
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.93 }}
-              className={`text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
+              className={`text-xs font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-md cursor-pointer transition-colors ${
                 activeTag === tag
                   ? "bg-accent/10 text-accent"
                   : "bg-surface-hover text-muted hover:text-accent"
@@ -266,27 +267,17 @@ export function BlogContent({
         </div>
       )}
 
-      {showFeatured && (
-        <section className="mb-12">
+      {showFeatured && featured.length > 0 && (
+        <section className="mb-14">
           <h2 className="text-xs text-muted uppercase tracking-[0.2em] font-medium mb-5">
             Featured
           </h2>
-          <div
-            className={`grid gap-4 ${
-              featured.length === 1
-                ? "grid-cols-1"
-                : featured.length === 2
-                  ? "grid-cols-1 sm:grid-cols-2"
-                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
-            {featured.map((p) => (
-              <FeaturedCard
-                key={p.slug}
-                post={p}
-                likes={likeCounts[p.slug] ?? 0}
-              />
-            ))}
+          <div className="grid grid-cols-1 gap-4">
+            <FeaturedCard
+              key={featured[0].slug}
+              post={featured[0]}
+              likes={likeCounts[featured[0].slug] ?? 0}
+            />
           </div>
         </section>
       )}
@@ -298,7 +289,7 @@ export function BlogContent({
           </h2>
         )}
         <AnimatePresence mode="popLayout">
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+          <div className="grid gap-6 sm:gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {(showFeatured ? nonFeaturedFiltered : filtered).map(
               (post, idx) => (
                 <PostCard

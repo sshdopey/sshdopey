@@ -98,6 +98,21 @@ body {
   50% { opacity: 1; }
 }
 
+@keyframes featured-carousel-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.featured-carousel-track {
+  animation: featured-carousel-scroll 55s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-carousel-track {
+    animation: none;
+  }
+}
+
 .animate-subtle-pulse { animation: subtle-pulse 3s ease-in-out infinite; }
 
 /* ═══ Custom cursor glow (desktop) ═══ */
@@ -330,19 +345,28 @@ html.light [data-rehype-pretty-code-figure] code span {
 
 .prose img {
   border-radius: 10px;
-  margin: 2em auto 0.5em;
+  margin: 2em 0 0.5em;
   max-width: 100%;
+  width: 100%;
   display: block;
-  border: 1px solid var(--color-line-faint);
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .prose figure.prose-figure {
   margin: 2em 0;
-  text-align: center;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .prose figure.prose-figure img {
-  margin: 0 auto 0.5em;
+  margin: 0;
+  width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: middle;
+  border: none;
 }
 
 .prose figure.prose-figure figcaption {
@@ -350,8 +374,9 @@ html.light [data-rehype-pretty-code-figure] code span {
   color: var(--color-dim);
   font-style: italic;
   line-height: 1.5;
-  max-width: 80%;
-  margin: 0 auto;
+  text-align: center;
+  margin-top: 0.5em;
+  padding: 0 1rem;
 }
 
 .prose img + em,
@@ -360,8 +385,9 @@ html.light [data-rehype-pretty-code-figure] code span {
   text-align: center;
   font-size: 0.82rem;
   color: var(--color-dim);
-  margin-top: -1em;
+  margin-top: 0.5em;
   margin-bottom: 1.5em;
+  padding: 0 1rem;
 }
 
 /* ═══ YouTube / Video Embeds ═══ */

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { Sparkles, ChevronsRight, ChevronsDown, Send } from "lucide-react";
+import { LikedPostsProvider } from "@/components/liked-posts-provider";
 
 interface SidebarContextType {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export function ClientLayout({ children }: { children: ReactNode }) {
   }, [isOpen, isMobile]);
 
   return (
+    <LikedPostsProvider>
     <SidebarContext.Provider
       value={{
         isOpen,
@@ -127,5 +129,6 @@ export function ClientLayout({ children }: { children: ReactNode }) {
         </aside>
       </div>
     </SidebarContext.Provider>
+    </LikedPostsProvider>
   );
 }

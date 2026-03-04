@@ -73,7 +73,7 @@ export function seedIfEmpty(db: Database.Database) {
   const insertSub = db.prepare("INSERT INTO subscribers (id, email) VALUES (?, ?)");
   for (const s of subscribers) insertSub.run(s.id, s.email);
 
-  const insertLike = db.prepare("INSERT INTO likes (post_slug, created_at) VALUES (?, datetime('now', '-' || ? || ' hours'))");
+  const insertLike = db.prepare("INSERT INTO likes (post_slug, subscriber_id, created_at) VALUES (?, NULL, datetime('now', '-' || ? || ' hours'))");
   for (const [slug, count] of Object.entries(likeCounts)) {
     for (let i = 0; i < count; i++) insertLike.run(slug, Math.floor(Math.random() * 2000));
   }
