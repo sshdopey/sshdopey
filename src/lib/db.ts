@@ -1,4 +1,3 @@
-import Database from "better-sqlite3";
 import path from "path";
 import { seedIfEmpty } from "./seed";
 import { createId } from "./utils";
@@ -21,10 +20,14 @@ export interface Comment {
 }
 
 const DB_PATH = path.join(process.cwd(), "sshdopey.db");
-let _db: Database.Database | null = null;
+let _db: import("better-sqlite3").Database | null = null;
+let _dbUnavailable = false;
 
-function getDb(): Database.Database {
-  if (!_db) {
+function loadDb(): import("better-sqlite3").Database | null {
+  if (_dbUnavailable) return null;
+  if (_db) return _db;
+  try {
+    const Database = require("better-sqlite3") as new (path: string) => import("better-sqlite3").Database;
     _db = new Database(DB_PATH);
     _db.pragma("journal_mode = WAL");
     _db.pragma("foreign_keys = ON");
@@ -70,14 +73,25 @@ function getDb(): Database.Database {
     _db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_subscriber ON likes(post_slug, subscriber_id)");
 
     seedIfEmpty(_db);
+    return _db;
+  } catch {
+    _dbUnavailable = true;
+    return null;
   }
-  return _db;
+}
+
+function getDb(): import("better-sqlite3").Database {
+  const db = loadDb();
+  if (!db) throw new Error("Database unavailable (e.g. during build or missing native bindings)");
+  return db;
 }
 
 // ── Likes ──
 
 export function getLikeCounts(): Record<string, number> {
-  const rows = getDb()
+  const db = loadDb();
+  if (!db) return {};
+  const rows = db
     .prepare("SELECT post_slug, COUNT(*) as c FROM likes GROUP BY post_slug")
     .all() as { post_slug: string; c: number }[];
   const map: Record<string, number> = {};
@@ -86,7 +100,9 @@ export function getLikeCounts(): Record<string, number> {
 }
 
 export function getLikeCount(postSlug: string): number {
-  const r = getDb().prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?").get(postSlug) as { c: number };
+  const db = loadDb();
+  if (!db) return 0;
+  const r = db.prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?").get(postSlug) as { c: number };
   return r.c;
 }
 
@@ -134,7 +150,9 @@ export function createSubscriber(id: string, email: string): Subscriber {
 // ── Comments ──
 
 export function getComments(postSlug: string, subscriberId?: string | null): Comment[] {
-  const rows = getDb()
+  const db = loadDb();
+  if (!db) return [];
+  const rows = db
     .prepare(
       `SELECT c.*,
         (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id) as like_count
@@ -144,7 +162,7 @@ export function getComments(postSlug: string, subscriberId?: string | null): Com
     )
     .all(postSlug) as Comment[];
   if (!subscriberId) return rows;
-  const withLiked = getDb()
+  const withLiked = db
     .prepare("SELECT comment_id FROM comment_likes WHERE subscriber_id = ?")
     .all(subscriberId) as { comment_id: string }[];
   const likedSet = new Set(withLiked.map((r) => r.comment_id));
