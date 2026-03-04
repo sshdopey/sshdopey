@@ -160,27 +160,27 @@ function FeaturedCard({ post, likes }: { post: PostMeta; likes: number }) {
         className="group flex flex-col sm:flex-row h-full rounded-xl border-2 border-line overflow-hidden hover:border-accent/40 bg-surface/50 hover:bg-surface-hover transition-all duration-300"
       >
         {post.cover_image && (
-          <div className="relative w-full sm:w-[40%] min-h-[200px] sm:min-h-0 sm:shrink-0 overflow-hidden">
+          <div className="relative w-full sm:w-[44%] min-h-[240px] sm:min-h-0 sm:shrink-0 overflow-hidden">
             <Image
               src={post.cover_image}
               alt={post.title}
               fill
               className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-              sizes="(max-width: 640px) 100vw, 40vw"
+              sizes="(max-width: 640px) 100vw, 44vw"
             />
           </div>
         )}
-        <div className="p-6 sm:p-8 flex flex-col flex-1 justify-center">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-2 block">
+        <div className="p-7 sm:p-9 flex flex-col flex-1 justify-center">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-accent font-medium mb-2.5 block">
             Featured
           </span>
-          <h3 className="text-xl sm:text-2xl font-bold text-primary leading-tight mb-3 group-hover:text-secondary transition-colors">
+          <h3 className="text-2xl sm:text-3xl font-bold text-primary leading-tight mb-3.5 group-hover:text-secondary transition-colors">
             {post.title}
           </h3>
-          <p className="text-sm text-muted leading-relaxed line-clamp-3 mb-4">
+          <p className="text-sm sm:text-base text-muted leading-relaxed line-clamp-4 mb-5">
             {post.excerpt}
           </p>
-          <div className="flex items-center gap-3 text-xs text-muted">
+          <div className="flex items-center gap-3 text-xs sm:text-sm text-muted">
             <time>
               {new Date(post.published_at).toLocaleDateString("en-US", {
                 month: "short",
@@ -281,11 +281,11 @@ export function BlogContent({
       )}
 
       {showFeatured && featured.length > 0 && (
-        <section className="mb-14">
+        <section className="mb-16">
           <h2 className="text-xs text-muted uppercase tracking-[0.2em] font-medium mb-5">
             Featured
           </h2>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-5">
             <FeaturedCard
               key={featured[0].slug}
               post={featured[0]}
