@@ -161,7 +161,6 @@ function LikeShareBar({
   const [count, setCount] = useState(initialCount);
   const [serverLiked, setServerLiked] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
-  const [loaded, setLoaded] = useState(false);
   const [, startTransition] = useTransition();
   const { toggle } = useSidebar();
   const { isLiked, addLiked, removeLiked } = useLikedPosts();
@@ -176,7 +175,6 @@ function LikeShareBar({
       if (!cancelled) {
         setCount(r.count);
         setServerLiked(r.liked);
-        setLoaded(true);
       }
     });
     return () => {
