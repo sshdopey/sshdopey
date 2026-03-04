@@ -54,9 +54,15 @@ export async function likePost(
         error: "Subscribe first.",
       };
     const count = addLike(postSlug, subscriber.id);
+    revalidatePath(`/blog/${postSlug}`);
+    revalidatePath("/blog");
+    revalidatePath("/");
     return { count, liked: true };
   }
   const count = addLike(postSlug, null);
+  revalidatePath(`/blog/${postSlug}`);
+  revalidatePath("/blog");
+  revalidatePath("/");
   return { count, liked: true };
 }
 
@@ -68,6 +74,9 @@ export async function unlikePost(
   if (!subscriber)
     return { count: getLikeCount(postSlug), error: "Subscribe first." };
   const count = removePostLike(postSlug, subscriber.id);
+  revalidatePath(`/blog/${postSlug}`);
+  revalidatePath("/blog");
+  revalidatePath("/");
   return { count };
 }
 
@@ -106,23 +115,27 @@ export async function postCommentAction(
 export async function likeCommentAction(
   commentId: string,
   email: string,
+  postSlug: string,
 ): Promise<{ count: number; error?: string }> {
   const subscriber = getSubscriberByEmail(email);
   if (!subscriber) return { count: 0, error: "Subscribe first." };
 
   addCommentLike(commentId, subscriber.id);
+  revalidatePath(`/blog/${postSlug}`);
   return { count: getCommentLikeCount(commentId) };
 }
 
 export async function unlikeCommentAction(
   commentId: string,
   email: string,
+  postSlug: string,
 ): Promise<{ count: number; error?: string }> {
   const subscriber = getSubscriberByEmail(email);
   if (!subscriber)
     return { count: getCommentLikeCount(commentId), error: "Subscribe first." };
 
   removeCommentLike(commentId, subscriber.id);
+  revalidatePath(`/blog/${postSlug}`);
   return { count: getCommentLikeCount(commentId) };
 }
 

@@ -386,12 +386,14 @@ function buildThreads(comments: Comment[]): ThreadedComment[] {
 
 function CommentLikeBtn({
   commentId,
+  postSlug,
   initialCount,
   initialLiked,
   email,
   onLikedChange,
 }: {
   commentId: string;
+  postSlug: string;
   initialCount: number;
   initialLiked: boolean;
   email: string | null;
@@ -416,7 +418,7 @@ function CommentLikeBtn({
       setCount((c) => Math.max(0, c - 1));
       onLikedChange?.(commentId, false);
       startTransition(async () => {
-        const r = await unlikeCommentAction(commentId, email);
+        const r = await unlikeCommentAction(commentId, email, postSlug);
         if (!r.error) setCount(r.count);
       });
       return;
@@ -425,7 +427,7 @@ function CommentLikeBtn({
     setCount((c) => c + 1);
     onLikedChange?.(commentId, true);
     startTransition(async () => {
-      const r = await likeCommentAction(commentId, email);
+      const r = await likeCommentAction(commentId, email, postSlug);
       if (!r.error) setCount(r.count);
     });
   }
@@ -514,6 +516,7 @@ function ThreadNode({
         <div className="flex items-center gap-3 pl-[34px]">
           <CommentLikeBtn
             commentId={node.id}
+            postSlug={postSlug}
             initialCount={node.like_count}
             initialLiked={node.liked_by_me ?? false}
             email={subscriber?.email ?? null}
