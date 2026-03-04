@@ -8,6 +8,7 @@
     "postinstall": "pnpm rebuild better-sqlite3 2>/dev/null || true",
     "start": "next start",
     "lint": "eslint",
+    "db:seed": "npx tsx src/lib/seed.ts",
     "og:generate": "npx tsx scripts/generate-og.tsx"
   },
   "dependencies": {

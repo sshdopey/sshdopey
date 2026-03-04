@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { seedIfEmpty } from "./seed";
 import { createId } from "./utils";
@@ -19,14 +20,21 @@ export interface Comment {
   liked_by_me?: boolean;
 }
 
-const DB_PATH = path.join(process.cwd(), "sshdopey.db");
+const DB_PATH = process.env.DATABASE_PATH
+  ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+  : path.join(process.cwd(), "sshdopey.db");
 let _db: import("better-sqlite3").Database | null = null;
 let _dbUnavailable = false;
+let _dbLoadError: unknown = null;
 
 function loadDb(): import("better-sqlite3").Database | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
+    _dbLoadError = null;
+    // Ensure the directory for the DB file exists (e.g. ./data/sshdopey.db on server).
+    const dir = path.dirname(DB_PATH);
+    fs.mkdirSync(dir, { recursive: true });
     // Lazy require so the native addon isn't loaded at build time (SSG can run without bindings).
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require("better-sqlite3") as new (
@@ -82,7 +90,8 @@ function loadDb(): import("better-sqlite3").Database | null {
 
     seedIfEmpty(_db);
     return _db;
-  } catch {
+  } catch (err) {
+    _dbLoadError = err;
     _dbUnavailable = true;
     return null;
   }
@@ -90,10 +99,15 @@ function loadDb(): import("better-sqlite3").Database | null {
 
 function getDb(): import("better-sqlite3").Database {
   const db = loadDb();
-  if (!db)
+  if (!db) {
+    const detail =
+      _dbLoadError instanceof Error
+        ? _dbLoadError.message
+        : String(_dbLoadError);
     throw new Error(
-      "Database unavailable (e.g. during build or missing native bindings)",
+      `Database unavailable. Path: ${DB_PATH}. ${detail ? `Cause: ${detail}` : "Check DATABASE_PATH and that better-sqlite3 is built for this platform."}`,
     );
+  }
   return db;
 }
 
