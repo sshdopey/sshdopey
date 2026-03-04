@@ -97,7 +97,7 @@ function loadDb(): import("better-sqlite3").Database | null {
   }
 }
 
-function getDb(): import("better-sqlite3").Database {
+export function getDb(): import("better-sqlite3").Database {
   const db = loadDb();
   if (!db) {
     const detail =

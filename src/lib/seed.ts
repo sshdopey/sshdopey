@@ -340,22 +340,3 @@ export function seedIfEmpty(db: Database.Database) {
   insertCL.run(commentIds[23], subscribers[2].id);
   insertCL.run(commentIds[24], subscribers[1].id);
 }
-
-// When run as CLI (pnpm db:seed): load .env then open DB so tables are created and seedIfEmpty runs
-if (typeof require !== "undefined" && require.main === module) {
-  const fs = require("fs");
-  const path = require("path");
-  for (const f of [".env", ".env.local"]) {
-    const p = path.join(process.cwd(), f);
-    if (fs.existsSync(p)) {
-      for (const line of fs.readFileSync(p, "utf8").split("\n")) {
-        const m = line.match(/^([^#=]+)=(.*)$/);
-        if (m)
-          process.env[m[1].trim()] = m[2].trim().replace(/^["']|["']$/g, "");
-      }
-    }
-  }
-  const { getDb } = require("./db");
-  getDb();
-  console.log("Database ready and seeded (if empty).");
-}
