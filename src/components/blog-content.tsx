@@ -229,7 +229,7 @@ export function BlogContent({
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40 transition-all focus:shadow-[0_0_0_3px_rgba(200,255,0,0.06)]"
+          className="w-full pl-10 pr-4 py-2.5 text-sm bg-surface/50 border border-line-faint rounded-lg text-primary placeholder:text-ghost focus:outline-none focus:border-accent/40 transition-all focus:shadow-[0_0_0_3px_var(--accent-focus)]"
         />
       </div>
 

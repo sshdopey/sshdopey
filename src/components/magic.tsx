@@ -64,9 +64,8 @@ function CustomCursor() {
 
       let mode: "default" | "pointer" | "grab" = "default";
 
-      if (target.closest("[data-cursor-grab]")) {
-        mode = "grab";
-      } else if (
+      // Check pointer first so title bar buttons show pointer even inside terminal grab area
+      if (
         target.closest(".video-embed:not([data-active])") ||
         target.closest("a") ||
         target.closest("button") ||
@@ -80,6 +79,8 @@ function CustomCursor() {
         (target as HTMLElement)?.style?.cursor === "pointer"
       ) {
         mode = "pointer";
+      } else if (target.closest("[data-cursor-grab]")) {
+        mode = "grab";
       } else {
         try {
           const cs = window.getComputedStyle(target as HTMLElement);

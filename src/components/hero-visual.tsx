@@ -177,14 +177,10 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
   return result;
 }
 
-const TERMINAL_WIDTH_DEFAULT = 420;
-const TERMINAL_WIDTH_XL_DEFAULT = 460;
-const TERMINAL_HEIGHT_DEFAULT = 460;
-const TERMINAL_HEIGHT_XL_DEFAULT = 500;
-const TERMINAL_MIN_W = 320;
-const TERMINAL_MAX_W = 800;
-const TERMINAL_MIN_H = 320;
-const TERMINAL_MAX_H = 900;
+const TERMINAL_WIDTH = 420;
+const TERMINAL_WIDTH_XL = 460;
+const TERMINAL_HEIGHT = 460;
+const TERMINAL_HEIGHT_XL = 500;
 
 export function HeroVisual() {
   const [fs] = useState(buildFS);
@@ -198,55 +194,9 @@ export function HeroVisual() {
   const [gameMode, setGameMode] = useState<"none" | "game">("none");
   const [windowState, setWindowState] = useState<WindowState>("normal");
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
-  const [terminalSize, setTerminalSize] = useState({ w: TERMINAL_WIDTH_DEFAULT, h: TERMINAL_HEIGHT_DEFAULT });
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
-  const resizeStartRef = useRef<{ x: number; y: number; w: number; h: number; edge: "e" | "s" | "se" } | null>(null);
-
-  const clampSize = useCallback((w: number, h: number) => ({
-    w: Math.min(TERMINAL_MAX_W, Math.max(TERMINAL_MIN_W, w)),
-    h: Math.min(TERMINAL_MAX_H, Math.max(TERMINAL_MIN_H, h)),
-  }), []);
-
-  const handleResizeStart = useCallback((e: React.PointerEvent, edge: "e" | "s" | "se") => {
-    e.stopPropagation();
-    e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    resizeStartRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      w: terminalSize.w,
-      h: terminalSize.h,
-      edge,
-    };
-  }, [terminalSize]);
-
-  useEffect(() => {
-    if (!resizeStartRef.current) return;
-    const onMove = (e: PointerEvent) => {
-      const start = resizeStartRef.current;
-      if (!start) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      let { w, h } = start;
-      if (start.edge === "e" || start.edge === "se") w = start.w + dx;
-      if (start.edge === "s" || start.edge === "se") h = start.h + dy;
-      setTerminalSize((prev) => clampSize(w, h));
-    };
-    const onUp = () => {
-      resizeStartRef.current = null;
-      document.body.releasePointerCapture?.(-1);
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-    };
-  }, [clampSize]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setReady(true), 600);
@@ -634,7 +584,8 @@ export function HeroVisual() {
 
       <div
         ref={scrollRef}
-        className={`px-3.5 py-2.5 font-mono text-[11px] leading-[1.85] terminal-scroll flex-1 min-h-0 flex flex-col ${gameMode === "game" ? "overflow-hidden" : "overflow-y-auto"}`}
+        data-cursor-grab={windowState === "normal" ? "" : undefined}
+        className={`px-3.5 py-2.5 font-mono text-[13px] leading-[1.85] terminal-scroll flex-1 min-h-0 flex flex-col ${gameMode === "game" ? "overflow-hidden" : "overflow-y-auto"} ${windowState === "normal" ? "cursor-grab active:cursor-grabbing" : ""}`}
         style={
           isMaximized ? { height: "calc(100vh - 5rem)" } : undefined
         }
@@ -679,15 +630,20 @@ export function HeroVisual() {
             ))}
 
             {bootDone && (
-              <div className="flex items-center blink-cursor">
-                <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
+              <div className="relative flex items-center min-h-[1.85em]">
+                <div className="flex items-center min-w-0 flex-1 pointer-events-none">
+                  <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
+                  <span className="text-primary truncate">{inputValue || "\u00a0"}</span>
+                  <span className="terminal-cursor-block shrink-0" aria-hidden />
+                </div>
                 <input
                   ref={inputRef}
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 min-w-0 bg-transparent border-none outline-none text-primary font-mono text-[11px] p-0 caret-accent placeholder:text-ghost"
+                  className="absolute inset-0 w-full bg-transparent border-none outline-none font-mono text-[13px] p-0 opacity-0 cursor-text caret-transparent placeholder:text-ghost"
+                  style={{ caretColor: "transparent" }}
                   spellCheck={false}
                   autoComplete="off"
                   aria-label="Terminal input"
@@ -787,12 +743,7 @@ export function HeroVisual() {
             className={
               isMaximized
                 ? "fixed inset-6 z-[90] flex flex-col select-none overflow-hidden rounded-2xl border border-line bg-surface/95 backdrop-blur-md shadow-2xl shadow-black/40 cursor-default"
-                : "hidden lg:flex flex-col select-none overflow-hidden rounded-xl border border-line bg-surface/90 backdrop-blur-md shadow-2xl shadow-black/30 absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] z-10 resize-container"
-            }
-            style={
-              isMaximized
-                ? undefined
-                : { width: terminalSize.w, height: terminalSize.h, minWidth: TERMINAL_MIN_W, minHeight: TERMINAL_MIN_H }
+                : "hidden lg:flex flex-col select-none overflow-hidden rounded-xl border border-line bg-surface/90 backdrop-blur-md shadow-2xl shadow-black/30 absolute -right-2 xl:-right-6 top-1/2 -translate-y-[48%] z-10 w-[420px] xl:w-[460px] h-[460px] xl:h-[500px]"
             }
           >
             <div
@@ -802,29 +753,6 @@ export function HeroVisual() {
             >
               {terminalContent}
             </div>
-            {/* Resize handles — only when normal */}
-            {!isMaximized && (
-              <>
-                <div
-                  className="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-accent/20 transition-colors rounded-r"
-                  style={{ touchAction: "none" }}
-                  onPointerDown={(e) => handleResizeStart(e, "e")}
-                  aria-hidden
-                />
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-accent/20 transition-colors rounded-b"
-                  style={{ touchAction: "none" }}
-                  onPointerDown={(e) => handleResizeStart(e, "s")}
-                  aria-hidden
-                />
-                <div
-                  className="absolute right-0 bottom-0 w-3 h-3 cursor-nwse-resize hover:bg-accent/30 transition-colors rounded-br"
-                  style={{ touchAction: "none" }}
-                  onPointerDown={(e) => handleResizeStart(e, "se")}
-                  aria-hidden
-                />
-              </>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
