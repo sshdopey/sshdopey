@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .pnpm-store
+
+# SQLite database (local/dev data; use DATABASE_PATH in production)
+*.db
+*.db-shm
+*.db-wal
