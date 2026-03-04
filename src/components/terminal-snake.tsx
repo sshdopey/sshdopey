@@ -8,7 +8,6 @@ const TICK_MS = 180;
 const ENEMY_TICK = 2;
 
 type Cell = " " | "#" | "@" | "$" | "%" | "E" | "·";
-type Dir = "up" | "down" | "left" | "right";
 type Pos = { r: number; c: number };
 
 function posKey(p: Pos) {
@@ -84,23 +83,26 @@ export function TerminalSnake({ onExit }: { onExit: (score: number) => void }) {
 
   useEffect(() => {
     const g = buildMaze();
-    setGrid(g);
-    setPlayer({ r: 1, c: 1 });
     const exit = { r: ROWS - 2, c: COLS - 2 };
-    setExitPos(exit);
     const coinSet = new Set<string>();
     for (let i = 0; i < totalCoins; i++) {
       const p = randomEmpty(g);
       g[p.r][p.c] = "$";
       coinSet.add(posKey(p));
     }
-    setCoins(coinSet);
-    setEnemy(randomEmpty(g));
-    setScore(0);
-    setGameOver(false);
-    setWon(false);
-    setMessage("");
-    gameRef.current?.focus();
+    const t = setTimeout(() => {
+      setGrid(g);
+      setPlayer({ r: 1, c: 1 });
+      setExitPos(exit);
+      setCoins(coinSet);
+      setEnemy(randomEmpty(g));
+      setScore(0);
+      setGameOver(false);
+      setWon(false);
+      setMessage("");
+      gameRef.current?.focus();
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -186,9 +188,11 @@ export function TerminalSnake({ onExit }: { onExit: (score: number) => void }) {
   useEffect(() => {
     if (gameOver || won) return;
     if (player.r === enemy.r && player.c === enemy.c) {
-      setGameOver(true);
-      setMessage("The shadow got you!");
-      return;
+      const t = setTimeout(() => {
+        setGameOver(true);
+        setMessage("The shadow got you!");
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [gameOver, won, player, enemy]);
 

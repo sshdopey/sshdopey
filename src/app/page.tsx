@@ -5,7 +5,7 @@ import { getLikeCounts } from "@/lib/db";
 import { HeroName, HeroHandle } from "@/components/hero-name";
 import { HeroVisual } from "@/components/hero-visual";
 import { FeaturedCarousel } from "@/components/featured-carousel";
-import { FadeIn, FadeInOnScroll } from "@/components/fade-in";
+import { FadeIn } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
 import { PersonJsonLd } from "@/components/json-ld";
 

@@ -95,16 +95,17 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   const [won, setWon] = useState(false);
   const [powerTimer, setPowerTimer] = useState(0);
   const [mouthOpen, setMouthOpen] = useState(true);
-  const lastTickRef = useRef(0);
-  const ghostTickRef = useRef(0);
   const gameRef = useRef<HTMLDivElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const mazeRef = useRef(maze);
   const pacDirRef = useRef(pacDir);
   const nextDirRef = useRef(nextDir);
-  mazeRef.current = maze;
-  pacDirRef.current = pacDir;
-  nextDirRef.current = nextDir;
+
+  useEffect(() => {
+    mazeRef.current = maze;
+    pacDirRef.current = pacDir;
+    nextDirRef.current = nextDir;
+  }, [maze, pacDir, nextDir]);
 
   // Optional sound feedback (respects user prefs, no autoplay)
   const playDotSound = useCallback(() => {
@@ -143,9 +144,6 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
       /* ignore */
     }
   }, []);
-
-  // Count remaining dots
-  const dotsLeft = maze.flat().filter((c) => c === 0 || c === 3).length;
 
   // Reset game
   const resetGame = useCallback(() => {
@@ -240,6 +238,7 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   useEffect(() => {
     if (gameOver || won) return;
 
+    const t = setTimeout(() => {
     setMaze((prev) => {
       const cell = prev[pacman.r]?.[pacman.c];
       if (cell === 0) {
@@ -299,12 +298,15 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
       });
       return ate ? newGhosts : gs === newGhosts ? gs : newGhosts;
     });
+    }, 0);
+    return () => clearTimeout(t);
   }, [pacman, gameOver, won, maze, playDotSound, playPowerSound]);
 
   // Power timer effect on ghosts
   useEffect(() => {
     if (powerTimer === 0) {
-      setGhosts((gs) => gs.map((g) => ({ ...g, scared: false })));
+      const t = setTimeout(() => setGhosts((gs) => gs.map((g) => ({ ...g, scared: false }))), 0);
+      return () => clearTimeout(t);
     }
   }, [powerTimer]);
 

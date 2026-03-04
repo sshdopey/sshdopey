@@ -20,23 +20,26 @@ function MagneticLetter({
   const [rotate, setRotate] = useState(0);
 
   useEffect(() => {
-    if (mouseX === null || mouseY === null || !ref.current) {
-      setProximity(0);
-      setOffsetY(0);
-      setRotate(0);
-      return;
-    }
-    const rect = ref.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = mouseX - cx;
-    const dy = mouseY - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const p = Math.max(0, 1 - dist / 160);
-
-    setProximity(p);
-    setOffsetY(p * -22);
-    setRotate(p * (dx > 0 ? -12 : 12) * (1 - p * 0.4));
+    const run = () => {
+      if (mouseX === null || mouseY === null || !ref.current) {
+        setProximity(0);
+        setOffsetY(0);
+        setRotate(0);
+        return;
+      }
+      const rect = ref.current.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = mouseX - cx;
+      const dy = mouseY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const p = Math.max(0, 1 - dist / 160);
+      setProximity(p);
+      setOffsetY(p * -22);
+      setRotate(p * (dx > 0 ? -12 : 12) * (1 - p * 0.4));
+    };
+    const id = setTimeout(run, 0);
+    return () => clearTimeout(id);
   }, [mouseX, mouseY]);
 
   const wiggleDelay = index * 0.07;

@@ -57,6 +57,7 @@ export function getAllPosts(): Post[] {
 }
 
 export function getAllPostsMeta(): PostMeta[] {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- content omitted from meta
   return getAllPosts().map(({ content: _, ...meta }) => meta);
 }
 

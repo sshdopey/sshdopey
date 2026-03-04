@@ -30,10 +30,13 @@ export function ClientLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
-    setIsMobile(mq.matches);
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    const t = setTimeout(() => setIsMobile(mq.matches), 0);
+    return () => {
+      mq.removeEventListener("change", handler);
+      clearTimeout(t);
+    };
   }, []);
 
   useEffect(() => {

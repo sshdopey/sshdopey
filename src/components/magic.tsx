@@ -165,6 +165,12 @@ function CustomCursor() {
     window.addEventListener("mouseup", onUp);
     document.addEventListener("visibilitychange", onVisibilityChange);
     document.addEventListener("click", onDocClick);
+    if (cursorRef.current) {
+      cursorRef.current.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px)`;
+    }
+    if (glowRef.current) {
+      glowRef.current.style.transform = `translate(${glowPos.current.x}px, ${glowPos.current.y}px) translate(-50%, -50%)`;
+    }
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -195,7 +201,6 @@ function CustomCursor() {
           height: 240,
           opacity: visible ? 0.7 : 0,
           transition: "opacity 0.2s",
-          transform: `translate(${glowPos.current.x}px, ${glowPos.current.y}px) translate(-50%, -50%)`,
         }}
       />
 
@@ -205,7 +210,6 @@ function CustomCursor() {
         style={{
           opacity: visible ? 1 : 0,
           transition: "opacity 0.12s",
-          transform: `translate(${pos.current.x}px, ${pos.current.y}px)`,
         }}
       >
         {cursorMode === "grab" ? (

@@ -166,7 +166,8 @@ function LikeShareBar({
 
   useEffect(() => {
     if (!subscriber && loaded === false) {
-      setLoaded(true);
+      const t = setTimeout(() => setLoaded(true), 0);
+      return () => clearTimeout(t);
     }
   }, [subscriber, loaded]);
 
@@ -380,8 +381,11 @@ function CommentLikeBtn({
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    setLiked(initialLiked);
-    setCount(initialCount);
+    const t = setTimeout(() => {
+      setLiked(initialLiked);
+      setCount(initialCount);
+    }, 0);
+    return () => clearTimeout(t);
   }, [initialLiked, initialCount]);
 
   function handleLike() {
@@ -688,7 +692,10 @@ export function PostInteractions({
   useEffect(() => {
     try {
       const stored = localStorage.getItem("subscriber");
-      if (stored) setSubscriber(JSON.parse(stored));
+      if (stored) {
+        const t = setTimeout(() => setSubscriber(JSON.parse(stored)), 0);
+        return () => clearTimeout(t);
+      }
     } catch {}
   }, []);
 

@@ -177,11 +177,6 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
   return result;
 }
 
-const TERMINAL_WIDTH = 420;
-const TERMINAL_WIDTH_XL = 460;
-const TERMINAL_HEIGHT = 460;
-const TERMINAL_HEIGHT_XL = 500;
-
 export function HeroVisual() {
   const [fs] = useState(buildFS);
   const [cwd, setCwd] = useState("/home/dopey");

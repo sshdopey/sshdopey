@@ -57,7 +57,7 @@ export function LikedPostsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fromStorage = loadLikedFromStorage();
-    setLikedSlugs(fromStorage);
+    queueMicrotask(() => setLikedSlugs(fromStorage));
 
     let subscriberEmail: string | null = null;
     try {
@@ -79,7 +79,8 @@ export function LikedPostsProvider({ children }: { children: ReactNode }) {
         setIsReady(true);
       });
     } else {
-      setIsReady(true);
+      const t = setTimeout(() => setIsReady(true), 0);
+      return () => clearTimeout(t);
     }
   }, []);
 
