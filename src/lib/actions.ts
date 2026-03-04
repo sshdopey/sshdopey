@@ -144,3 +144,19 @@ export async function getCommentsForPostAction(
   const comments = getComments(postSlug, subscriber?.id);
   return { comments };
 }
+
+/** Single fetch for post stats (like count, liked, comments) so client gets both in one round-trip. */
+export async function getPostStatsAction(
+  postSlug: string,
+  email: string | null,
+): Promise<{ likeCount: number; liked: boolean; comments: Comment[] }> {
+  const count = getLikeCount(postSlug);
+  let liked = false;
+  if (email) {
+    const subscriber = getSubscriberByEmail(email);
+    liked = subscriber ? hasUserLikedPost(postSlug, subscriber.id) : false;
+  }
+  const subscriber = email ? getSubscriberByEmail(email) : undefined;
+  const comments = getComments(postSlug, subscriber?.id);
+  return { likeCount: count, liked, comments };
+}

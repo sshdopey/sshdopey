@@ -15,8 +15,7 @@ import {
 import {
   likePost,
   unlikePost,
-  getPostLikeStatus,
-  getCommentsForPostAction,
+  getPostStatsAction,
   subscribeAction,
   postCommentAction,
   likeCommentAction,
@@ -152,11 +151,13 @@ function LikeShareBar({
   initialCount,
   title,
   subscriber,
+  liveLikeStats,
 }: {
   postSlug: string;
   initialCount: number;
   title: string;
   subscriber: Subscriber | null;
+  liveLikeStats: { count: number; liked: boolean } | null;
 }) {
   const [count, setCount] = useState(initialCount);
   const [serverLiked, setServerLiked] = useState(false);
@@ -165,22 +166,16 @@ function LikeShareBar({
   const { toggle } = useSidebar();
   const { isLiked, addLiked, removeLiked } = useLikedPosts();
 
-  const liked = serverLiked || isLiked(postSlug);
-
-  // Always fetch real like count (with or without subscriber) so static shell hydrates with correct count
+  // Sync from parent's single fetch (likes + comments together) so we don't show stale SSG count
   useEffect(() => {
-    let cancelled = false;
-    const email = subscriber?.email ?? null;
-    getPostLikeStatus(postSlug, email).then((r) => {
-      if (!cancelled) {
-        setCount(r.count);
-        setServerLiked(r.liked);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [postSlug, subscriber?.email]);
+    if (liveLikeStats) {
+      setCount(liveLikeStats.count);
+      setServerLiked(liveLikeStats.liked);
+    }
+  }, [liveLikeStats]);
+
+  const liked = serverLiked || isLiked(postSlug);
+  const countLoaded = liveLikeStats !== null;
 
   function handleLike() {
     if (liked && subscriber) {
@@ -250,7 +245,9 @@ function LikeShareBar({
             ))}
           </AnimatePresence>
         </span>
-        <span className="text-sm tabular-nums">{count}</span>
+        <span className="text-sm tabular-nums min-w-5 text-center inline-block">
+          {countLoaded ? count : "—"}
+        </span>
       </motion.button>
 
       <div className="flex items-center gap-2">
@@ -715,12 +712,19 @@ export function PostInteractions({
     } catch {}
   }, []);
 
-  // Fetch comments on mount (and when subscriber loads) so static shell shows real replies
+  // Single fetch for likes + comments so both appear together (no slow like count after replies)
+  const [liveLikeStats, setLiveLikeStats] = useState<{
+    count: number;
+    liked: boolean;
+  } | null>(null);
   useEffect(() => {
     let cancelled = false;
     const email = subscriber?.email ?? null;
-    getCommentsForPostAction(postSlug, email).then((r) => {
-      if (!cancelled) setComments(r.comments);
+    getPostStatsAction(postSlug, email).then((r) => {
+      if (!cancelled) {
+        setComments(r.comments);
+        setLiveLikeStats({ count: r.likeCount, liked: r.liked });
+      }
     });
     return () => {
       cancelled = true;
@@ -734,6 +738,7 @@ export function PostInteractions({
         initialCount={likeCount}
         title={postTitle}
         subscriber={subscriber}
+        liveLikeStats={liveLikeStats}
       />
       <AuthorSubscribe subscriber={subscriber} onSubscribed={setSubscriber} />
       <DiscussionSection
