@@ -8,7 +8,10 @@ import { WebSiteJsonLd } from "@/components/json-ld";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sshdopey.com"),
@@ -41,12 +44,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <style dangerouslySetInnerHTML={{ __html: [
-          `@media(min-width:769px){`,
-            `html,body,*,*::before,*::after{cursor:none!important}`,
-            `a,button,select,label,[role="button"],input,.cursor-pointer{cursor:none!important}`,
-          `}`,
-        ].join("") }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: [
+              `@media(min-width:769px){`,
+              `html,body,*,*::before,*::after{cursor:none!important}`,
+              `a,button,select,label,[role="button"],input,.cursor-pointer{cursor:none!important}`,
+              `}`,
+            ].join(""),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if(localStorage.getItem('theme')==='light')document.documentElement.classList.add('light')}catch(e){}})();`,

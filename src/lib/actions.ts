@@ -46,7 +46,12 @@ export async function likePost(
 ): Promise<{ count: number; liked: boolean; error?: string }> {
   if (email) {
     const subscriber = getSubscriberByEmail(email);
-    if (!subscriber) return { count: getLikeCount(postSlug), liked: false, error: "Subscribe first." };
+    if (!subscriber)
+      return {
+        count: getLikeCount(postSlug),
+        liked: false,
+        error: "Subscribe first.",
+      };
     const count = addLike(postSlug, subscriber.id);
     return { count, liked: true };
   }
@@ -59,7 +64,8 @@ export async function unlikePost(
   email: string,
 ): Promise<{ count: number; error?: string }> {
   const subscriber = getSubscriberByEmail(email);
-  if (!subscriber) return { count: getLikeCount(postSlug), error: "Subscribe first." };
+  if (!subscriber)
+    return { count: getLikeCount(postSlug), error: "Subscribe first." };
   const count = removePostLike(postSlug, subscriber.id);
   return { count };
 }
@@ -112,7 +118,8 @@ export async function unlikeCommentAction(
   email: string,
 ): Promise<{ count: number; error?: string }> {
   const subscriber = getSubscriberByEmail(email);
-  if (!subscriber) return { count: getCommentLikeCount(commentId), error: "Subscribe first." };
+  if (!subscriber)
+    return { count: getCommentLikeCount(commentId), error: "Subscribe first." };
 
   removeCommentLike(commentId, subscriber.id);
   return { count: getCommentLikeCount(commentId) };

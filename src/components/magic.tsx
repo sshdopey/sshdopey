@@ -14,9 +14,9 @@ function CustomCursor() {
   const modeRef = useRef<"default" | "pointer" | "grab">("default");
   const shownOnce = useRef(false);
   const [visible, setVisible] = useState(false);
-  const [cursorMode, setCursorMode] = useState<
-    "default" | "pointer" | "grab"
-  >("default");
+  const [cursorMode, setCursorMode] = useState<"default" | "pointer" | "grab">(
+    "default",
+  );
   const [clicking, setClicking] = useState(false);
 
   useEffect(() => {
@@ -129,11 +129,9 @@ function CustomCursor() {
         return;
       }
 
-      document
-        .querySelectorAll(".video-embed[data-active]")
-        .forEach((el) => {
-          if (!el.contains(target)) el.removeAttribute("data-active");
-        });
+      document.querySelectorAll(".video-embed[data-active]").forEach((el) => {
+        if (!el.contains(target)) el.removeAttribute("data-active");
+      });
     }
 
     ensureHidden();

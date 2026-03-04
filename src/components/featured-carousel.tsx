@@ -21,7 +21,12 @@ function PostGridCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.06, type: "spring", stiffness: 260, damping: 24 }}
+      transition={{
+        delay: index * 0.06,
+        type: "spring",
+        stiffness: 260,
+        damping: 24,
+      }}
       className="h-full"
     >
       <TiltCard className="h-full">
@@ -77,7 +82,12 @@ function PostGridCard({
                   <span className="text-dim">·</span>
                   <span>{post.reading_time} min</span>
                 </div>
-                <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1" />
+                <PostLikeBadge
+                  slug={post.slug}
+                  count={likes}
+                  size={11}
+                  className="flex items-center gap-1"
+                />
               </div>
             </div>
           </Link>

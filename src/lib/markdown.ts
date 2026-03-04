@@ -11,11 +11,7 @@ import { visit } from "unist-util-visit";
 function rehypeVideoEmbed() {
   return (tree: Root) => {
     visit(tree, "element", (node: Element, index, parent) => {
-      if (
-        node.tagName === "iframe" &&
-        parent &&
-        index !== undefined
-      ) {
+      if (node.tagName === "iframe" && parent && index !== undefined) {
         const wrapper: Element = {
           type: "element",
           tagName: "div",

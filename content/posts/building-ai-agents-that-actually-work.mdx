@@ -9,7 +9,7 @@ featured: true
 
 Most AI agent demos are impressive. Most AI agent products are terrible. The gap between "look what it can do" and "this reliably solves my problem" is enormous, and it's an engineering problem — not an AI problem.
 
-I've spent the last year building Fairmeld's agent system. What I've learned is that the model is maybe 20% of the work. The other 80% is everything that makes the model *useful*: tool design, error recovery, evaluation, observability, and knowing when to bail out gracefully.
+I've spent the last year building Fairmeld's agent system. What I've learned is that the model is maybe 20% of the work. The other 80% is everything that makes the model _useful_: tool design, error recovery, evaluation, observability, and knowing when to bail out gracefully.
 
 ## The Reliability Problem
 
@@ -70,7 +70,7 @@ def find_user_by_email(email: str) -> User | None:
 Principles that work in practice:
 
 - **One tool, one job.** Never build a Swiss Army knife tool. Build many small, specific tools.
-- **Fail loudly.** Return structured errors that tell the model *what went wrong* and *what to try instead*.
+- **Fail loudly.** Return structured errors that tell the model _what went wrong_ and _what to try instead_.
 - **Limit output size.** A tool that returns 50KB of JSON will confuse the model. Paginate, summarize, or filter.
 - **Make invalid states unrepresentable.** Use enums instead of strings. Use typed IDs instead of raw integers.
 
@@ -103,13 +103,13 @@ class AgentEval:
         )
 ```
 
-| Metric | Our Target | Typical Agent | Fairmeld Current |
-|--------|-----------|---------------|-----------------|
-| Task completion | > 95% | 70-85% | 93.2% |
-| Avg latency | < 5s | 8-15s | 3.8s |
-| Tool call accuracy | > 99% | 90-95% | 98.7% |
-| Cost per task | < $0.03 | $0.10-0.50 | $0.02 |
-| Graceful failure rate | 100% | 40-60% | 100% |
+| Metric                | Our Target | Typical Agent | Fairmeld Current |
+| --------------------- | ---------- | ------------- | ---------------- |
+| Task completion       | > 95%      | 70-85%        | 93.2%            |
+| Avg latency           | < 5s       | 8-15s         | 3.8s             |
+| Tool call accuracy    | > 99%      | 90-95%        | 98.7%            |
+| Cost per task         | < $0.03    | $0.10-0.50    | $0.02            |
+| Graceful failure rate | 100%       | 40-60%        | 100%             |
 
 Every number in that table is measured by automated evals that run on every commit.
 
@@ -117,7 +117,7 @@ Every number in that table is measured by automated evals that run on every comm
 
 ## The Recovery Loop
 
-When a tool call fails — and it will — the agent needs a structured recovery strategy. Not "try again and hope." A *strategy*.
+When a tool call fails — and it will — the agent needs a structured recovery strategy. Not "try again and hope." A _strategy_.
 
 ```python
 class RecoveryStrategy:

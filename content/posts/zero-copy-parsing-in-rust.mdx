@@ -7,11 +7,11 @@ tags: ["rust", "performance", "systems"]
 featured: false
 ---
 
-One of Rust's most powerful patterns is zero-copy parsing: analyzing structured data by *borrowing slices of the original input* rather than allocating new strings. The lifetime system makes this both safe and ergonomic in a way no other mainstream language can match.
+One of Rust's most powerful patterns is zero-copy parsing: analyzing structured data by _borrowing slices of the original input_ rather than allocating new strings. The lifetime system makes this both safe and ergonomic in a way no other mainstream language can match.
 
 ## The Core Idea
 
-Traditional parsing reads input bytes, allocates new strings for each field, and returns owned data. Zero-copy parsing returns *references into the original buffer*.
+Traditional parsing reads input bytes, allocates new strings for each field, and returns owned data. Zero-copy parsing returns _references into the original buffer_.
 
 ```rust
 // Traditional: allocates a new String for each field
@@ -71,11 +71,11 @@ Every parsed value is a `&str` — a pointer and length into the original input.
 
 I benchmarked parsing a 1KB HTTP request with headers using three strategies on an M3 MacBook Pro:
 
-| Strategy | Throughput | Allocations per parse | Memory per parse |
-|----------|-----------|----------------------|-----------------|
-| Owned (String) | 2.1M ops/sec | 12 | 847 bytes |
-| Zero-copy (nom) | 8.7M ops/sec | 0 | 0 bytes |
-| Regex | 0.4M ops/sec | 8 | 2,104 bytes |
+| Strategy        | Throughput   | Allocations per parse | Memory per parse |
+| --------------- | ------------ | --------------------- | ---------------- |
+| Owned (String)  | 2.1M ops/sec | 12                    | 847 bytes        |
+| Zero-copy (nom) | 8.7M ops/sec | 0                     | 0 bytes          |
+| Regex           | 0.4M ops/sec | 8                     | 2,104 bytes      |
 
 Zero-copy parsing is **4x faster** than allocating owned strings and **21x faster** than regex-based parsing. For high-throughput services parsing millions of requests, this is the difference between needing 4 servers and needing 1.
 

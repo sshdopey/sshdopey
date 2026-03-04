@@ -9,7 +9,7 @@ featured: false
 
 Most codebases treat errors as an inconvenience — something to catch, log, and suppress. But error handling is **architecture**. The way you model, propagate, and present errors defines the reliability of your entire system.
 
-After years of writing Rust, where the compiler *forces* you to handle every error, I've developed a philosophy that I now apply in every language.
+After years of writing Rust, where the compiler _forces_ you to handle every error, I've developed a philosophy that I now apply in every language.
 
 ![Error handling decision tree and hierarchy](https://picsum.photos/seed/error-tree/800/400)
 
@@ -67,7 +67,7 @@ async fn create_user(input: CreateUserInput) -> Result<User, AppError> {
 }
 ```
 
-Read this function top to bottom. The happy path is *crystal clear*. Every `?` is a potential exit point, and the type system guarantees they're all handled by the caller.
+Read this function top to bottom. The happy path is _crystal clear_. Every `?` is a potential exit point, and the type system guarantees they're all handled by the caller.
 
 ## Errors Are User Interface
 

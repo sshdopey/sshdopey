@@ -32,10 +32,13 @@ export function AudioPlayer() {
     const words = wordsRef.current;
     for (const idx of trailRef.current) {
       const w = words[idx];
-      if (w) w.element.classList.remove(
-        "audio-word-active", "audio-word-trail-1",
-        "audio-word-trail-2", "audio-word-trail-3",
-      );
+      if (w)
+        w.element.classList.remove(
+          "audio-word-active",
+          "audio-word-trail-1",
+          "audio-word-trail-2",
+          "audio-word-trail-3",
+        );
     }
     trailRef.current = [];
     activeIdxRef.current = -1;
@@ -47,14 +50,22 @@ export function AudioPlayer() {
     // Clear previous trail
     for (const idx of trailRef.current) {
       const w = words[idx];
-      if (w) w.element.classList.remove(
-        "audio-word-active", "audio-word-trail-1",
-        "audio-word-trail-2", "audio-word-trail-3",
-      );
+      if (w)
+        w.element.classList.remove(
+          "audio-word-active",
+          "audio-word-trail-1",
+          "audio-word-trail-2",
+          "audio-word-trail-3",
+        );
     }
 
     const trail: number[] = [];
-    const classes = ["audio-word-active", "audio-word-trail-1", "audio-word-trail-2", "audio-word-trail-3"];
+    const classes = [
+      "audio-word-active",
+      "audio-word-trail-1",
+      "audio-word-trail-2",
+      "audio-word-trail-3",
+    ];
     for (let i = 0; i < classes.length; i++) {
       const idx = globalIdx - i;
       if (idx >= 0 && idx < words.length) {
@@ -74,7 +85,9 @@ export function AudioPlayer() {
       if (rect.top < vh * 0.3 || rect.bottom > vh * 0.7) {
         isAutoScrollingRef.current = true;
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => { isAutoScrollingRef.current = false; }, 600);
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 600);
       }
     }
   }, []);
@@ -97,13 +110,21 @@ export function AudioPlayer() {
         let el = node.parentElement;
         while (el && el !== prose) {
           const tag = el.tagName;
-          if (tag === "PRE" || tag === "FIGURE" || tag === "CODE" ||
-              tag === "SCRIPT" || tag === "STYLE" || tag === "SVG") {
+          if (
+            tag === "PRE" ||
+            tag === "FIGURE" ||
+            tag === "CODE" ||
+            tag === "SCRIPT" ||
+            tag === "STYLE" ||
+            tag === "SVG"
+          ) {
             return NodeFilter.FILTER_REJECT;
           }
           el = el.parentElement;
         }
-        return node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        return node.textContent?.trim()
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_SKIP;
       },
     });
 
@@ -185,7 +206,10 @@ export function AudioPlayer() {
         if (event.name === "word") {
           let idx = 0;
           for (let i = charStarts.length - 1; i >= 0; i--) {
-            if (event.charIndex >= charStarts[i]) { idx = i; break; }
+            if (event.charIndex >= charStarts[i]) {
+              idx = i;
+              break;
+            }
           }
           highlightWord(startIdx + idx);
         }
@@ -270,7 +294,9 @@ export function AudioPlayer() {
       if (w) {
         isAutoScrollingRef.current = true;
         w.element.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => { isAutoScrollingRef.current = false; }, 600);
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 600);
       }
     }
   }, []);
@@ -279,7 +305,8 @@ export function AudioPlayer() {
     function handleWordClick(e: MouseEvent) {
       const target = e.target as HTMLElement;
       if (!target.classList.contains("audio-word")) return;
-      if (stateRef.current !== "playing" && stateRef.current !== "paused") return;
+      if (stateRef.current !== "playing" && stateRef.current !== "paused")
+        return;
 
       const idx = parseInt(target.dataset.wordIdx || "0");
       if (isNaN(idx)) return;
@@ -319,7 +346,9 @@ export function AudioPlayer() {
   }, [state]);
 
   useEffect(() => {
-    function stop() { speechSynthesis.cancel(); }
+    function stop() {
+      speechSynthesis.cancel();
+    }
     window.addEventListener("beforeunload", stop);
     return () => {
       stop();
@@ -336,9 +365,17 @@ export function AudioPlayer() {
           state !== "idle" ? "text-accent" : "text-muted hover:text-accent"
         }`}
       >
-        {state === "playing" ? <CirclePause size={16} /> : <CirclePlay size={16} />}
+        {state === "playing" ? (
+          <CirclePause size={16} />
+        ) : (
+          <CirclePlay size={16} />
+        )}
         <span className="hidden sm:inline">
-          {state === "idle" ? "Listen" : state === "playing" ? "Listening..." : "Paused"}
+          {state === "idle"
+            ? "Listen"
+            : state === "playing"
+              ? "Listening..."
+              : "Paused"}
         </span>
       </button>
 
@@ -355,7 +392,11 @@ export function AudioPlayer() {
               onClick={toggle}
               className="text-accent hover:opacity-80 transition-opacity cursor-pointer"
             >
-              {state === "playing" ? <CirclePause size={20} /> : <CirclePlay size={20} />}
+              {state === "playing" ? (
+                <CirclePause size={20} />
+              ) : (
+                <CirclePlay size={20} />
+              )}
             </button>
 
             <div className="w-px h-5 bg-line-faint" />

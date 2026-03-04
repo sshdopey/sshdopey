@@ -27,7 +27,12 @@ export default function NotFound() {
       <motion.p
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, type: "spring", stiffness: 200, damping: 20 }}
+        transition={{
+          delay: 0.35,
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+        }}
         className="text-sm text-ghost mb-8 font-mono"
       >
         but you do, and that&apos;s what matters ✨

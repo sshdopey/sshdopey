@@ -19,13 +19,13 @@ I've taken three models from prototype to production in Fairmeld. Each time, I u
 
 Not every ML project needs the same level of infrastructure. Match your investment to your stage:
 
-| Level | Characteristics | Infrastructure | When |
-|-------|----------------|---------------|------|
-| 0 - Notebook | Jupyter, manual runs | None | Exploration |
-| 1 - Script | `.py` file, CLI args | Cron job or manual | Internal tools |
-| 2 - Service | API endpoint, basic monitoring | Docker + health checks | Single-user product feature |
-| 3 - Pipeline | Automated retraining, versioning | CI/CD + model registry | Multi-user product |
-| 4 - Platform | A/B testing, feature store, automated rollback | Full MLOps stack | ML is the core product |
+| Level        | Characteristics                                | Infrastructure         | When                        |
+| ------------ | ---------------------------------------------- | ---------------------- | --------------------------- |
+| 0 - Notebook | Jupyter, manual runs                           | None                   | Exploration                 |
+| 1 - Script   | `.py` file, CLI args                           | Cron job or manual     | Internal tools              |
+| 2 - Service  | API endpoint, basic monitoring                 | Docker + health checks | Single-user product feature |
+| 3 - Pipeline | Automated retraining, versioning               | CI/CD + model registry | Multi-user product          |
+| 4 - Platform | A/B testing, feature store, automated rollback | Full MLOps stack       | ML is the core product      |
 
 Most teams jump from Level 0 to Level 4 and drown. **Start at Level 1 and climb one step at a time.**
 
@@ -121,7 +121,7 @@ This is where most teams get stuck. Automated retraining requires:
 name: Retrain Model
 on:
   schedule:
-    - cron: '0 2 * * 1'  # Every Monday at 2am
+    - cron: "0 2 * * 1" # Every Monday at 2am
   workflow_dispatch:
 
 jobs:
@@ -147,4 +147,4 @@ After three rounds of prototype-to-production, I've internalized three rules:
 - **Version everything.** Data, models, code, configs. You should be able to reproduce any model from any point in time.
 - **Gate everything.** No model reaches production without passing automated quality checks. No exceptions, no "just this once."
 
-The notebook is for exploration. Production is for reliability. The bridge between them is *discipline*.
+The notebook is for exploration. Production is for reliability. The bridge between them is _discipline_.

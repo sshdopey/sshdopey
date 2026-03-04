@@ -104,7 +104,7 @@ export function LikedPostsProvider({ children }: { children: ReactNode }) {
 
   const isLiked = useCallback(
     (slug: string) => likedSlugs.has(slug),
-    [likedSlugs]
+    [likedSlugs],
   );
 
   return (

@@ -7,7 +7,7 @@ tags: ["api-design", "architecture", "python"]
 featured: false
 ---
 
-A great API is one that developers can use correctly *without reading the documentation*. Not because documentation doesn't matter — it does — but because the API's design should make the right thing obvious and the wrong thing difficult.
+A great API is one that developers can use correctly _without reading the documentation_. Not because documentation doesn't matter — it does — but because the API's design should make the right thing obvious and the wrong thing difficult.
 
 I've built APIs consumed by internal teams, third-party developers, and AI agents. The principles that make an API beloved are the same regardless of who's calling it.
 
@@ -94,19 +94,19 @@ An error response:
 
 Don't make developers guess what went wrong:
 
-| Status | Meaning | When to use |
-|--------|---------|-------------|
-| 200 | OK | Successful GET, PUT, PATCH |
-| 201 | Created | Successful POST that creates a resource |
-| 204 | No Content | Successful DELETE |
-| 400 | Bad Request | Validation failure, malformed input |
-| 401 | Unauthorized | Missing or invalid authentication |
-| 403 | Forbidden | Authenticated but not authorized |
-| 404 | Not Found | Resource doesn't exist |
-| 409 | Conflict | Duplicate resource, state conflict |
-| 422 | Unprocessable | Syntactically valid but semantically wrong |
-| 429 | Too Many Requests | Rate limited (include `Retry-After` header) |
-| 500 | Internal Error | Something broke on your end |
+| Status | Meaning           | When to use                                 |
+| ------ | ----------------- | ------------------------------------------- |
+| 200    | OK                | Successful GET, PUT, PATCH                  |
+| 201    | Created           | Successful POST that creates a resource     |
+| 204    | No Content        | Successful DELETE                           |
+| 400    | Bad Request       | Validation failure, malformed input         |
+| 401    | Unauthorized      | Missing or invalid authentication           |
+| 403    | Forbidden         | Authenticated but not authorized            |
+| 404    | Not Found         | Resource doesn't exist                      |
+| 409    | Conflict          | Duplicate resource, state conflict          |
+| 422    | Unprocessable     | Syntactically valid but semantically wrong  |
+| 429    | Too Many Requests | Rate limited (include `Retry-After` header) |
+| 500    | Internal Error    | Something broke on your end                 |
 
 **Never return 200 with an error body.** If the request failed, the status code should reflect it. API consumers check status codes first, body second.
 
@@ -164,4 +164,4 @@ One principle I've learned the hard way: **idempotency matters**. For any mutati
 
 Another often-overlooked detail: **include request IDs in responses**. Add `X-Request-Id` to every response header. When a user reports "the API returned an error," you can look up exactly what happened instead of asking them to reproduce. One line of middleware, massive debuggability gain.
 
-The best API is one that feels *obvious*. When a developer guesses the endpoint name, the parameter name, and the response shape — and they're right every time — you've built something they'll love.
+The best API is one that feels _obvious_. When a developer guesses the endpoint name, the parameter name, and the response shape — and they're right every time — you've built something they'll love.

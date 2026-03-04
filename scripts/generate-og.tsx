@@ -91,7 +91,8 @@ function formatDate(dateStr: string): string {
 function OgImage({ post }: { post: PostData }) {
   const date = formatDate(post.published_at);
   const tags = post.tags.slice(0, 3);
-  const titleSize = post.title.length > 60 ? 42 : post.title.length > 40 ? 50 : 58;
+  const titleSize =
+    post.title.length > 60 ? 42 : post.title.length > 40 ? 50 : 58;
 
   const excerpt =
     post.excerpt.length > 100
@@ -182,8 +183,7 @@ function OgImage({ post }: { post: PostData }) {
           width: "120px",
           height: "3px",
           display: "flex",
-          background:
-            "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
+          background: "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
           borderRadius: "0 0 2px 2px",
         }}
       />
@@ -383,7 +383,12 @@ function OgImage({ post }: { post: PostData }) {
 
 async function generateOgImage(
   post: PostData,
-  fonts: { name: string; data: ArrayBuffer; weight: 400 | 700; style: "normal" }[],
+  fonts: {
+    name: string;
+    data: ArrayBuffer;
+    weight: 400 | 700;
+    style: "normal";
+  }[],
 ) {
   const outPath = path.join(outDir, `${post.slug}.png`);
 

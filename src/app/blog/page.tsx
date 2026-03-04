@@ -6,18 +6,21 @@ import { BlogContent } from "@/components/blog-content";
 
 export const metadata: Metadata = {
   title: "Writing",
-  description: "Thoughts on engineering, architecture, and building things that last.",
+  description:
+    "Thoughts on engineering, architecture, and building things that last.",
   alternates: { canonical: "/blog" },
   openGraph: {
     title: "Writing — Dopey",
-    description: "Thoughts on engineering, architecture, and building things that last.",
+    description:
+      "Thoughts on engineering, architecture, and building things that last.",
     url: "/blog",
     images: [{ url: "/og/blog.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Writing — Dopey",
-    description: "Thoughts on engineering, architecture, and building things that last.",
+    description:
+      "Thoughts on engineering, architecture, and building things that last.",
   },
 };
 

@@ -30,7 +30,9 @@ export function KeepReading({
         const bShared = sharedTagCount(b, currentPost);
         if (bShared !== aShared) return bShared - aShared;
       }
-      return new Date(b.published_at).getTime() - new Date(a.published_at).getTime();
+      return (
+        new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+      );
     })
     .slice(0, 3);
 
@@ -47,7 +49,9 @@ export function KeepReading({
           className="text-xs text-muted hover:text-accent transition-colors group"
         >
           View all writing{" "}
-          <span className="inline-block group-hover:translate-x-0.5 transition-transform">→</span>
+          <span className="inline-block group-hover:translate-x-0.5 transition-transform">
+            →
+          </span>
         </Link>
       </div>
 
@@ -105,16 +109,24 @@ export function KeepReading({
                       <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-line-faint/50">
                         <div className="flex items-center gap-2.5">
                           <time>
-                            {new Date(post.published_at).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {new Date(post.published_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
                           </time>
                           <span className="text-dim">·</span>
                           <span>{post.reading_time} min</span>
                         </div>
-                        <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1" />
+                        <PostLikeBadge
+                          slug={post.slug}
+                          count={likes}
+                          size={11}
+                          className="flex items-center gap-1"
+                        />
                       </div>
                     </div>
                   </Link>

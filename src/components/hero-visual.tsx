@@ -68,7 +68,7 @@ function buildFS(): FSNode {
                       "train.py": {
                         type: "file",
                         content:
-                          "import torch\nfrom engine import NeuralCore\n\nmodel = NeuralCore(\n    layers=12,\n    heads=8,\n    d_model=768\n)\n\ntrainer = Trainer(model, lr=3e-4)\ntrainer.fit(epochs=100)\nprint(f\"✓ accuracy: {trainer.best_acc:.1%}\")",
+                          'import torch\nfrom engine import NeuralCore\n\nmodel = NeuralCore(\n    layers=12,\n    heads=8,\n    d_model=768\n)\n\ntrainer = Trainer(model, lr=3e-4)\ntrainer.fit(epochs=100)\nprint(f"✓ accuracy: {trainer.best_acc:.1%}")',
                       },
                       "requirements.txt": {
                         type: "file",
@@ -180,7 +180,9 @@ function treeStr(node: FSNode, prefix = "", isLast = true, name = ""): string {
 export function HeroVisual() {
   const [fs] = useState(buildFS);
   const [cwd, setCwd] = useState("/home/dopey");
-  const [lines, setLines] = useState<{ text: string; color: Color }[]>(() => []);
+  const [lines, setLines] = useState<{ text: string; color: Color }[]>(
+    () => [],
+  );
   const [inputValue, setInputValue] = useState("");
   const [ready, setReady] = useState(false);
   const [bootDone, setBoot] = useState(false);
@@ -196,7 +198,10 @@ export function HeroVisual() {
   useEffect(() => {
     const t1 = setTimeout(() => setReady(true), 600);
     const t2 = setTimeout(() => setBoot(true), 1400);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
   useEffect(() => {
@@ -204,7 +209,8 @@ export function HeroVisual() {
   }, [bootDone]);
 
   const prompt = useCallback(
-    () => `dopey ${cwd === "/home/dopey" ? "~" : cwd.replace("/home/dopey", "~")}>`,
+    () =>
+      `dopey ${cwd === "/home/dopey" ? "~" : cwd.replace("/home/dopey", "~")}>`,
     [cwd],
   );
 
@@ -245,14 +251,20 @@ export function HeroVisual() {
           break;
         }
         case "ls": {
-          const showHidden = args.includes("-a") || args.includes("-la") || args.includes("-al");
+          const showHidden =
+            args.includes("-a") || args.includes("-la") || args.includes("-al");
           const pathArg = args.find((a) => !a.startsWith("-")) || ".";
           const resolved = resolvePath(fs, cwd, pathArg);
           if (!resolved || resolved.node.type !== "dir") {
-            out.push({ text: `ls: no such directory: ${pathArg}`, color: "ghost" });
+            out.push({
+              text: `ls: no such directory: ${pathArg}`,
+              color: "ghost",
+            });
           } else {
             const items = listDir(resolved.node);
-            const filtered = showHidden ? items : items.filter((i) => !i.startsWith("."));
+            const filtered = showHidden
+              ? items
+              : items.filter((i) => !i.startsWith("."));
             if (filtered.length === 0) {
               out.push({ text: "(empty)", color: "ghost" });
             } else {
@@ -265,7 +277,10 @@ export function HeroVisual() {
           const target = args[0] || "~";
           const resolved = resolvePath(fs, cwd, target);
           if (!resolved || resolved.node.type !== "dir") {
-            out.push({ text: `cd: no such directory: ${target}`, color: "ghost" });
+            out.push({
+              text: `cd: no such directory: ${target}`,
+              color: "ghost",
+            });
           } else {
             setCwd(resolved.path);
           }
@@ -278,7 +293,10 @@ export function HeroVisual() {
           } else {
             const resolved = resolvePath(fs, cwd, target);
             if (!resolved || resolved.node.type !== "file") {
-              out.push({ text: `cat: ${target}: No such file`, color: "ghost" });
+              out.push({
+                text: `cat: ${target}: No such file`,
+                color: "ghost",
+              });
             } else {
               for (const line of (resolved.node.content || "").split("\n")) {
                 out.push({ text: `  ${line}`, color: "muted" });
@@ -294,11 +312,16 @@ export function HeroVisual() {
           const target = args[0] || ".";
           const resolved = resolvePath(fs, cwd, target);
           if (!resolved || resolved.node.type !== "dir") {
-            out.push({ text: `tree: not a directory: ${target}`, color: "ghost" });
+            out.push({
+              text: `tree: not a directory: ${target}`,
+              color: "ghost",
+            });
           } else {
             const name = resolved.path.split("/").pop() || "/";
             out.push({ text: `  ${name}/`, color: "accent" });
-            for (const line of treeStr(resolved.node).split("\n").filter(Boolean)) {
+            for (const line of treeStr(resolved.node)
+              .split("\n")
+              .filter(Boolean)) {
               out.push({ text: `  ${line}`, color: "muted" });
             }
           }
@@ -361,7 +384,10 @@ export function HeroVisual() {
           out.push({ text: `  ${new Date().toString()}`, color: "muted" });
           break;
         case "uptime":
-          out.push({ text: `  up ${Math.floor(Math.random() * 90 + 10)} days, shipping non-stop`, color: "muted" });
+          out.push({
+            text: `  up ${Math.floor(Math.random() * 90 + 10)} days, shipping non-stop`,
+            color: "muted",
+          });
           break;
         case "neofetch":
           out.push(
@@ -381,7 +407,9 @@ export function HeroVisual() {
           if (history.length === 0) {
             out.push({ text: "  (empty)", color: "ghost" });
           } else {
-            history.forEach((h, i) => out.push({ text: `  ${i + 1}  ${h}`, color: "muted" }));
+            history.forEach((h, i) =>
+              out.push({ text: `  ${i + 1}  ${h}`, color: "muted" }),
+            );
           }
           break;
         case "pacman":
@@ -395,10 +423,16 @@ export function HeroVisual() {
           setLines([]);
           return;
         case "exit":
-          out.push({ text: "  nice try — you're stuck here forever 😏", color: "accent" });
+          out.push({
+            text: "  nice try — you're stuck here forever 😏",
+            color: "accent",
+          });
           break;
         case "sudo":
-          out.push({ text: "  dopey is not in the sudoers file.", color: "ghost" });
+          out.push({
+            text: "  dopey is not in the sudoers file.",
+            color: "ghost",
+          });
           break;
         case "rm":
           if (args.join(" ").includes("-rf")) {
@@ -407,20 +441,38 @@ export function HeroVisual() {
             out.push({ text: "  rm: read-only filesystem", color: "ghost" });
           }
           break;
-        case "vim": case "nvim": case "nano":
-          out.push({ text: "  nice taste. use cat for now :)", color: "ghost" });
+        case "vim":
+        case "nvim":
+        case "nano":
+          out.push({
+            text: "  nice taste. use cat for now :)",
+            color: "ghost",
+          });
           break;
         case "git":
-          out.push({ text: "  everything is committed. always shipping.", color: "accent" });
+          out.push({
+            text: "  everything is committed. always shipping.",
+            color: "accent",
+          });
           break;
-        case "npm": case "pnpm": case "yarn":
+        case "npm":
+        case "pnpm":
+        case "yarn":
           out.push({ text: "  node_modules: 847MB. classic.", color: "ghost" });
           break;
-        case "python": case "python3":
-          out.push({ text: "  Python 3.12 — try cat on a .py file", color: "muted" });
+        case "python":
+        case "python3":
+          out.push({
+            text: "  Python 3.12 — try cat on a .py file",
+            color: "muted",
+          });
           break;
-        case "cargo": case "rustc":
-          out.push({ text: "  🦀 Rust 1.82 — zero-cost abstractions", color: "accent" });
+        case "cargo":
+        case "rustc":
+          out.push({
+            text: "  🦀 Rust 1.82 — zero-cost abstractions",
+            color: "accent",
+          });
           break;
         case "cowsay": {
           const msg = args.join(" ") || "moo";
@@ -447,9 +499,13 @@ export function HeroVisual() {
           break;
         }
         case "curl":
-          out.push({ text: '  {"status":"ok","vibe":"immaculate"}', color: "accent" });
+          out.push({
+            text: '  {"status":"ok","vibe":"immaculate"}',
+            color: "accent",
+          });
           break;
-        case "": break;
+        case "":
+          break;
         default:
           out.push(
             { text: `  zsh: command not found: ${cmd}`, color: "ghost" },
@@ -475,7 +531,10 @@ export function HeroVisual() {
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         if (history.length > 0) {
-          const idx = historyIdx === -1 ? history.length - 1 : Math.max(0, historyIdx - 1);
+          const idx =
+            historyIdx === -1
+              ? history.length - 1
+              : Math.max(0, historyIdx - 1);
           setHistoryIdx(idx);
           setInputValue(history[idx]);
         }
@@ -496,11 +555,17 @@ export function HeroVisual() {
         const tokens = inputValue.split(/\s+/);
         const partial = tokens[tokens.length - 1];
         if (partial) {
-          const dir = partial.includes("/") ? partial.substring(0, partial.lastIndexOf("/") + 1) : ".";
-          const prefix = partial.includes("/") ? partial.substring(partial.lastIndexOf("/") + 1) : partial;
+          const dir = partial.includes("/")
+            ? partial.substring(0, partial.lastIndexOf("/") + 1)
+            : ".";
+          const prefix = partial.includes("/")
+            ? partial.substring(partial.lastIndexOf("/") + 1)
+            : partial;
           const resolved = resolvePath(fs, cwd, dir);
           if (resolved?.node.type === "dir" && resolved.node.children) {
-            const matches = Object.keys(resolved.node.children).filter((k) => k.startsWith(prefix));
+            const matches = Object.keys(resolved.node.children).filter((k) =>
+              k.startsWith(prefix),
+            );
             if (matches.length === 1) {
               const completion = dir === "." ? matches[0] : dir + matches[0];
               const isDir = resolved.node.children[matches[0]].type === "dir";
@@ -581,9 +646,7 @@ export function HeroVisual() {
         ref={scrollRef}
         data-cursor-grab={windowState === "normal" ? "" : undefined}
         className={`px-3.5 py-2.5 font-mono text-[13px] leading-[1.85] terminal-scroll flex-1 min-h-0 flex flex-col ${gameMode === "game" ? "overflow-hidden" : "overflow-y-auto"} ${windowState === "normal" ? "cursor-grab active:cursor-grabbing" : ""}`}
-        style={
-          isMaximized ? { height: "calc(100vh - 5rem)" } : undefined
-        }
+        style={isMaximized ? { height: "calc(100vh - 5rem)" } : undefined}
         onClick={() => gameMode === "none" && inputRef.current?.focus()}
       >
         {gameMode === "game" ? (
@@ -627,9 +690,16 @@ export function HeroVisual() {
             {bootDone && (
               <div className="relative flex items-center min-h-[1.85em]">
                 <div className="flex items-center min-w-0 flex-1 pointer-events-none">
-                  <span className="text-secondary shrink-0">{prompt()}&nbsp;</span>
-                  <span className="text-primary truncate">{inputValue || "\u00a0"}</span>
-                  <span className="terminal-cursor-block shrink-0" aria-hidden />
+                  <span className="text-secondary shrink-0">
+                    {prompt()}&nbsp;
+                  </span>
+                  <span className="text-primary truncate">
+                    {inputValue || "\u00a0"}
+                  </span>
+                  <span
+                    className="terminal-cursor-block shrink-0"
+                    aria-hidden
+                  />
                 </div>
                 <input
                   ref={inputRef}
@@ -732,7 +802,10 @@ export function HeroVisual() {
             }
             whileDrag={
               !isMaximized
-                ? { scale: 1.02, boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)" }
+                ? {
+                    scale: 1.02,
+                    boxShadow: "0 30px 60px -12px rgba(0,0,0,0.4)",
+                  }
                 : undefined
             }
             className={
@@ -751,7 +824,6 @@ export function HeroVisual() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </>
   );
 }

@@ -3,7 +3,15 @@
 import { useState, useEffect, useTransition } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Share, Sparkles, X, Link2, Check, Linkedin } from "lucide-react";
+import {
+  Heart,
+  Share,
+  Sparkles,
+  X,
+  Link2,
+  Check,
+  Linkedin,
+} from "lucide-react";
 import {
   likePost,
   unlikePost,
@@ -41,9 +49,10 @@ function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const url = typeof window !== "undefined"
-    ? `${window.location.origin}/blog/${postSlug}`
-    : "";
+  const url =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/blog/${postSlug}`
+      : "";
 
   async function copyLink() {
     await navigator.clipboard.writeText(url);
@@ -99,14 +108,23 @@ function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
                 onClick={copyLink}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-accent hover:bg-surface-hover transition-colors cursor-pointer"
               >
-                {copied ? <Check size={14} className="text-accent" /> : <Link2 size={14} />}
+                {copied ? (
+                  <Check size={14} className="text-accent" />
+                ) : (
+                  <Link2 size={14} />
+                )}
                 {copied ? "Copied!" : "Copy link"}
               </button>
               <button
                 onClick={shareOnX}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-accent hover:bg-surface-hover transition-colors border-t border-line-faint cursor-pointer"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
                 Share on X
@@ -301,7 +319,7 @@ function AuthorSubscribe({
               Written by Dopey
             </p>
             <p className="text-xs text-muted mt-0.5 leading-relaxed">
-            Just one letter away from being Dope.
+              Just one letter away from being Dope.
             </p>
           </div>
         </div>
@@ -316,7 +334,10 @@ function AuthorSubscribe({
               ✓
             </p>
           ) : (
-            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2">
+            <form
+              onSubmit={handleSubscribe}
+              className="flex flex-col sm:flex-row gap-2"
+            >
               <input
                 type="email"
                 placeholder="your@email.com"
@@ -478,12 +499,12 @@ function ThreadNode({
             alt=""
             className="w-6 h-6 rounded-full shrink-0 object-cover"
           />
-          <span className={`text-xs font-medium ${isOwner ? "text-accent" : "text-secondary"}`}>
+          <span
+            className={`text-xs font-medium ${isOwner ? "text-accent" : "text-secondary"}`}
+          >
             {displayName}
           </span>
-          <span className="text-xs text-ghost">
-            {timeAgo(node.created_at)}
-          </span>
+          <span className="text-xs text-ghost">{timeAgo(node.created_at)}</span>
         </div>
 
         <p className="text-sm text-secondary leading-relaxed mb-2 pl-[34px]">
@@ -575,7 +596,9 @@ function DiscussionSection({
   onCommentAdded: (comments: Comment[]) => void;
 }) {
   const [text, setText] = useState("");
-  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(new Set());
+  const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [, startTransition] = useTransition();
 
   useEffect(() => {

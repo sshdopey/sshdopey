@@ -27,7 +27,9 @@ function loadDb(): import("better-sqlite3").Database | null {
   if (_dbUnavailable) return null;
   if (_db) return _db;
   try {
-    const Database = require("better-sqlite3") as new (path: string) => import("better-sqlite3").Database;
+    const Database = require("better-sqlite3") as new (
+      path: string,
+    ) => import("better-sqlite3").Database;
     _db = new Database(DB_PATH);
     _db.pragma("journal_mode = WAL");
     _db.pragma("foreign_keys = ON");
@@ -66,11 +68,15 @@ function loadDb(): import("better-sqlite3").Database | null {
     `);
 
     // Migrate existing DBs: add subscriber_id to likes if missing, then create index
-    const info = _db.prepare("PRAGMA table_info(likes)").all() as { name: string }[];
+    const info = _db.prepare("PRAGMA table_info(likes)").all() as {
+      name: string;
+    }[];
     if (!info.some((c) => c.name === "subscriber_id")) {
       _db.exec("ALTER TABLE likes ADD COLUMN subscriber_id TEXT");
     }
-    _db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_subscriber ON likes(post_slug, subscriber_id)");
+    _db.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_post_subscriber ON likes(post_slug, subscriber_id)",
+    );
 
     seedIfEmpty(_db);
     return _db;
@@ -82,7 +88,10 @@ function loadDb(): import("better-sqlite3").Database | null {
 
 function getDb(): import("better-sqlite3").Database {
   const db = loadDb();
-  if (!db) throw new Error("Database unavailable (e.g. during build or missing native bindings)");
+  if (!db)
+    throw new Error(
+      "Database unavailable (e.g. during build or missing native bindings)",
+    );
   return db;
 }
 
@@ -102,29 +111,43 @@ export function getLikeCounts(): Record<string, number> {
 export function getLikeCount(postSlug: string): number {
   const db = loadDb();
   if (!db) return 0;
-  const r = db.prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?").get(postSlug) as { c: number };
+  const r = db
+    .prepare("SELECT COUNT(*) as c FROM likes WHERE post_slug = ?")
+    .get(postSlug) as { c: number };
   return r.c;
 }
 
-export function hasUserLikedPost(postSlug: string, subscriberId: string): boolean {
+export function hasUserLikedPost(
+  postSlug: string,
+  subscriberId: string,
+): boolean {
   const r = getDb()
     .prepare("SELECT 1 FROM likes WHERE post_slug = ? AND subscriber_id = ?")
     .get(postSlug, subscriberId);
   return !!r;
 }
 
-export function addLike(postSlug: string, subscriberId?: string | null): number {
+export function addLike(
+  postSlug: string,
+  subscriberId?: string | null,
+): number {
   const db = getDb();
   if (subscriberId != null) {
-    db.prepare("INSERT OR IGNORE INTO likes (post_slug, subscriber_id) VALUES (?, ?)").run(postSlug, subscriberId);
+    db.prepare(
+      "INSERT OR IGNORE INTO likes (post_slug, subscriber_id) VALUES (?, ?)",
+    ).run(postSlug, subscriberId);
   } else {
-    db.prepare("INSERT INTO likes (post_slug, subscriber_id) VALUES (?, NULL)").run(postSlug);
+    db.prepare(
+      "INSERT INTO likes (post_slug, subscriber_id) VALUES (?, NULL)",
+    ).run(postSlug);
   }
   return getLikeCount(postSlug);
 }
 
 export function removePostLike(postSlug: string, subscriberId: string): number {
-  getDb().prepare("DELETE FROM likes WHERE post_slug = ? AND subscriber_id = ?").run(postSlug, subscriberId);
+  getDb()
+    .prepare("DELETE FROM likes WHERE post_slug = ? AND subscriber_id = ?")
+    .run(postSlug, subscriberId);
   return getLikeCount(postSlug);
 }
 
@@ -138,18 +161,28 @@ export function getLikedPostSlugsForSubscriber(subscriberId: string): string[] {
 // ── Subscribers ──
 
 export function getSubscriberByEmail(email: string): Subscriber | undefined {
-  return getDb().prepare("SELECT * FROM subscribers WHERE email = ?").get(email) as Subscriber | undefined;
+  return getDb()
+    .prepare("SELECT * FROM subscribers WHERE email = ?")
+    .get(email) as Subscriber | undefined;
 }
 
 export function createSubscriber(id: string, email: string): Subscriber {
   const db = getDb();
-  db.prepare("INSERT INTO subscribers (id, email) VALUES (?, ?)").run(id, email);
-  return db.prepare("SELECT * FROM subscribers WHERE id = ?").get(id) as Subscriber;
+  db.prepare("INSERT INTO subscribers (id, email) VALUES (?, ?)").run(
+    id,
+    email,
+  );
+  return db
+    .prepare("SELECT * FROM subscribers WHERE id = ?")
+    .get(id) as Subscriber;
 }
 
 // ── Comments ──
 
-export function getComments(postSlug: string, subscriberId?: string | null): Comment[] {
+export function getComments(
+  postSlug: string,
+  subscriberId?: string | null,
+): Comment[] {
   const db = loadDb();
   if (!db) return [];
   const rows = db
@@ -177,7 +210,9 @@ export function addComment(
 ): string {
   const id = createId();
   getDb()
-    .prepare("INSERT INTO comments (id, post_slug, subscriber_id, content, parent_id) VALUES (?, ?, ?, ?, ?)")
+    .prepare(
+      "INSERT INTO comments (id, post_slug, subscriber_id, content, parent_id) VALUES (?, ?, ?, ?, ?)",
+    )
     .run(id, postSlug, subscriberId, content, parentId);
   return id;
 }
@@ -186,20 +221,34 @@ export function addComment(
 
 export function addCommentLike(commentId: string, subscriberId: string): void {
   getDb()
-    .prepare("INSERT OR IGNORE INTO comment_likes (comment_id, subscriber_id) VALUES (?, ?)")
+    .prepare(
+      "INSERT OR IGNORE INTO comment_likes (comment_id, subscriber_id) VALUES (?, ?)",
+    )
     .run(commentId, subscriberId);
 }
 
 export function getCommentLikeCount(commentId: string): number {
-  const r = getDb().prepare("SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?").get(commentId) as { c: number };
+  const r = getDb()
+    .prepare("SELECT COUNT(*) as c FROM comment_likes WHERE comment_id = ?")
+    .get(commentId) as { c: number };
   return r.c;
 }
 
-export function removeCommentLike(commentId: string, subscriberId: string): void {
-  getDb().prepare("DELETE FROM comment_likes WHERE comment_id = ? AND subscriber_id = ?").run(commentId, subscriberId);
+export function removeCommentLike(
+  commentId: string,
+  subscriberId: string,
+): void {
+  getDb()
+    .prepare(
+      "DELETE FROM comment_likes WHERE comment_id = ? AND subscriber_id = ?",
+    )
+    .run(commentId, subscriberId);
 }
 
-export function getCommentLikedIdsForPost(postSlug: string, subscriberId: string): string[] {
+export function getCommentLikedIdsForPost(
+  postSlug: string,
+  subscriberId: string,
+): string[] {
   const rows = getDb()
     .prepare(
       `SELECT cl.comment_id FROM comment_likes cl

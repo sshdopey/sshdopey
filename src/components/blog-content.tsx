@@ -74,11 +74,20 @@ function PostCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ delay: index * 0.04, type: "spring", stiffness: 260, damping: 24 }}
+      transition={{
+        delay: index * 0.04,
+        type: "spring",
+        stiffness: 260,
+        damping: 24,
+      }}
       className="h-full"
     >
       <TiltCard className="h-full">
-        <motion.div whileHover={{ y: -6, scale: 1.02 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} className="h-full">
+        <motion.div
+          whileHover={{ y: -6, scale: 1.02 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="h-full"
+        >
           <Link
             href={`/blog/${post.slug}`}
             className="group flex flex-col h-full rounded-xl border border-line-faint overflow-hidden hover:border-line bg-surface/50 hover:bg-surface-hover transition-colors duration-300 shadow-sm hover:shadow-xl hover:shadow-black/10"
@@ -128,7 +137,12 @@ function PostCard({
                   <span className="text-dim">·</span>
                   <span>{post.reading_time} min</span>
                 </div>
-                <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1" />
+                <PostLikeBadge
+                  slug={post.slug}
+                  count={likes}
+                  size={11}
+                  className="flex items-center gap-1"
+                />
               </div>
             </div>
           </Link>
@@ -138,13 +152,7 @@ function PostCard({
   );
 }
 
-function FeaturedCard({
-  post,
-  likes,
-}: {
-  post: PostMeta;
-  likes: number;
-}) {
+function FeaturedCard({ post, likes }: { post: PostMeta; likes: number }) {
   return (
     <TiltCard className="h-full">
       <Link
@@ -163,7 +171,9 @@ function FeaturedCard({
           </div>
         )}
         <div className="p-6 sm:p-8 flex flex-col flex-1 justify-center">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-2 block">Featured</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-accent font-medium mb-2 block">
+            Featured
+          </span>
           <h3 className="text-xl sm:text-2xl font-bold text-primary leading-tight mb-3 group-hover:text-secondary transition-colors">
             {post.title}
           </h3>
@@ -180,7 +190,12 @@ function FeaturedCard({
             </time>
             <span className="text-dim">·</span>
             <span>{post.reading_time} min read</span>
-            <PostLikeBadge slug={post.slug} count={likes} size={11} className="flex items-center gap-1 ml-auto" />
+            <PostLikeBadge
+              slug={post.slug}
+              count={likes}
+              size={11}
+              className="flex items-center gap-1 ml-auto"
+            />
           </div>
         </div>
       </Link>
@@ -250,9 +265,7 @@ export function BlogContent({
           {allTags.map((tag) => (
             <motion.button
               key={tag}
-              onClick={() =>
-                setActiveTag(activeTag === tag ? null : tag)
-              }
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.93 }}
               className={`text-xs font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-md cursor-pointer transition-colors ${

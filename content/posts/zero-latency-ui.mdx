@@ -9,7 +9,7 @@ featured: true
 
 Users don't care about your Lighthouse score. They don't care about your bundle size metrics. They don't care about your server response time.
 
-They care about one thing: *does it feel fast?*
+They care about one thing: _does it feel fast?_
 
 Perceived performance is the only performance that matters. And the gap between "technically fast" and "perceptually fast" is where most teams fail.
 
@@ -17,15 +17,15 @@ Perceived performance is the only performance that matters. And the gap between 
 
 Research from Google and Microsoft tells us the same story:
 
-| Threshold | Perception | Example |
-|-----------|-----------|---------|
-| < 100ms | Instant | Button click feedback |
-| 100-300ms | Slight delay | Page transition |
-| 300-1000ms | Noticeable wait | Data loading |
-| > 1000ms | Interrupted flow | User considers leaving |
-| > 3000ms | Broken | User *is* leaving |
+| Threshold  | Perception       | Example                |
+| ---------- | ---------------- | ---------------------- |
+| < 100ms    | Instant          | Button click feedback  |
+| 100-300ms  | Slight delay     | Page transition        |
+| 300-1000ms | Noticeable wait  | Data loading           |
+| > 1000ms   | Interrupted flow | User considers leaving |
+| > 3000ms   | Broken           | User _is_ leaving      |
 
-Your job as a frontend engineer is to keep *every interaction* under 100ms perceptually, even when the backend takes 500ms to respond.
+Your job as a frontend engineer is to keep _every interaction_ under 100ms perceptually, even when the backend takes 500ms to respond.
 
 ![Latency perception thresholds and user experience](https://picsum.photos/seed/latency-chart/800/400)
 
@@ -37,14 +37,14 @@ Every mutation should be optimistic. When a user clicks "like," the heart fills 
 async function handleLike(postId: string) {
   // Update UI immediately — the user sees this in <16ms
   setLiked(true);
-  setCount(prev => prev + 1);
+  setCount((prev) => prev + 1);
 
   try {
     await api.post(`/posts/${postId}/like`);
   } catch {
     // Roll back only on failure
     setLiked(false);
-    setCount(prev => prev - 1);
+    setCount((prev) => prev - 1);
     toast.error("Couldn't save your like. Try again?");
   }
 }
@@ -79,7 +79,7 @@ function PostLink({ slug, children }: { slug: string; children: React.ReactNode 
 }
 ```
 
-By the time the user clicks, the data is already in cache. The page transition feels instant because it *is* instant — the network request happened 200ms ago while the user was moving their mouse.
+By the time the user clicks, the data is already in cache. The page transition feels instant because it _is_ instant — the network request happened 200ms ago while the user was moving their mouse.
 
 ## Ship Less JavaScript
 
@@ -95,18 +95,18 @@ Every kilobyte of JavaScript is a millisecond of parsing on a median mobile devi
 Stop measuring server response times in isolation. Measure these instead:
 
 - **Interaction to Next Paint (INP)**: How long between a user action and the next visual update?
-- **Time to Interactive (TTI)**: When can the user actually *do things*?
+- **Time to Interactive (TTI)**: When can the user actually _do things_?
 - **Cumulative Layout Shift (CLS)**: Does the page jump around while loading?
 
 ```typescript
 const observer = new PerformanceObserver((list) => {
   for (const entry of list.getEntries()) {
-    if (entry.entryType === 'event' && entry.duration > 100) {
-      console.warn('Slow interaction:', entry.name, entry.duration + 'ms');
+    if (entry.entryType === "event" && entry.duration > 100) {
+      console.warn("Slow interaction:", entry.name, entry.duration + "ms");
     }
   }
 });
-observer.observe({ type: 'event', buffered: true });
+observer.observe({ type: "event", buffered: true });
 ```
 
 ![Interaction-to-visual-update timing measurement](https://picsum.photos/seed/latency-inp/800/400)

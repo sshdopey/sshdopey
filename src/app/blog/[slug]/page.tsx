@@ -133,10 +133,7 @@ export default async function BlogPost({
         </FadeIn>
 
         <FadeIn delay={0.15}>
-          <div
-            className="prose"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
         </FadeIn>
 
         <PostInteractions

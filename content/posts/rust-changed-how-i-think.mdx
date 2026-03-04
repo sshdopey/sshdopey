@@ -7,7 +7,7 @@ tags: ["rust", "systems"]
 featured: false
 ---
 
-Learning Rust didn't just teach me a new language. It rewired how I approach software in *every* language I use. Python, TypeScript, SQL — I write all of them differently now, and I write them better.
+Learning Rust didn't just teach me a new language. It rewired how I approach software in _every_ language I use. Python, TypeScript, SQL — I write all of them differently now, and I write them better.
 
 ## Ownership Is a Design Tool
 
@@ -23,7 +23,7 @@ fn process_batch(data: Vec<Record>) -> Result<Report, ProcessError> {
 }
 ```
 
-After a year of this, I started asking in every language: *who owns this data? Who can mutate it? When does it get cleaned up?* These questions have no compiler to enforce them in Python, but they're still the right questions to ask.
+After a year of this, I started asking in every language: _who owns this data? Who can mutate it? When does it get cleaned up?_ These questions have no compiler to enforce them in Python, but they're still the right questions to ask.
 
 ![Rust ownership and borrowing visualized](https://picsum.photos/seed/rust-ownership/800/400)
 
@@ -52,7 +52,7 @@ fn ingest(record: RawRecord) -> Result<ProcessedRecord, IngestError> {
 }
 ```
 
-Every function signature tells you exactly what can go wrong. No hidden exceptions. No "this might throw something, check the docs maybe." The *type system* documents your failure modes.
+Every function signature tells you exactly what can go wrong. No hidden exceptions. No "this might throw something, check the docs maybe." The _type system_ documents your failure modes.
 
 ## What I Bring Back to Python
 
@@ -73,7 +73,7 @@ def get_user(user_id: int) -> User | None:
 
 Specific habits Rust gave me:
 
-- **Type hints everywhere.** Not because Python requires them — because *I* require them. `mypy --strict` on every project.
+- **Type hints everywhere.** Not because Python requires them — because _I_ require them. `mypy --strict` on every project.
 - **No bare excepts.** Every `except` clause names exactly what it catches. If I don't know what exceptions a function throws, I read the source.
 - **Immutable by default.** I use `frozen=True` on dataclasses. I use tuples instead of lists when the data shouldn't change. I treat mutation as a code smell that requires justification.
 - **Parse, don't validate.** Instead of validating a dict and hoping it stays valid, I parse it into a typed object at the boundary and only pass typed objects internally.
@@ -103,7 +103,7 @@ This changed how I think about concurrent Python code. I stopped using shared mu
 - Use immutable data structures passed by value
 - Isolate mutable state behind a single owner with a clear API
 
-> Shared mutable state is the root of all evil in concurrent programming. Rust makes this a compile error. In Python, you have to make it a *team norm*.
+> Shared mutable state is the root of all evil in concurrent programming. Rust makes this a compile error. In Python, you have to make it a _team norm_.
 
 ![Concurrency patterns: message passing vs shared state](https://picsum.photos/seed/rust-concurrency/800/400)
 

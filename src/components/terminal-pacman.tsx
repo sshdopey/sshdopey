@@ -26,27 +26,27 @@ const DIRS: Record<Dir, Pos> = {
 
 // Classic Pac-Man maze (1=wall, 0=dot, 2=empty, 3=power pellet, 4=ghost house)
 const MAZE_TEMPLATE: number[][] = [
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-  [1,0,1,1,0,1,1,1,0,0,1,0,0,1,1,1,0,1,1,0,1],
-  [1,3,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,3,1],
-  [1,0,0,0,0,1,0,1,1,0,1,0,1,1,0,1,0,0,0,0,1],
-  [1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1],
-  [2,2,1,0,0,1,1,0,1,1,4,1,1,0,1,1,0,0,1,2,2],
-  [1,1,1,0,0,0,0,0,1,4,4,4,1,0,0,0,0,0,1,1,1],
-  [2,2,2,0,0,1,0,0,1,4,4,4,1,0,0,1,0,0,2,2,2],
-  [1,1,1,0,0,1,0,0,1,1,1,1,1,0,0,1,0,0,1,1,1],
-  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-  [1,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1],
-  [1,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,3,1],
-  [1,1,0,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,1],
-  [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-  [1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
-  [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
-  [1,0,1,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1],
-  [1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],
-  [1,0,1,1,0,1,1,0,1,1,1,1,1,0,1,1,0,1,1,0,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1],
+  [1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3, 1],
+  [1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1],
+  [1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1],
+  [2, 2, 1, 0, 0, 1, 1, 0, 1, 1, 4, 1, 1, 0, 1, 1, 0, 0, 1, 2, 2],
+  [1, 1, 1, 0, 0, 0, 0, 0, 1, 4, 4, 4, 1, 0, 0, 0, 0, 0, 1, 1, 1],
+  [2, 2, 2, 0, 0, 1, 0, 0, 1, 4, 4, 4, 1, 0, 0, 1, 0, 0, 2, 2, 2],
+  [1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1],
+  [1, 3, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 1],
+  [1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+  [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+  [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+  [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
 interface Ghost {
@@ -66,7 +66,12 @@ function canMove(maze: number[][], r: number, c: number): boolean {
   return cell !== undefined && cell !== 1;
 }
 
-function ghostCanMove(maze: number[][], r: number, c: number, fromHome: boolean): boolean {
+function ghostCanMove(
+  maze: number[][],
+  r: number,
+  c: number,
+  fromHome: boolean,
+): boolean {
   const wr = ((r % ROWS) + ROWS) % ROWS;
   const wc = ((c % COLS) + COLS) % COLS;
   const cell = maze[wr]?.[wc];
@@ -76,18 +81,50 @@ function ghostCanMove(maze: number[][], r: number, c: number, fromHome: boolean)
   return true;
 }
 
-export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) {
+export function TerminalPacman({
+  onExit,
+}: {
+  onExit: (score: number) => void;
+}) {
   const [maze, setMaze] = useState<number[][]>(() =>
-    MAZE_TEMPLATE.map((row) => [...row])
+    MAZE_TEMPLATE.map((row) => [...row]),
   );
   const [pacman, setPacman] = useState<Pos>({ r: 16, c: 10 });
   const [pacDir, setPacDir] = useState<Dir>("right");
   const [nextDir, setNextDir] = useState<Dir>("right");
   const [ghosts, setGhosts] = useState<Ghost[]>([
-    { pos: { r: 7, c: 9 }, dir: "up", color: "text-red-400", scared: false, home: true, homeTimer: 0 },
-    { pos: { r: 7, c: 10 }, dir: "up", color: "text-pink-400", scared: false, home: true, homeTimer: 10 },
-    { pos: { r: 8, c: 9 }, dir: "up", color: "text-cyan-400", scared: false, home: true, homeTimer: 20 },
-    { pos: { r: 8, c: 10 }, dir: "up", color: "text-orange-400", scared: false, home: true, homeTimer: 30 },
+    {
+      pos: { r: 7, c: 9 },
+      dir: "up",
+      color: "text-red-400",
+      scared: false,
+      home: true,
+      homeTimer: 0,
+    },
+    {
+      pos: { r: 7, c: 10 },
+      dir: "up",
+      color: "text-pink-400",
+      scared: false,
+      home: true,
+      homeTimer: 10,
+    },
+    {
+      pos: { r: 8, c: 9 },
+      dir: "up",
+      color: "text-cyan-400",
+      scared: false,
+      home: true,
+      homeTimer: 20,
+    },
+    {
+      pos: { r: 8, c: 10 },
+      dir: "up",
+      color: "text-orange-400",
+      scared: false,
+      home: true,
+      homeTimer: 30,
+    },
   ]);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -111,7 +148,11 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   const playDotSound = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = new (
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext
+      )();
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.connect(g);
@@ -129,7 +170,11 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   const playPowerSound = useCallback(() => {
     if (typeof window === "undefined") return;
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = new (
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext
+      )();
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.connect(g);
@@ -152,10 +197,38 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     setPacDir("right");
     setNextDir("right");
     setGhosts([
-      { pos: { r: 7, c: 9 }, dir: "up", color: "text-red-400", scared: false, home: true, homeTimer: 0 },
-      { pos: { r: 7, c: 10 }, dir: "up", color: "text-pink-400", scared: false, home: true, homeTimer: 10 },
-      { pos: { r: 8, c: 9 }, dir: "up", color: "text-cyan-400", scared: false, home: true, homeTimer: 20 },
-      { pos: { r: 8, c: 10 }, dir: "up", color: "text-orange-400", scared: false, home: true, homeTimer: 30 },
+      {
+        pos: { r: 7, c: 9 },
+        dir: "up",
+        color: "text-red-400",
+        scared: false,
+        home: true,
+        homeTimer: 0,
+      },
+      {
+        pos: { r: 7, c: 10 },
+        dir: "up",
+        color: "text-pink-400",
+        scared: false,
+        home: true,
+        homeTimer: 10,
+      },
+      {
+        pos: { r: 8, c: 9 },
+        dir: "up",
+        color: "text-cyan-400",
+        scared: false,
+        home: true,
+        homeTimer: 20,
+      },
+      {
+        pos: { r: 8, c: 10 },
+        dir: "up",
+        color: "text-orange-400",
+        scared: false,
+        home: true,
+        homeTimer: 30,
+      },
     ]);
     setScore(0);
     setLives(3);
@@ -177,7 +250,8 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
 
       if (gameOver || won) {
         if (e.key === "r" || e.key === "R") resetGame();
-        else if (e.key === "q" || e.key === "Q" || e.key === "Escape") onExit(score);
+        else if (e.key === "q" || e.key === "Q" || e.key === "Escape")
+          onExit(score);
         return;
       }
 
@@ -216,15 +290,15 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
       setPacman((prev) => {
         const m = mazeRef.current;
         const nd = DIRS[nextDirRef.current];
-        const nr = ((prev.r + nd.r) % ROWS + ROWS) % ROWS;
-        const nc = ((prev.c + nd.c) % COLS + COLS) % COLS;
+        const nr = (((prev.r + nd.r) % ROWS) + ROWS) % ROWS;
+        const nc = (((prev.c + nd.c) % COLS) + COLS) % COLS;
         if (canMove(m, nr, nc) && m[nr][nc] !== 4) {
           setPacDir(nextDirRef.current);
           return { r: nr, c: nc };
         }
         const cd = DIRS[pacDirRef.current];
-        const cr = ((prev.r + cd.r) % ROWS + ROWS) % ROWS;
-        const cc = ((prev.c + cd.c) % COLS + COLS) % COLS;
+        const cr = (((prev.r + cd.r) % ROWS) + ROWS) % ROWS;
+        const cc = (((prev.c + cd.c) % COLS) + COLS) % COLS;
         if (canMove(m, cr, cc) && m[cr][cc] !== 4) return { r: cr, c: cc };
         return prev;
       });
@@ -239,65 +313,65 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
     if (gameOver || won) return;
 
     const t = setTimeout(() => {
-    setMaze((prev) => {
-      const cell = prev[pacman.r]?.[pacman.c];
-      if (cell === 0) {
-        playDotSound();
-        const next = prev.map((r) => [...r]);
-        next[pacman.r][pacman.c] = 2;
-        setScore((s) => s + 10);
-        return next;
-      }
-      if (cell === 3) {
-        playPowerSound();
-        const next = prev.map((r) => [...r]);
-        next[pacman.r][pacman.c] = 2;
-        setScore((s) => s + 50);
-        setPowerTimer(30);
-        setGhosts((gs) => gs.map((g) => ({ ...g, scared: true })));
-        return next;
-      }
-      return prev;
-    });
-
-    // Check win
-    const remaining = maze.flat().filter((c) => c === 0 || c === 3).length;
-    if (remaining === 0) {
-      setWon(true);
-      setScore((s) => s + 500);
-    }
-
-    // Ghost collision
-    setGhosts((gs) => {
-      let ate = false;
-      const newGhosts = gs.map((g) => {
-        if (g.pos.r === pacman.r && g.pos.c === pacman.c) {
-          if (g.scared) {
-            ate = true;
-            setScore((s) => s + 200);
-            return {
-              ...g,
-              pos: { r: 7, c: 10 },
-              scared: false,
-              home: true,
-              homeTimer: 10,
-            };
-          } else if (!g.home) {
-            setLives((l) => {
-              const next = l - 1;
-              if (next <= 0) setGameOver(true);
-              return next;
-            });
-            setPacman({ r: 16, c: 10 });
-            setPacDir("right");
-            setNextDir("right");
-            return g;
-          }
+      setMaze((prev) => {
+        const cell = prev[pacman.r]?.[pacman.c];
+        if (cell === 0) {
+          playDotSound();
+          const next = prev.map((r) => [...r]);
+          next[pacman.r][pacman.c] = 2;
+          setScore((s) => s + 10);
+          return next;
         }
-        return g;
+        if (cell === 3) {
+          playPowerSound();
+          const next = prev.map((r) => [...r]);
+          next[pacman.r][pacman.c] = 2;
+          setScore((s) => s + 50);
+          setPowerTimer(30);
+          setGhosts((gs) => gs.map((g) => ({ ...g, scared: true })));
+          return next;
+        }
+        return prev;
       });
-      return ate ? newGhosts : gs === newGhosts ? gs : newGhosts;
-    });
+
+      // Check win
+      const remaining = maze.flat().filter((c) => c === 0 || c === 3).length;
+      if (remaining === 0) {
+        setWon(true);
+        setScore((s) => s + 500);
+      }
+
+      // Ghost collision
+      setGhosts((gs) => {
+        let ate = false;
+        const newGhosts = gs.map((g) => {
+          if (g.pos.r === pacman.r && g.pos.c === pacman.c) {
+            if (g.scared) {
+              ate = true;
+              setScore((s) => s + 200);
+              return {
+                ...g,
+                pos: { r: 7, c: 10 },
+                scared: false,
+                home: true,
+                homeTimer: 10,
+              };
+            } else if (!g.home) {
+              setLives((l) => {
+                const next = l - 1;
+                if (next <= 0) setGameOver(true);
+                return next;
+              });
+              setPacman({ r: 16, c: 10 });
+              setPacDir("right");
+              setNextDir("right");
+              return g;
+            }
+          }
+          return g;
+        });
+        return ate ? newGhosts : gs === newGhosts ? gs : newGhosts;
+      });
     }, 0);
     return () => clearTimeout(t);
   }, [pacman, gameOver, won, maze, playDotSound, playPowerSound]);
@@ -305,7 +379,10 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
   // Power timer effect on ghosts
   useEffect(() => {
     if (powerTimer === 0) {
-      const t = setTimeout(() => setGhosts((gs) => gs.map((g) => ({ ...g, scared: false }))), 0);
+      const t = setTimeout(
+        () => setGhosts((gs) => gs.map((g) => ({ ...g, scared: false }))),
+        0,
+      );
       return () => clearTimeout(t);
     }
   }, [powerTimer]);
@@ -331,7 +408,10 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
             if (ghost.pos.c !== exitC) {
               return {
                 ...ghost,
-                pos: { r: ghost.pos.r, c: ghost.pos.c + (ghost.pos.c < exitC ? 1 : -1) },
+                pos: {
+                  r: ghost.pos.r,
+                  c: ghost.pos.c + (ghost.pos.c < exitC ? 1 : -1),
+                },
               };
             }
             return { ...ghost, home: false, dir: "left" };
@@ -355,13 +435,12 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
 
           for (const d of dirs) {
             const dd = DIRS[d];
-            const nr = ((ghost.pos.r + dd.r) % ROWS + ROWS) % ROWS;
-            const nc = ((ghost.pos.c + dd.c) % COLS + COLS) % COLS;
+            const nr = (((ghost.pos.r + dd.r) % ROWS) + ROWS) % ROWS;
+            const nc = (((ghost.pos.c + dd.c) % COLS) + COLS) % COLS;
 
             if (!ghostCanMove(maze, nr, nc, false)) continue;
 
-            const dist =
-              Math.abs(nr - pacman.r) + Math.abs(nc - pacman.c);
+            const dist = Math.abs(nr - pacman.r) + Math.abs(nc - pacman.c);
 
             if (ghost.scared) {
               // Run away — maximize distance
@@ -380,8 +459,8 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
           }
 
           const dd = DIRS[bestDir];
-          const nr = ((ghost.pos.r + dd.r) % ROWS + ROWS) % ROWS;
-          const nc = ((ghost.pos.c + dd.c) % COLS + COLS) % COLS;
+          const nr = (((ghost.pos.r + dd.r) % ROWS) + ROWS) % ROWS;
+          const nc = (((ghost.pos.c + dd.c) % COLS) + COLS) % COLS;
 
           if (ghostCanMove(maze, nr, nc, false)) {
             return { ...ghost, pos: { r: nr, c: nc }, dir: bestDir };
@@ -390,8 +469,8 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
           // Stuck — try any valid direction
           for (const d of dirs) {
             const dd2 = DIRS[d];
-            const nr2 = ((ghost.pos.r + dd2.r) % ROWS + ROWS) % ROWS;
-            const nc2 = ((ghost.pos.c + dd2.c) % COLS + COLS) % COLS;
+            const nr2 = (((ghost.pos.r + dd2.r) % ROWS) + ROWS) % ROWS;
+            const nc2 = (((ghost.pos.c + dd2.c) % COLS) + COLS) % COLS;
             if (ghostCanMove(maze, nr2, nc2, false)) {
               return { ...ghost, pos: { r: nr2, c: nc2 }, dir: d };
             }
@@ -452,12 +531,8 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
       style={{ caretColor: "transparent" }}
     >
       <div className="flex items-center justify-between text-xs shrink-0 mb-2 px-0.5">
-        <span className="text-accent font-semibold">
-          PAC-MAN
-        </span>
-        <span className="text-primary font-medium tabular-nums">
-          {score}
-        </span>
+        <span className="text-accent font-semibold">PAC-MAN</span>
+        <span className="text-primary font-medium tabular-nums">{score}</span>
         <span className="text-muted text-[10px]">
           ♥ {lives} · WASD / Arrows
         </span>
@@ -476,7 +551,15 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
                 // Pac-Man
                 if (pacman.r === r && pacman.c === c) {
                   return (
-                    <span key={key} className="text-accent font-bold" style={{ width: "1ch", textAlign: "center", display: "inline-block" }}>
+                    <span
+                      key={key}
+                      className="text-accent font-bold"
+                      style={{
+                        width: "1ch",
+                        textAlign: "center",
+                        display: "inline-block",
+                      }}
+                    >
                       {pacChar}
                     </span>
                   );
@@ -489,7 +572,11 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
                     <span
                       key={key}
                       className={`font-bold ${ghost.scared ? (powerTimer < 8 ? "animate-pulse text-blue-300" : "text-blue-400") : ghost.color}`}
-                      style={{ width: "1ch", textAlign: "center", display: "inline-block" }}
+                      style={{
+                        width: "1ch",
+                        textAlign: "center",
+                        display: "inline-block",
+                      }}
                     >
                       {ghost.scared ? "◎" : "◉"}
                     </span>
@@ -525,7 +612,11 @@ export function TerminalPacman({ onExit }: { onExit: (score: number) => void }) 
                   <span
                     key={key}
                     className={color}
-                    style={{ width: "1ch", textAlign: "center", display: "inline-block" }}
+                    style={{
+                      width: "1ch",
+                      textAlign: "center",
+                      display: "inline-block",
+                    }}
                   >
                     {char}
                   </span>

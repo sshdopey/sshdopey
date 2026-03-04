@@ -130,7 +130,12 @@ export function TerminalSnake({ onExit }: { onExit: (score: number) => void }) {
           });
           setScore((s) => s + 50);
         }
-        if (exitPos && nr === exitPos.r && nc === exitPos.c && coins.size === 0) {
+        if (
+          exitPos &&
+          nr === exitPos.r &&
+          nc === exitPos.c &&
+          coins.size === 0
+        ) {
           setWon(true);
           setMessage("You escaped with the treasure!");
           setScore((s) => s + 200);
@@ -231,7 +236,8 @@ export function TerminalSnake({ onExit }: { onExit: (score: number) => void }) {
     row.map((cell, c) => {
       if (player.r === r && player.c === c) return "@";
       if (enemy.r === r && enemy.c === c) return "E";
-      if (exitPos?.r === r && exitPos?.c === c) return coins.size === 0 ? "%" : "·";
+      if (exitPos?.r === r && exitPos?.c === c)
+        return coins.size === 0 ? "%" : "·";
       if (coins.has(`${r},${c}`)) return "$";
       return cell;
     }),
@@ -246,7 +252,9 @@ export function TerminalSnake({ onExit }: { onExit: (score: number) => void }) {
       style={{ caretColor: "transparent" }}
     >
       <div className="flex items-center justify-between text-[10px] text-accent shrink-0 mb-1">
-        <span>🏰 DUNGEON — Score: {score} | $: {coinsCollected}/{totalCoins}</span>
+        <span>
+          🏰 DUNGEON — Score: {score} | $: {coinsCollected}/{totalCoins}
+        </span>
         <span className="text-ghost">WASD · Q quit</span>
       </div>
 

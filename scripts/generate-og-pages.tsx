@@ -122,8 +122,7 @@ function HomeOgImage() {
           width: "120px",
           height: "3px",
           display: "flex",
-          background:
-            "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
+          background: "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
           borderRadius: "0 0 2px 2px",
         }}
       />
@@ -215,7 +214,8 @@ function HomeOgImage() {
               maxWidth: "700px",
             }}
           >
-            Building AI systems and high-performance tools. Python for the models. Rust for everything else.
+            Building AI systems and high-performance tools. Python for the
+            models. Rust for everything else.
           </div>
         </div>
 
@@ -257,8 +257,7 @@ function HomeOgImage() {
                 width: "32px",
                 height: "32px",
                 borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, #C8FF00 0%, #7BA600 100%)",
+                background: "linear-gradient(135deg, #C8FF00 0%, #7BA600 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -385,8 +384,7 @@ function BlogOgImage() {
           width: "120px",
           height: "3px",
           display: "flex",
-          background:
-            "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
+          background: "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
           borderRadius: "0 0 2px 2px",
         }}
       />
@@ -477,7 +475,8 @@ function BlogOgImage() {
               maxWidth: "700px",
             }}
           >
-            Thoughts on engineering, architecture, and building things that last.
+            Thoughts on engineering, architecture, and building things that
+            last.
           </div>
         </div>
 
@@ -519,8 +518,7 @@ function BlogOgImage() {
                 width: "32px",
                 height: "32px",
                 borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, #C8FF00 0%, #7BA600 100%)",
+                background: "linear-gradient(135deg, #C8FF00 0%, #7BA600 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -575,7 +573,9 @@ async function main() {
     height: 630,
     fonts,
   });
-  const homePng = await sharp(Buffer.from(homeSvg)).png({ quality: 95 }).toBuffer();
+  const homePng = await sharp(Buffer.from(homeSvg))
+    .png({ quality: 95 })
+    .toBuffer();
   fs.writeFileSync(path.join(outDir, "home.png"), homePng);
   console.log("  done home.png");
 
@@ -586,7 +586,9 @@ async function main() {
     height: 630,
     fonts,
   });
-  const blogPng = await sharp(Buffer.from(blogSvg)).png({ quality: 95 }).toBuffer();
+  const blogPng = await sharp(Buffer.from(blogSvg))
+    .png({ quality: 95 })
+    .toBuffer();
   fs.writeFileSync(path.join(outDir, "blog.png"), blogPng);
   console.log("  done blog.png");
 

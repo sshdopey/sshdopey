@@ -47,7 +47,12 @@ function MagneticLetter({
   return (
     <motion.span
       ref={ref}
-      initial={{ opacity: 0, y: 60, rotate: index % 2 === 0 ? -15 : 15, scale: 0.5 }}
+      initial={{
+        opacity: 0,
+        y: 60,
+        rotate: index % 2 === 0 ? -15 : 15,
+        scale: 0.5,
+      }}
       animate={{
         opacity: 1,
         y: offsetY,
@@ -56,15 +61,34 @@ function MagneticLetter({
       }}
       transition={{
         opacity: { delay: wiggleDelay, duration: 0.4 },
-        y: proximity > 0
-          ? { type: "spring", stiffness: 180, damping: 12, mass: 0.8 }
-          : { delay: wiggleDelay, type: "spring", stiffness: 200, damping: 10, mass: 1 },
-        rotate: proximity > 0
-          ? { type: "spring", stiffness: 180, damping: 12 }
-          : { delay: wiggleDelay, type: "spring", stiffness: 200, damping: 8 },
-        scale: proximity > 0
-          ? { type: "spring", stiffness: 250, damping: 18 }
-          : { delay: wiggleDelay, type: "spring", stiffness: 200, damping: 10 },
+        y:
+          proximity > 0
+            ? { type: "spring", stiffness: 180, damping: 12, mass: 0.8 }
+            : {
+                delay: wiggleDelay,
+                type: "spring",
+                stiffness: 200,
+                damping: 10,
+                mass: 1,
+              },
+        rotate:
+          proximity > 0
+            ? { type: "spring", stiffness: 180, damping: 12 }
+            : {
+                delay: wiggleDelay,
+                type: "spring",
+                stiffness: 200,
+                damping: 8,
+              },
+        scale:
+          proximity > 0
+            ? { type: "spring", stiffness: 250, damping: 18 }
+            : {
+                delay: wiggleDelay,
+                type: "spring",
+                stiffness: 200,
+                damping: 10,
+              },
       }}
       className="inline-block origin-bottom"
       style={{

@@ -52,7 +52,7 @@ result = client.beta.chat.completions.parse(
 person = result.choices[0].message.parsed  # typed, validated, guaranteed
 ```
 
-No prompt gymnastics. No "please respond in JSON." The model is *structurally constrained* to return what you need. When the model updates, this still works. When you switch providers, the pattern transfers.
+No prompt gymnastics. No "please respond in JSON." The model is _structurally constrained_ to return what you need. When the model updates, this still works. When you switch providers, the pattern transfers.
 
 ## Structured Outputs Beat Prompts Every Time
 
@@ -85,7 +85,7 @@ class Issue(BaseModel):
     suggestion: str | None = None
 ```
 
-The schema *is* the prompt. It tells the model what you need with machine-parseable precision.
+The schema _is_ the prompt. It tells the model what you need with machine-parseable precision.
 
 ![Pydantic schema and structured output validation](https://picsum.photos/seed/prompt-schema/800/400)
 

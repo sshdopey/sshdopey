@@ -17,7 +17,15 @@ YouTube embeds are the most common form of embedded video on the web. A well-pla
 
 Here's a great talk on the future of the web platform:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video embed example" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+  title="Video embed example"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+></iframe>
 
 The key to good video embeds is **responsive sizing**. A fixed-width iframe breaks on mobile. The `aspect-ratio: 16/9` CSS property combined with `width: 100%` solves this elegantly without the old padding-hack.
 
@@ -68,7 +76,7 @@ The alt text above isn't just for screen readers — on this site, it renders as
 Rich media isn't limited to images and video. Well-formatted tables convey information that would be awkward as prose:
 
 | Format | Animated | Compression | Browser Support |
-|--------|----------|-------------|-----------------|
+| ------ | -------- | ----------- | --------------- |
 | GIF    | Yes      | Lossless    | Universal       |
 | WebP   | Yes      | Lossy/Less  | 97%+            |
 | AVIF   | Yes      | Best        | 92%+            |
@@ -82,4 +90,4 @@ The web gave us `<img>`, then `<video>`, then `<iframe>`, then Web Components. E
 
 ![A minimalist workspace setup with dual monitors showing code and design side by side](https://picsum.photos/seed/workspace-media/800/400)
 
-The best content doesn't just inform — it *shows*.
+The best content doesn't just inform — it _shows_.
