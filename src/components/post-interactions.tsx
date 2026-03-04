@@ -390,18 +390,15 @@ function CommentLikeBtn({
   initialLiked,
   email,
   onLikedChange,
-  countLoaded,
 }: {
   commentId: string;
   initialCount: number;
   initialLiked: boolean;
   email: string | null;
   onLikedChange?: (commentId: string, liked: boolean) => void;
-  countLoaded: boolean;
 }) {
   const [count, setCount] = useState(initialCount);
   const [liked, setLiked] = useState(initialLiked);
-  const [hasInteracted, setHasInteracted] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
@@ -414,7 +411,6 @@ function CommentLikeBtn({
 
   function handleLike() {
     if (!email) return;
-    setHasInteracted(true);
     if (liked) {
       setLiked(false);
       setCount((c) => Math.max(0, c - 1));
@@ -443,7 +439,7 @@ function CommentLikeBtn({
       } ${!email ? "opacity-30 cursor-default" : ""}`}
     >
       <Heart size={12} fill={liked ? "currentColor" : "none"} />
-      {(countLoaded || hasInteracted) && count > 0 && <span className="tabular-nums">{count}</span>}
+      {count > 0 && <span className="tabular-nums">{count}</span>}
     </button>
   );
 }
@@ -455,7 +451,6 @@ function ThreadNode({
   subscriber,
   onCommentAdded,
   onCommentLikedChange,
-  commentsLive,
 }: {
   node: ThreadedComment;
   depth: number;
@@ -463,7 +458,6 @@ function ThreadNode({
   subscriber: Subscriber | null;
   onCommentAdded: (comments: Comment[]) => void;
   onCommentLikedChange?: (commentId: string, liked: boolean) => void;
-  commentsLive: boolean;
 }) {
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -524,7 +518,6 @@ function ThreadNode({
             initialLiked={node.liked_by_me ?? false}
             email={subscriber?.email ?? null}
             onLikedChange={onCommentLikedChange}
-            countLoaded={commentsLive}
           />
           {subscriber && (
             <button
@@ -585,7 +578,6 @@ function ThreadNode({
           subscriber={subscriber}
           onCommentAdded={onCommentAdded}
           onCommentLikedChange={onCommentLikedChange}
-          commentsLive={commentsLive}
         />
       ))}
     </div>
@@ -597,13 +589,11 @@ function DiscussionSection({
   comments: initialComments,
   subscriber,
   onCommentAdded,
-  commentsLive,
 }: {
   postSlug: string;
   comments: Comment[];
   subscriber: Subscriber | null;
   onCommentAdded: (comments: Comment[]) => void;
-  commentsLive: boolean;
 }) {
   const [text, setText] = useState("");
   const [likedCommentIds, setLikedCommentIds] = useState<Set<string>>(
@@ -666,7 +656,6 @@ function DiscussionSection({
               postSlug={postSlug}
               subscriber={subscriber}
               onCommentAdded={onCommentAdded}
-              commentsLive={commentsLive}
               onCommentLikedChange={(commentId, liked) => {
                 setLikedCommentIds((prev) => {
                   const next = new Set(prev);
@@ -738,14 +727,12 @@ export function PostInteractions({
     count: number;
     liked: boolean;
   } | null>(null);
-  const [commentsLive, setCommentsLive] = useState(false);
   useEffect(() => {
     let cancelled = false;
     const email = subscriber?.email ?? null;
     getPostStatsAction(postSlug, email).then((r) => {
       if (!cancelled) {
         setComments(r.comments);
-        setCommentsLive(true);
         setLiveLikeStats({ count: r.likeCount, liked: r.liked });
       }
     });
@@ -769,7 +756,6 @@ export function PostInteractions({
         comments={comments}
         subscriber={subscriber}
         onCommentAdded={setComments}
-        commentsLive={commentsLive}
       />
     </>
   );
