@@ -12,7 +12,7 @@ import { HeaderShareBtn } from "@/components/header-share";
 import { FadeIn } from "@/components/fade-in";
 import { PostInteractions } from "@/components/post-interactions";
 import { KeepReading } from "@/components/keep-reading";
-import { ArticleJsonLd } from "@/components/json-ld";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -32,6 +32,7 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
+    keywords: post.tags,
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       type: "article",
@@ -80,6 +81,15 @@ export default async function BlogPost({
         slug={post.slug}
         publishedAt={post.published_at}
         coverImage={post.cover_image}
+        tags={post.tags}
+        wordCount={post.content.split(/\s+/).length}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://sshdopey.com" },
+          { name: "Blog", url: "https://sshdopey.com/blog" },
+          { name: post.title, url: `https://sshdopey.com/blog/${post.slug}` },
+        ]}
       />
       <ReadingProgress />
       <CodeCopy />

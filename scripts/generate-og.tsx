@@ -3,7 +3,6 @@ import path from "path";
 import satori from "satori";
 import sharp from "sharp";
 import matter from "gray-matter";
-import React from "react";
 
 const postsDir = path.join(process.cwd(), "content/posts");
 const outDir = path.join(process.cwd(), "public/og");
@@ -37,6 +36,12 @@ async function loadFonts(): Promise<
   if (fonts.length === 0)
     throw new Error("Could not load fonts for OG generation");
   return fonts;
+}
+
+function loadAvatarBase64(): string {
+  const avatarPath = path.join(process.cwd(), "public/sshdopey.jpeg");
+  const buf = fs.readFileSync(avatarPath);
+  return `data:image/jpeg;base64,${buf.toString("base64")}`;
 }
 
 function readingTime(content: string): number {
@@ -88,11 +93,13 @@ function formatDate(dateStr: string): string {
   }
 }
 
-function OgImage({ post }: { post: PostData }) {
+/* eslint-disable @next/next/no-img-element */
+
+function OgImage({ post, avatarSrc }: { post: PostData; avatarSrc: string }) {
   const date = formatDate(post.published_at);
   const tags = post.tags.slice(0, 3);
   const titleSize =
-    post.title.length > 60 ? 42 : post.title.length > 40 ? 50 : 58;
+    post.title.length > 60 ? 48 : post.title.length > 40 ? 56 : 64;
 
   const excerpt =
     post.excerpt.length > 100
@@ -106,60 +113,42 @@ function OgImage({ post }: { post: PostData }) {
         height: "630px",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#050505",
+        backgroundColor: "#09090B",
         color: "#f5f5f5",
         fontFamily: "Inter, sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
     >
-      {/* ─── Background layers ─── */}
-
-      {/* Subtle radial gradient from center */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: "flex",
-          background:
-            "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(200,255,0,0.04) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* Large accent glow top-right */}
+      {/* ─── Background ─── */}
       <div
         style={{
           position: "absolute",
           top: "-200px",
-          right: "-120px",
-          width: "500px",
-          height: "500px",
+          right: "-80px",
+          width: "600px",
+          height: "600px",
           display: "flex",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(200,255,0,0.07) 0%, rgba(200,255,0,0.02) 40%, transparent 70%)",
+            "radial-gradient(circle, rgba(200,255,0,0.07) 0%, rgba(200,255,0,0.02) 45%, transparent 65%)",
         }}
       />
-
-      {/* Small accent glow bottom-left */}
       <div
         style={{
           position: "absolute",
-          bottom: "-150px",
-          left: "-80px",
-          width: "350px",
-          height: "350px",
+          bottom: "-180px",
+          left: "100px",
+          width: "400px",
+          height: "400px",
           display: "flex",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(200,255,0,0.05) 0%, transparent 70%)",
+            "radial-gradient(circle, rgba(200,255,0,0.04) 0%, transparent 60%)",
         }}
       />
 
-      {/* Noise texture overlay via fine grid */}
+      {/* Fine line grid */}
       <div
         style={{
           position: "absolute",
@@ -169,37 +158,130 @@ function OgImage({ post }: { post: PostData }) {
           bottom: 0,
           display: "flex",
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
+            "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
         }}
       />
 
-      {/* ─── Accent line at top ─── */}
+      {/* Left accent bar */}
+      <div
+        style={{
+          position: "absolute",
+          top: "40px",
+          left: 0,
+          width: "4px",
+          height: "550px",
+          display: "flex",
+          background:
+            "linear-gradient(180deg, #C8FF00 0%, rgba(200,255,0,0.25) 75%, transparent 100%)",
+          borderRadius: "0 4px 4px 0",
+        }}
+      />
+
+      {/* Top edge */}
       <div
         style={{
           position: "absolute",
           top: 0,
-          left: "70px",
-          width: "120px",
-          height: "3px",
+          left: 0,
+          right: 0,
+          height: "2px",
           display: "flex",
-          background: "linear-gradient(90deg, #C8FF00, rgba(200,255,0,0.2))",
-          borderRadius: "0 0 2px 2px",
+          background:
+            "linear-gradient(90deg, #C8FF00 0%, rgba(200,255,0,0.35) 50%, transparent 85%)",
         }}
       />
 
-      {/* ─── Content ─── */}
+      {/* ─── Avatar (absolutely positioned right) ─── */}
+      <div
+        style={{
+          position: "absolute",
+          right: "56px",
+          top: "50%",
+          marginTop: "-90px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "18px",
+        }}
+      >
+        {/* Separator line */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-80px",
+            left: "-36px",
+            width: "1px",
+            height: "340px",
+            display: "flex",
+            background:
+              "linear-gradient(180deg, transparent, rgba(255,255,255,0.06), transparent)",
+          }}
+        />
+        <div
+          style={{
+            width: "130px",
+            height: "130px",
+            borderRadius: "50%",
+            border: "3px solid rgba(200,255,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "3px",
+          }}
+        >
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img
+            alt=""
+            src={avatarSrc}
+            width={120}
+            height={120}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "3px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              fontSize: "22px",
+              fontWeight: 700,
+              color: "#ffffff",
+            }}
+          >
+            Dopey
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: "15px",
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.5)",
+            }}
+          >
+            @sshdopey
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Full-width content ─── */}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
           flex: 1,
-          padding: "56px 70px 50px",
+          padding: "46px 56px 42px 44px",
           position: "relative",
         }}
       >
-        {/* Top row: site name + reading time */}
+        {/* Top row: site + reading time (full width) */}
         <div
           style={{
             display: "flex",
@@ -208,11 +290,10 @@ function OgImage({ post }: { post: PostData }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Accent dot */}
             <div
               style={{
-                width: "8px",
-                height: "8px",
+                width: "10px",
+                height: "10px",
                 borderRadius: "50%",
                 backgroundColor: "#C8FF00",
                 display: "flex",
@@ -221,9 +302,9 @@ function OgImage({ post }: { post: PostData }) {
             <div
               style={{
                 display: "flex",
-                fontSize: "15px",
+                fontSize: "17px",
                 fontWeight: 700,
-                color: "rgba(255,255,255,0.5)",
+                color: "rgba(255,255,255,0.6)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
               }}
@@ -234,22 +315,24 @@ function OgImage({ post }: { post: PostData }) {
           <div
             style={{
               display: "flex",
-              fontSize: "14px",
-              color: "rgba(255,255,255,0.35)",
+              fontSize: "17px",
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.55)",
             }}
           >
             {`${post.reading_time} min read`}
           </div>
         </div>
 
-        {/* Middle: title + excerpt */}
+        {/* Middle: title + excerpt (avoid avatar area) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             flex: 1,
             justifyContent: "center",
-            gap: "20px",
+            gap: "22px",
+            maxWidth: "880px",
           }}
         >
           <div
@@ -258,9 +341,8 @@ function OgImage({ post }: { post: PostData }) {
               fontSize: `${titleSize}px`,
               fontWeight: 700,
               lineHeight: 1.1,
-              letterSpacing: "-0.035em",
+              letterSpacing: "-0.03em",
               color: "#ffffff",
-              maxWidth: "950px",
             }}
           >
             {post.title}
@@ -268,18 +350,18 @@ function OgImage({ post }: { post: PostData }) {
           <div
             style={{
               display: "flex",
-              fontSize: "18px",
+              fontSize: "24px",
               fontWeight: 400,
-              color: "rgba(255,255,255,0.45)",
-              lineHeight: 1.6,
-              maxWidth: "700px",
+              color: "rgba(255,255,255,0.65)",
+              lineHeight: 1.5,
+              maxWidth: "720px",
             }}
           >
             {excerpt}
           </div>
         </div>
 
-        {/* Bottom: tags + author + date */}
+        {/* Bottom row: tags + date (full width) */}
         <div
           style={{
             display: "flex",
@@ -287,94 +369,51 @@ function OgImage({ post }: { post: PostData }) {
             justifyContent: "space-between",
           }}
         >
-          {/* Tags */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {tags.map((tag) => (
               <div
                 key={tag}
                 style={{
                   display: "flex",
-                  fontSize: "12px",
+                  fontSize: "15px",
                   fontWeight: 700,
                   color: "#C8FF00",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  padding: "5px 14px",
+                  padding: "8px 22px",
                   borderRadius: "100px",
-                  border: "1px solid rgba(200,255,0,0.2)",
-                  background: "rgba(200,255,0,0.06)",
+                  border: "1px solid rgba(200,255,0,0.25)",
+                  background: "rgba(200,255,0,0.07)",
                 }}
               >
                 {tag}
               </div>
             ))}
           </div>
-
-          {/* Author + date */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  background:
-                    "linear-gradient(135deg, #C8FF00 0%, #7BA600 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "15px",
-                  fontWeight: 700,
-                  color: "#050505",
-                }}
-              >
-                D
-              </div>
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: "rgba(255,255,255,0.8)",
-                  }}
-                >
-                  Dopey
-                </div>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                width: "1px",
-                height: "20px",
-                backgroundColor: "rgba(255,255,255,0.1)",
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                fontSize: "14px",
-                color: "rgba(255,255,255,0.35)",
-              }}
-            >
-              {date}
-            </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: "18px",
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.55)",
+            }}
+          >
+            {date}
           </div>
         </div>
       </div>
 
-      {/* ─── Accent line at bottom ─── */}
+      {/* Bottom edge */}
       <div
         style={{
           position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
-          height: "2px",
+          height: "1px",
           display: "flex",
           background:
-            "linear-gradient(90deg, transparent 0%, rgba(200,255,0,0.15) 30%, rgba(200,255,0,0.3) 50%, rgba(200,255,0,0.15) 70%, transparent 100%)",
+            "linear-gradient(90deg, rgba(200,255,0,0.3) 0%, rgba(200,255,0,0.1) 50%, transparent 85%)",
         }}
       />
     </div>
@@ -389,6 +428,7 @@ async function generateOgImage(
     weight: 400 | 700;
     style: "normal";
   }[],
+  avatarSrc: string,
 ) {
   const outPath = path.join(outDir, `${post.slug}.png`);
 
@@ -402,7 +442,7 @@ async function generateOgImage(
     }
   }
 
-  const svg = await satori(<OgImage post={post} />, {
+  const svg = await satori(<OgImage post={post} avatarSrc={avatarSrc} />, {
     width: 1200,
     height: 630,
     fonts,
@@ -416,6 +456,7 @@ async function generateOgImage(
 async function main() {
   console.log("Loading fonts...");
   const fonts = await loadFonts();
+  const avatarSrc = loadAvatarBase64();
 
   fs.mkdirSync(outDir, { recursive: true });
 
@@ -429,12 +470,12 @@ async function main() {
       process.exit(1);
     }
     console.log(`Generating: ${targetSlug}`);
-    await generateOgImage(post, fonts);
+    await generateOgImage(post, fonts, avatarSrc);
   } else {
     const posts = getAllPosts();
     console.log(`Generating ${posts.length} OG images...`);
     for (const post of posts) {
-      await generateOgImage(post, fonts);
+      await generateOgImage(post, fonts, avatarSrc);
     }
   }
 

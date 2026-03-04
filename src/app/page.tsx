@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   title: "Dopey — Software Engineer",
   description:
     "Building AI systems and high-performance tools. Python for the models. Rust for everything else.",
+  keywords: [
+    "Dopey",
+    "software engineer",
+    "AI systems",
+    "Rust developer",
+    "Python developer",
+    "Fairmeld",
+  ],
   openGraph: {
     title: "Dopey — Software Engineer",
     description:

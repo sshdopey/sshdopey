@@ -3,11 +3,20 @@ import { getAllPostsMeta, getFeaturedPosts, getAllTags } from "@/lib/posts";
 import { getLikeCounts } from "@/lib/db";
 import { FadeIn } from "@/components/fade-in";
 import { BlogContent } from "@/components/blog-content";
+import { BreadcrumbJsonLd } from "@/components/json-ld";
 
 export const metadata: Metadata = {
   title: "Writing",
   description:
     "Thoughts on engineering, architecture, and building things that last.",
+  keywords: [
+    "engineering blog",
+    "AI articles",
+    "software architecture",
+    "Rust programming",
+    "Python development",
+    "technical writing",
+  ],
   alternates: { canonical: "/blog" },
   openGraph: {
     title: "Writing — Dopey",
@@ -32,6 +41,12 @@ export default function BlogIndex() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "https://sshdopey.com" },
+          { name: "Blog", url: "https://sshdopey.com/blog" },
+        ]}
+      />
       <FadeIn>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
           Writing<span className="text-accent animate-subtle-pulse">.</span>

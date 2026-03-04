@@ -30,6 +30,16 @@ export const metadata: Metadata = {
     description:
       "Building AI systems and high-performance tools. Python for the models. Rust for everything else.",
   },
+  keywords: [
+    "AI",
+    "Rust",
+    "Python",
+    "software engineering",
+    "machine learning",
+    "web development",
+    "architecture",
+    "devops",
+  ],
   twitter: {
     card: "summary_large_image",
     creator: "@sshdopey",
