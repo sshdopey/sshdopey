@@ -3,9 +3,8 @@ import { ArrowDown } from "lucide-react";
 import { getLatestPostsMeta } from "@/lib/posts";
 import { getLikeCounts } from "@/lib/db";
 import { HeroName, HeroHandle } from "@/components/hero-name";
-import { HeroVisual } from "@/components/hero-visual";
+import { LazyHeroVisual } from "@/components/lazy-hero-visual";
 import { FeaturedCarousel } from "@/components/featured-carousel";
-import { FadeIn } from "@/components/fade-in";
 import { SocialLinks } from "@/components/social-links";
 import { PersonJsonLd } from "@/components/json-ld";
 
@@ -48,15 +47,15 @@ export default function Home() {
               <HeroHandle />
             </div>
 
-            <FadeIn delay={0.55}>
+            <div className="hero-fade-1">
               <p className="text-secondary text-lg sm:text-xl leading-relaxed mt-8 max-w-xl">
                 I build AI systems and high-performance tools.
                 <br className="hidden sm:block" />
                 Python for the models. Rust for everything else.
               </p>
-            </FadeIn>
+            </div>
 
-            <FadeIn delay={0.7}>
+            <div className="hero-fade-2">
               <p className="text-muted text-sm mt-5 max-w-xl">
                 Currently building{" "}
                 <a
@@ -69,20 +68,18 @@ export default function Home() {
                 </a>{" "}
                 — an AI system everyone would trust.
               </p>
-            </FadeIn>
+            </div>
 
-            <FadeIn delay={0.85}>
+            <div className="hero-fade-3">
               <SocialLinks variant="hero" className="mt-8" />
-            </FadeIn>
+            </div>
           </div>
 
-          <HeroVisual />
+          <LazyHeroVisual />
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
-          <FadeIn delay={1.2}>
-            <ArrowDown size={20} className="text-ghost" />
-          </FadeIn>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float hero-fade-4">
+          <ArrowDown size={20} className="text-ghost" />
         </div>
       </section>
 
