@@ -148,6 +148,7 @@ export function HeroHandle() {
       href="https://x.com/sshdopey"
       target="_blank"
       rel="noopener noreferrer"
+      aria-label="sshdopey on X"
       initial={{ opacity: 0, y: 15, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 15 }}

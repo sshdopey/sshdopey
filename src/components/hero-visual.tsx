@@ -617,21 +617,27 @@ export function HeroVisual() {
           <button
             type="button"
             onClick={handleCloseClick}
-            className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff4a42] transition-colors cursor-pointer shrink-0"
+            className="w-6 h-6 flex items-center justify-center rounded-full cursor-pointer shrink-0"
             aria-label="Close terminal"
-          />
+          >
+            <span className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff4a42] transition-colors block" />
+          </button>
           <button
             type="button"
             onClick={handleMinimizeClick}
-            className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#f5b320] transition-colors cursor-pointer shrink-0"
+            className="w-6 h-6 flex items-center justify-center rounded-full cursor-pointer shrink-0"
             aria-label="Minimize"
-          />
+          >
+            <span className="w-3 h-3 rounded-full bg-[#febc2e] hover:bg-[#f5b320] transition-colors block" />
+          </button>
           <button
             type="button"
             onClick={handleMaximizeClick}
-            className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#20b836] transition-colors cursor-pointer shrink-0"
+            className="w-6 h-6 flex items-center justify-center rounded-full cursor-pointer shrink-0"
             aria-label={isMaximized ? "Restore" : "Maximize"}
-          />
+          >
+            <span className="w-3 h-3 rounded-full bg-[#28c840] hover:bg-[#20b836] transition-colors block" />
+          </button>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-ghost font-mono pointer-events-none">
           <Terminal size={10} />

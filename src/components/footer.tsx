@@ -40,6 +40,7 @@ export function Footer() {
           <Link
             href="/"
             onClick={handleClick}
+            aria-label="sshdopey home"
             className="text-sm font-medium text-accent tracking-tight"
           >
             @sshdopey

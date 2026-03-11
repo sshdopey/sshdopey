@@ -226,15 +226,9 @@ body {
 
 /* ═══ Ask AI Glow Effect ═══ */
 
-@property --glow-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 @keyframes glow-spin {
   to {
-    --glow-angle: 360deg;
+    transform: rotate(360deg);
   }
 }
 
@@ -242,15 +236,20 @@ body {
   position: relative;
   isolation: isolate;
   border-color: transparent !important;
+  overflow: hidden;
 }
 
 .ask-ai-glow::before {
   content: "";
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  aspect-ratio: 1;
+  margin-left: -150%;
+  margin-top: -150%;
+  border-radius: 50%;
   background: conic-gradient(
-    from var(--glow-angle),
     transparent 55%,
     var(--color-accent) 78%,
     transparent 100%
