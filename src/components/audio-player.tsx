@@ -361,14 +361,15 @@ export function AudioPlayer() {
     <>
       <button
         onClick={toggle}
+        aria-label={state === "idle" ? "Listen to article" : state === "playing" ? "Pause reading" : "Resume reading"}
         className={`flex items-center gap-1.5 text-sm transition-colors cursor-pointer ${
           state !== "idle" ? "text-accent" : "text-muted hover:text-accent"
         }`}
       >
         {state === "playing" ? (
-          <CirclePause size={16} />
+          <CirclePause size={16} aria-hidden="true" />
         ) : (
-          <CirclePlay size={16} />
+          <CirclePlay size={16} aria-hidden="true" />
         )}
         <span className="hidden sm:inline">
           {state === "idle"
@@ -390,12 +391,13 @@ export function AudioPlayer() {
           >
             <button
               onClick={toggle}
+              aria-label={state === "playing" ? "Pause" : "Resume"}
               className="text-accent hover:opacity-80 transition-opacity cursor-pointer"
             >
               {state === "playing" ? (
-                <CirclePause size={20} />
+                <CirclePause size={20} aria-hidden="true" />
               ) : (
-                <CirclePlay size={20} />
+                <CirclePlay size={20} aria-hidden="true" />
               )}
             </button>
 
@@ -409,11 +411,12 @@ export function AudioPlayer() {
 
             <button
               onClick={toggleAutoScroll}
+              aria-label={autoScroll ? "Disable auto scroll" : "Enable auto scroll"}
               className={`flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
                 autoScroll ? "text-accent" : "text-muted hover:text-accent"
               }`}
             >
-              <Locate size={13} />
+              <Locate size={13} aria-hidden="true" />
               <span className="hidden sm:inline">Auto Scroll</span>
               <span className="sm:hidden">Sync</span>
             </button>
@@ -422,9 +425,10 @@ export function AudioPlayer() {
 
             <button
               onClick={dismiss}
+              aria-label="Stop listening"
               className="text-ghost hover:text-primary transition-colors cursor-pointer"
             >
-              <X size={14} />
+              <X size={14} aria-hidden="true" />
             </button>
           </motion.div>
         )}

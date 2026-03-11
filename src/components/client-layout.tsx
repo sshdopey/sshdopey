@@ -69,12 +69,17 @@ export function ClientLayout({ children }: { children: ReactNode }) {
 
           {isOpen && isMobile && (
             <div
+              role="button"
+              aria-label="Close sidebar"
+              tabIndex={0}
               className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
               onClick={() => setIsOpen(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsOpen(false); }}
             />
           )}
 
           <aside
+            aria-label="Ask AI sidebar"
             className={`fixed z-50 bg-page border-line flex flex-col transition-transform duration-300 ease-in-out ${
               isMobile
                 ? `inset-x-0 bottom-0 h-[75vh] rounded-t-2xl border-t ${
@@ -102,6 +107,7 @@ export function ClientLayout({ children }: { children: ReactNode }) {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
+                aria-label="Close sidebar"
                 className="text-muted hover:text-primary transition-colors p-1 cursor-pointer"
               >
                 {isMobile ? (
@@ -128,14 +134,16 @@ export function ClientLayout({ children }: { children: ReactNode }) {
               <div className="flex gap-2">
                 <input
                   placeholder="Ask a question..."
+                  aria-label="Ask a question"
                   className="flex-1 bg-surface border border-line-faint rounded-lg px-3 py-2.5 text-sm text-primary placeholder:text-ghost focus:outline-none focus:border-line"
                   disabled
                 />
                 <button
+                  aria-label="Send message"
                   className="px-3 py-2.5 bg-accent text-inverse rounded-lg text-sm opacity-40 cursor-not-allowed"
                   disabled
                 >
-                  <Send size={14} />
+                  <Send size={14} aria-hidden="true" />
                 </button>
               </div>
             </div>

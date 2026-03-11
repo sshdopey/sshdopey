@@ -135,7 +135,7 @@ export default async function BlogPost({
               <div className="flex items-center gap-3 sm:gap-4">
                 <AudioPlayer />
                 <HeaderShareBtn slug={post.slug} title={post.title} />
-                <time className="text-xs sm:text-sm text-muted">{date}</time>
+                <time dateTime={post.published_at} className="text-xs sm:text-sm text-muted">{date}</time>
               </div>
             </div>
           </header>

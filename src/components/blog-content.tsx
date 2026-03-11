@@ -129,7 +129,7 @@ function PostCard({
 
               <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-line-faint/50">
                 <div className="flex items-center gap-2.5">
-                  <time>{formatDate(post.published_at)}</time>
+                  <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>
                   <span className="text-dim">·</span>
                   <span>{post.reading_time} min</span>
                 </div>
@@ -194,7 +194,7 @@ function FeaturedCard({ post, likes }: { post: PostMeta; likes: number }) {
             {post.excerpt}
           </p>
           <div className="flex items-center gap-3 text-xs sm:text-sm text-muted">
-            <time>{formatDate(post.published_at)}</time>
+            <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>
             <span className="text-dim">·</span>
             <span>{post.reading_time} min read</span>
             <PostLikeBadge
@@ -248,6 +248,7 @@ export function BlogContent({
         <input
           type="text"
           placeholder={placeholder}
+          aria-label="Search posts"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setFocused(true)}

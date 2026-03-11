@@ -7,8 +7,8 @@
   --color-primary: #f0f0f0;
   --color-secondary: #b8b8b8;
   --color-muted: #929292;
-  --color-dim: #707070;
-  --color-ghost: #505050;
+  --color-dim: #8b8b8b;
+  --color-ghost: #787878;
   --color-line: #262626;
   --color-line-faint: #1e1e1e;
   --color-inverse: #060606;
@@ -24,13 +24,13 @@
   --color-primary: #0a0a0a;
   --color-secondary: #222222;
   --color-muted: #555555;
-  --color-dim: #777777;
-  --color-ghost: #999999;
+  --color-dim: #696969;
+  --color-ghost: #767676;
   --color-line: #e0e0e0;
   --color-line-faint: #efefef;
   --color-inverse: #ffffff;
-  --color-accent: #3d9e00;
-  --accent-focus: rgba(61, 158, 0, 0.14);
+  --color-accent: #348200;
+  --accent-focus: rgba(52, 130, 0, 0.14);
 }
 
 :root:not(.light) {
@@ -66,7 +66,7 @@ body {
   background: rgba(200, 255, 0, 0.15);
 }
 :root.light ::selection {
-  background: rgba(61, 158, 0, 0.2);
+  background: rgba(52, 130, 0, 0.2);
 }
 
 /* ═══ Scrollbar ═══ */
@@ -196,8 +196,8 @@ body {
 :root.light .cursor-glow {
   background: radial-gradient(
     circle,
-    rgba(61, 158, 0, 0.2) 0%,
-    rgba(61, 158, 0, 0.07) 40%,
+    rgba(52, 130, 0, 0.2) 0%,
+    rgba(52, 130, 0, 0.07) 40%,
     transparent 70%
   );
 }

@@ -94,8 +94,12 @@ function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
         {open && (
           <>
             <div
+              role="button"
+              aria-label="Close share menu"
+              tabIndex={0}
               className="fixed inset-0 z-40"
               onClick={() => setOpen(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen(false); }}
             />
             <motion.div
               initial={{ opacity: 0, y: 5, scale: 0.96 }}
@@ -124,6 +128,7 @@ function ShareMenu({ postSlug, title }: { postSlug: string; title: string }) {
                   height="14"
                   viewBox="0 0 24 24"
                   fill="currentColor"
+                  aria-hidden="true"
                 >
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
@@ -333,6 +338,7 @@ function AuthorSubscribe({
               <input
                 type="email"
                 placeholder="your@email.com"
+                aria-label="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -428,11 +434,12 @@ function CommentLikeBtn({
     <button
       onClick={handleLike}
       disabled={!email}
+      aria-label={liked ? "Unlike comment" : "Like comment"}
       className={`flex items-center gap-1 text-xs cursor-pointer transition-colors ${
         liked ? "text-accent" : "text-ghost hover:text-accent"
       } ${!email ? "opacity-30 cursor-default" : ""}`}
     >
-      <Heart size={12} fill={liked ? "currentColor" : "none"} />
+      <Heart size={12} fill={liked ? "currentColor" : "none"} aria-hidden="true" />
       {count > 0 && <span className="tabular-nums">{count}</span>}
     </button>
   );
@@ -536,6 +543,7 @@ function ThreadNode({
                 <input
                   type="text"
                   placeholder="Write a reply..."
+                  aria-label="Write a reply"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleReply()}
@@ -554,9 +562,10 @@ function ThreadNode({
                     setReplying(false);
                     setReplyText("");
                   }}
+                  aria-label="Cancel reply"
                   className="text-xs text-ghost hover:text-accent cursor-pointer transition-colors"
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             </motion.div>
@@ -669,6 +678,7 @@ function DiscussionSection({
           <input
             type="text"
             placeholder={`Comment as ${displayName}...`}
+            aria-label="Write a comment"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePost()}

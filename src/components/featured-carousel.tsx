@@ -74,7 +74,7 @@ function PostGridCard({
               </p>
               <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-line-faint/50">
                 <div className="flex items-center gap-2.5">
-                  <time>{formatDate(post.published_at)}</time>
+                  <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>
                   <span className="text-dim">·</span>
                   <span>{post.reading_time} min</span>
                 </div>

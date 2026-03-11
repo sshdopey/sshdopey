@@ -29,6 +29,7 @@ export function Navigation() {
 
   return (
     <motion.nav
+      aria-label="Main navigation"
       initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.1 }}
@@ -81,9 +82,10 @@ export function Navigation() {
             onClick={toggle}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
+            aria-label="Ask AI"
             className="ask-ai-glow flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-line-faint text-sm text-muted hover:text-accent transition-colors cursor-pointer"
           >
-            <Sparkles size={14} className="text-accent" />
+            <Sparkles size={14} className="text-accent" aria-hidden="true" />
             <span className="hidden sm:inline">Ask AI</span>
           </motion.button>
 

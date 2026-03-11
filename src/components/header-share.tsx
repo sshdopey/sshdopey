@@ -50,17 +50,21 @@ export function HeaderShareBtn({
       <button
         onClick={() => setOpen(!open)}
         className="text-muted hover:text-accent transition-colors cursor-pointer"
-        title="Share"
+        aria-label="Share this post"
       >
-        <Share size={15} />
+        <Share size={15} aria-hidden="true" />
       </button>
 
       <AnimatePresence>
         {open && (
           <>
             <div
+              role="button"
+              aria-label="Close share menu"
+              tabIndex={0}
               className="fixed inset-0 z-40"
               onClick={() => setOpen(false)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setOpen(false); }}
             />
             <motion.div
               initial={{ opacity: 0, y: 5, scale: 0.96 }}
@@ -89,6 +93,7 @@ export function HeaderShareBtn({
                   height="14"
                   viewBox="0 0 24 24"
                   fill="currentColor"
+                  aria-hidden="true"
                 >
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
