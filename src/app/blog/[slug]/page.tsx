@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Clock } from "lucide-react";
 import { getPostBySlug, getAllSlugs } from "@/lib/posts";
+import { formatDate } from "@/lib/utils";
 import { renderMarkdown } from "@/lib/markdown";
 import { getComments, getLikeCount, getLikeCounts } from "@/lib/db";
 import { getLatestPostsMeta } from "@/lib/posts";
@@ -67,11 +68,7 @@ export default async function BlogPost({
   const likeCounts = getLikeCounts();
   const html = await renderMarkdown(post.content);
 
-  const date = new Date(post.published_at).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const date = formatDate(post.published_at);
 
   return (
     <>

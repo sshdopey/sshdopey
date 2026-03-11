@@ -37,10 +37,10 @@ function timeAgo(dateStr: string): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   if (days < 30) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  const d = new Date(dateStr);
+  const day = d.getDate().toString().padStart(2, "0");
+  const mon = d.toLocaleDateString("en-US", { month: "short" });
+  return `${day} ${mon}`;
 }
 
 // ── Share Menu ──
@@ -159,22 +159,20 @@ function LikeShareBar({
   subscriber: Subscriber | null;
   liveLikeStats: { count: number; liked: boolean } | null;
 }) {
-  const [count, setCount] = useState(initialCount);
+  const [localCount, setLocalCount] = useState<number | null>(null);
   const [serverLiked, setServerLiked] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
   const pendingRef = useRef(false);
   const { toggle } = useSidebar();
   const { isLiked, addLiked, removeLiked } = useLikedPosts();
 
-  // Sync from parent when liveLikeStats arrives
-  useEffect(() => {
-    if (!liveLikeStats || pendingRef.current) return;
-    setCount(liveLikeStats.count);
-    setServerLiked(liveLikeStats.liked);
-  }, [liveLikeStats]);
+  const count =
+    localCount !== null ? localCount : (liveLikeStats?.count ?? initialCount);
 
   const liked =
-    (liveLikeStats ? liveLikeStats.liked : serverLiked) || isLiked(postSlug);
+    (localCount !== null
+      ? serverLiked
+      : (liveLikeStats?.liked ?? serverLiked)) || isLiked(postSlug);
 
   function handleLike() {
     if (pendingRef.current) return;
@@ -182,11 +180,12 @@ function LikeShareBar({
       // Unlike - works for both subscribers and anonymous (localStorage-tracked)
       removeLiked(postSlug);
       setServerLiked(false);
-      setCount((c) => Math.max(0, c - 1));
+      setLocalCount((c) => Math.max(0, (c ?? count) - 1));
       if (subscriber) {
         pendingRef.current = true;
-        unlikePost(postSlug, subscriber.email).then((r) => {
-          setCount(r.count);
+        unlikePost(postSlug, subscriber.email).then(() => {
+          setLocalCount(null);
+          setServerLiked(false);
           pendingRef.current = false;
         });
       }
@@ -195,7 +194,7 @@ function LikeShareBar({
     // Like
     addLiked(postSlug);
     setServerLiked(true);
-    setCount((c) => c + 1);
+    setLocalCount((c) => (c ?? count) + 1);
     setParticles(Array.from({ length: 8 }, (_, i) => i));
     const email = subscriber?.email ?? null;
     pendingRef.current = true;
@@ -203,10 +202,8 @@ function LikeShareBar({
       if (r.error) {
         removeLiked(postSlug);
         setServerLiked(false);
-        setCount((c) => Math.max(0, c - 1));
-      } else {
-        setCount(r.count);
       }
+      setLocalCount(null);
       pendingRef.current = false;
     });
     setTimeout(() => setParticles([]), 800);

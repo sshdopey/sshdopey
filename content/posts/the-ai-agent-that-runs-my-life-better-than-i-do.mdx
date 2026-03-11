@@ -1,0 +1,333 @@
+---
+title: "The AI Agent That Runs My Life Better Than I Do"
+excerpt: 'I needed something that texts me at 11pm saying "you still haven''t sent that." So I set one up. Here''s how.'
+published_at: "2026-03-11"
+cover_image: "https://images.sshdopey.com/memes/openclaw-banner.jpg"
+tags: ["openclaw", "ai-agents", "productivity", "automation"]
+featured: true
+---
+
+![Me looking at my unread messages, overdue tasks, and three apps I was supposed to ship last month.](https://images.sshdopey.com/memes/elmo-surronded-by-fire.gif)
+
+Unread messages everywhere. Projects half-done across tools I forgot I signed up for. People waiting on replies I keep meaning to send. A Notion workspace with one empty page titled "Get Organized."
+
+Sound familiar?
+
+I didn't need another productivity app. I needed something to grab me by the shoulders and say "hey, you said you'd send that yesterday. Here's the draft. Just hit send."
+
+So I set one up. Took about 20 minutes.
+
+His name is Gru. He runs on a $4 server. He lives in my Telegram. And the other night he sent me this completely unprompted:
+
+> "You said you'd send that message three hours ago. I drafted it. Just hit send and move on."
+
+Then he logged it in my journal and moved on to reminding me about a deployment I'd completely forgotten about.
+
+![Before Gru vs. After Gru. Night and day.](https://images.sshdopey.com/memes/this-is-fine-dog-in-burning-room.gif)
+
+---
+
+## So What Is This Thing?
+
+[OpenClaw](https://github.com/openclaw/openclaw) is an open-source AI agent that actually does stuff. Not a chatbot. Not another wrapper around ChatGPT. An actual agent that runs on your own machine, connects to your messaging apps, remembers everything between conversations, and can execute tasks on a schedule while you sleep.
+
+It works with **Claude, GPT, Gemini, Mistral, local models through Ollama**... basically anything with an API. Run it on a VPS, a Raspberry Pi, that dusty laptop in your closet, a Mac Mini, whatever. Your data stays on your hardware.
+
+This guide walks you through the whole setup. By the end, you'll have your own agent running in Telegram that you can text like a friend. A friend with a perfect memory who doesn't let you get away with anything.
+
+**What you need:**
+
+- A machine running Linux (VPS, old laptop, Pi, anything)
+- A Telegram account
+- An API key from an AI provider (Anthropic, OpenAI, Google, etc.)
+
+**What you don't need:**
+
+- A domain name
+- DevOps experience
+- To understand Docker deeply
+- Money (beyond ~$4/month if you use a VPS)
+
+---
+
+## Step 1: Get a Machine
+
+You need something that stays on. The moment your laptop sleeps, your agent sleeps.
+
+**Option A: Rent a VPS (~$4/month)**
+The easiest path. Always on, nothing to maintain at home. Some solid cheap options:
+
+- [Contabo](https://contabo.com/en/vps/) (~$4/month for 4GB RAM)
+- [Hetzner](https://www.hetzner.com/cloud/) (~$4-5/month)
+- [DigitalOcean](https://www.digitalocean.com/) (~$6/month)
+
+Pick **Ubuntu 24.04** when setting up.
+
+**Option B: Use what you have (free)**
+Old laptop? Install Ubuntu, plug it in, keep it awake. Raspberry Pi? Even better. Mac Mini? Fancy.
+
+Whatever you pick, the commands below are identical. SSH into your machine and let's go:
+
+```bash
+ssh root@YOUR_SERVER_IP
+```
+
+Update and install the basics:
+
+```bash
+apt update && apt upgrade -y
+apt install -y curl git ufw autossh
+```
+
+Quick firewall setup:
+
+```bash
+ufw allow 22
+ufw allow 80
+ufw enable
+```
+
+Type `y`. Done.
+
+---
+
+## Step 2: Install Docker
+
+One command. Docker keeps everything contained so if your agent goes rogue, your server stays clean.
+
+```bash
+curl -fsSL https://get.docker.com | sh
+```
+
+![You installing Docker.](https://images.sshdopey.com/memes/hacker-typing-fast.gif)
+
+Then add your user to the Docker group so you don't need `sudo`:
+
+```bash
+usermod -aG docker $USER
+```
+
+Log out and back in for the group change to take effect.
+
+Check it worked:
+
+```bash
+docker --version && docker compose version
+```
+
+See version numbers? Good. Moving on.
+
+---
+
+## Step 3: Deploy OpenClaw
+
+Here's where it gets real. Three commands and a wizard.
+
+```bash
+cd ~
+git clone https://github.com/openclaw/openclaw.git
+cd openclaw
+./docker-setup.sh
+```
+
+The setup wizard walks you through everything interactively. Here's what it'll ask:
+
+**AI Provider:** Pick yours. Anthropic (Claude), OpenAI (GPT), Google (Gemini), whatever you've got. They all work.
+
+> Pro tip: **Google's Gemini 3.0 Flash** is an excellent budget pick. It's fast, surprisingly capable for agent tasks, and way cheaper than the premium models. Great for getting started without burning through credits.
+
+**API Key:** Paste it in. For Anthropic: [console.anthropic.com](https://console.anthropic.com). For OpenAI: [platform.openai.com](https://platform.openai.com). For Google: [aistudio.google.com](https://aistudio.google.com).
+
+**Gateway auth token:** The wizard generates one. **Save this somewhere.** You need it for the dashboard later.
+
+**Telegram:** The wizard asks if you want to set up channels. Say yes. It'll ask for a bot token. Here's how to get one:
+
+1. Open Telegram, search for **@BotFather**
+2. Send `/newbot`
+3. Pick a name (whatever you want)
+4. Pick a username (must end in `bot`)
+5. BotFather gives you a token. Copy it. Paste it into the wizard.
+
+The wizard handles the rest. When it finishes, everything starts automatically.
+
+```bash
+docker compose ps
+```
+
+See `openclaw-gateway` with status "Up"? You're live.
+
+![Your agent is alive. Go text it.](https://images.sshdopey.com/memes/celebration-dance.gif)
+
+---
+
+## Step 4: Say Hello
+
+Open Telegram. Find your bot. Send it anything.
+
+If it asks to pair (first-time security thing), check the logs:
+
+```bash
+docker compose logs --tail 20
+```
+
+Grab the pairing code and approve it:
+
+```bash
+docker compose run --rm openclaw-cli pairing approve telegram THE_CODE
+```
+
+Now text your bot again. It replies. You're talking to your agent. From your phone. Anywhere in the world.
+
+Take a second to appreciate that. You just deployed an AI agent on your own infrastructure in like 15 minutes.
+
+---
+
+## Step 5: Access the Dashboard
+
+OpenClaw has a web UI for managing skills, memory, and settings. It runs on port 18789 but only locally on your server.
+
+We need to make it accessible. The absolute easiest way? [Serveo](https://serveo.net). No domain. No signup. One SSH command:
+
+```bash
+ssh -R 80:localhost:18789 serveo.net
+```
+
+It spits out a URL like `https://xxxx.serveo.net`. Open it in your browser. Paste your gateway token from Step 3. You're in.
+
+> **"But what about that gateway config thing?"**
+> If you get an error about `allowedOrigins`, just edit the config real quick:
+>
+> ```bash
+> nano ~/.openclaw/openclaw.json
+> ```
+>
+> Find the `"gateway"` section and change `"bind": "loopback"` to `"bind": "lan"`, then add this right after:
+>
+> ```json
+> "controlUi": {
+>   "dangerouslyAllowHostHeaderOriginFallback": true
+> },
+> ```
+>
+> Restart with `cd ~/openclaw && docker compose down && docker compose up -d` and try again.
+
+Want the tunnel to stay up in the background permanently?
+
+```bash
+nohup autossh -M 0 -o "ServerAliveInterval 30" -o "ServerAliveCountMax 3" \
+  -R 80:localhost:18789 serveo.net &>/dev/null &
+```
+
+Dashboard accessible from anywhere. Done.
+
+---
+
+## Step 6: Give It a Soul
+
+Right now your agent is smart but generic. Let's fix that.
+
+Text it on Telegram. Tell it who it is and what you need:
+
+> Your name is [pick something]. You're not an assistant. You're my operator. Don't wait for me to ask for things. If something needs doing, flag it. If I haven't replied to someone in too long, nudge me. If a deadline is creeping up, warn me early. Be direct. No fluff. Keep me accountable. Track my commitments. If I say I'll do something and don't, call me out.
+
+Your agent saves this to its memory. Every future conversation starts with this context. The more you talk, the more it learns.
+
+After a few days, you'll unlock your phone to a message you never asked for:
+
+> "You have a standup in 40 minutes. That PR still needs review. And you told Sarah you'd send the doc today. Here's a draft. Want me to send it?"
+
+![The first time your agent reminds you about something you forgot.](https://images.sshdopey.com/memes/mind-blown.gif)
+
+That's the moment.
+
+---
+
+## Step 7: Add Skills
+
+Skills are plugins that give your agent superpowers. Notion, web search, calendar, GitHub, whatever.
+
+The easiest way? Just tell your agent in Telegram:
+
+> /skill install notion
+
+Or from the CLI:
+
+```bash
+docker compose run --rm openclaw-cli skills install notion
+```
+
+Browse the full catalog at [clawhub.ai](https://clawhub.ai). Thousands of community-built skills.
+
+### Notion Setup (Quick Note)
+
+If you're connecting Notion, here's the thing that trips everyone up:
+
+1. Go to [notion.so/my-integrations](https://notion.so/my-integrations)
+2. **Click "Internal Integration"** (not **Integration**). This is the simple one. The public OAuth page with company name, website, redirect URIs... that's for building apps for other people. You don't want that.
+
+![Everyone who accidentally clicked Public Integration instead of Internal.](https://images.sshdopey.com/memes/painful-hit-in-the-balls-self-pain.gif)
+
+4. Name it, save it, copy the API key
+5. Paste the key to your agent in Telegram. It handles the config.
+6. In Notion, share your pages/databases with the integration (click `...` > Connections > add it)
+
+Your agent can now read, create, and manage your Notion workspace.
+
+---
+
+## Step 8: Cron Jobs (Or Just Ask)
+
+Want your agent to brief you every morning? Check in at night? Send reminders?
+
+Just text it:
+
+> "Brief me every morning at 7am"
+
+> "Remind me to follow up with the client every Monday"
+
+> "Check my calendar every evening and tell me what's tomorrow"
+
+It creates the scheduled jobs itself. No cron syntax needed. No config files. Just talk to it like a person.
+
+![Your agent at 7am while you're still asleep.](https://images.sshdopey.com/memes/frog-typing-fast.gif)
+
+---
+
+## What Happens Next
+
+The first day is setup. After that it gets interesting fast.
+
+You start dumping everything into it. Projects, deadlines, ideas, people you keep meaning to text back. By day three, it knows your patterns. By day five, it catches things before you even think about them.
+
+The memory compounds. The accountability compounds. And slowly, the chaos starts shrinking.
+
+It won't fix your life. That's still on you. But it's way easier when something's keeping score.
+
+---
+
+## Quick Reference
+
+| What          | Command                                       |
+| ------------- | --------------------------------------------- |
+| Start         | `cd ~/openclaw && docker compose up -d`       |
+| Stop          | `docker compose down`                         |
+| Logs          | `docker compose logs --tail 50 -f`            |
+| Restart       | `docker compose down && docker compose up -d` |
+| Update        | `docker compose pull && docker compose up -d` |
+| Dashboard     | `ssh -R 80:localhost:18789 serveo.net`        |
+| Install skill | `/skill install SKILL_NAME` (in Telegram)     |
+
+---
+
+## Links
+
+- [OpenClaw on GitHub](https://github.com/openclaw/openclaw)
+- [OpenClaw Docs](https://docs.openclaw.ai)
+- [ClawHub Skills](https://clawhub.ai)
+- **AI Providers:** [Anthropic](https://console.anthropic.com) / [OpenAI](https://platform.openai.com) / [Google AI Studio](https://aistudio.google.com)
+- **Cheap VPS:** [Contabo](https://contabo.com/en/vps/) / [Hetzner](https://www.hetzner.com/cloud/) / [DigitalOcean](https://www.digitalocean.com/)
+- [Serveo](https://serveo.net) (free tunneling)
+
+---
+
+_Co-authored by Gru 🤪, the agent this post is about._

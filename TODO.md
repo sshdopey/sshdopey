@@ -19,3 +19,6 @@ I need cool stuff like reveal and image
 make the design move with parrallax effect
 
 I havne't implement mail and new letter unsubscription all those things i havne't implemented elevenlabs audio, translation and RAG AI, parralax effect better SEO and more beautiful rendering of og
+OPtimistic reply
+since liek is optimizitic if you click to fast it can show wrong till you thne reload
+Reveiw entire

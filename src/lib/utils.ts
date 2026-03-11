@@ -31,3 +31,14 @@ export function getDisplayName(id: string): string {
 export function isDopey(subscriberId: string): boolean {
   return DOPEY_SUBSCRIPTION_ID !== "" && subscriberId === DOPEY_SUBSCRIPTION_ID;
 }
+
+export function formatDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const day = d.getUTCDate().toString().padStart(2, "0");
+  const month = d.toLocaleDateString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const year = d.getUTCFullYear();
+  return `${day} ${month} ${year}`;
+}

@@ -7,6 +7,7 @@ import { TiltCard } from "@/components/tilt-card";
 import { PostLikeBadge } from "@/components/liked-posts-provider";
 import { FadeInOnScroll } from "@/components/fade-in";
 import { useLikeCounts } from "@/hooks/use-like-counts";
+import { formatDate } from "@/lib/utils";
 import type { PostMeta } from "@/lib/posts";
 
 function PostGridCard({
@@ -55,7 +56,7 @@ function PostGridCard({
             <div className="p-5 pt-5 pb-5 flex flex-col flex-1 min-h-0">
               {post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {post.tags.slice(0, 2).map((tag) => (
+                  {post.tags.slice(0, 3).map((tag) => (
                     <span
                       key={tag}
                       className="text-[10px] font-semibold uppercase tracking-[0.12em] text-dim bg-line-faint/80 px-1.5 py-0.5 rounded"
@@ -73,13 +74,7 @@ function PostGridCard({
               </p>
               <div className="flex items-center justify-between text-xs text-muted mt-auto pt-3 border-t border-line-faint/50">
                 <div className="flex items-center gap-2.5">
-                  <time>
-                    {new Date(post.published_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
+                  <time>{formatDate(post.published_at)}</time>
                   <span className="text-dim">·</span>
                   <span>{post.reading_time} min</span>
                 </div>
