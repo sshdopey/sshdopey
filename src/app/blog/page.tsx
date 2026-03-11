@@ -27,6 +27,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@sshdopey",
+    creator: "@sshdopey",
     title: "Writing — Dopey",
     description:
       "Thoughts on engineering, architecture, and building things that last.",
